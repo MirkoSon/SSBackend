@@ -33,9 +33,9 @@ Designed to be **stupid simple**: built for designers/prototypers to iterate fas
 
 ## 📥 Downloads
 
-* Latest Windows build: [Download](#)
-* Latest macOS build: [Download](#)
-* Latest Linux build: [Download](#)
+* Latest Windows build: [Download](https://github.com/MirkoSon/SSBackend/releases/download/v1.0.3/ssbackend.exe)
+* Latest macOS build: [Download](https://github.com/MirkoSon/SSBackend/releases/download/v1.0.3/ssbackend-macos)
+* Latest Linux build: [Download](https://github.com/MirkoSon/SSBackend/releases/download/v1.0.3/ssbackend-linux)
 
 *(These links auto-update on each release)*
 
