@@ -48,11 +48,29 @@ Designed to be **stupid simple**: built for designers/prototypers to iterate fas
 2. **Run** it from the terminal:
 
    ```bash
-   ./backend-sim.bin   # macOS/Linux
-   backend-sim.exe     # Windows
+   # Default port (3000)
+   ./ssbackend   # macOS/Linux
+   ssbackend.exe # Windows
+   
+   # Custom port using --port parameter
+   ./ssbackend --port 8080
+   ssbackend.exe --port 8080
+   
+   # Custom port using environment variable
+   PORT=8080 ./ssbackend
+   set PORT=8080 && ssbackend.exe
+   
+   # Get help information
+   ./ssbackend --help
    ```
 
 3. **Test endpoints** from your game prototype or with curl/Postman:
+
+   * Health check:
+
+     ```bash
+     curl http://localhost:3000/health
+     ```
 
    * Save game state:
 
@@ -85,6 +103,64 @@ Designed to be **stupid simple**: built for designers/prototypers to iterate fas
        -d '{"userId":1,"itemId":"sword","quantity":1}'
      ```
 
+4. **Reset database** by deleting the `game.db` file created in the working directory.
+
+---
+
+## 📖 Port Configuration
+
+The backend simulator supports flexible port configuration:
+
+- **Default**: Runs on port 3000
+- **CLI Parameter**: Use `--port <number>` to specify a custom port
+- **Environment Variable**: Set `PORT=<number>` before running
+- **Priority**: CLI parameter > Environment variable > Default (3000)
+
+Examples:
+```bash
+# Default port 3000
+./ssbackend
+
+# Custom port via CLI
+./ssbackend --port 8080
+
+# Custom port via environment
+PORT=9000 ./ssbackend
+
+# Invalid ports will show an error
+./ssbackend --port 70000  # Error: Port must be between 1-65535
+```
+
+---
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+**Database errors:**
+- **Problem**: `SQLITE_CANTOPEN: unable to open database file`
+- **Solution**: Ensure the executable has write permissions in the working directory
+
+**Port conflicts:**
+- **Problem**: `Error: listen EADDRINUSE :::3000`
+- **Solution**: Use `--port <number>` to choose a different port or stop other services using port 3000
+
+**Reset database:**
+- Delete the `game.db` file in the working directory
+- The file will be recreated automatically on next startup
+
+**Executable security warnings:**
+- **Windows**: Windows Defender may flag the executable as unknown software
+- **macOS**: You may need to allow the app in System Preferences > Security & Privacy
+- **Linux**: Ensure the executable has execute permissions: `chmod +x ssbackend`
+
+### Performance Notes
+
+- Database file size grows with save data - delete `game.db` to reset
+- Executable size: ~45MB (includes Node.js runtime and dependencies)
+- Memory usage: ~50-100MB during operation
+- Startup time: ~2-3 seconds (includes database initialization)
+
 ---
 
 ## 🗄️ Architecture
@@ -99,22 +175,41 @@ Clone the repo and install dependencies:
 
 ```bash
 git clone https://github.com/MirkoSon/SSBackend.git
-cd REPO
+cd SSBackend
 npm install
 ```
 
 Run locally (requires Node.js):
 
 ```bash
-node server.js
+npm start                # Default port 3000
+npm start -- --port 8080 # Custom port
 ```
 
 Build executables manually:
 
 ```bash
-npx pkg . --targets node18-win-x64 --output dist/backend-sim.exe
-npx pkg . --targets node18-macos-x64 --output dist/backend-sim.bin
+# Build Windows executable
+npm run build:exe
+
+# Build Linux/macOS executables
+npm run build:bin
+
+# Build all platforms
+npm run build:all
+
+# Test built executable
+npm run test:exe
 ```
+
+Available scripts:
+- `npm start` - Run development server
+- `npm run dev` - Run with nodemon for auto-restart
+- `npm run build:exe` - Build Windows executable
+- `npm run build:bin` - Build Linux/macOS executables
+- `npm run build:all` - Build all platform executables
+- `npm run test:exe` - Test Windows executable
+- `npm run test:bin` - Test Linux/macOS executable
 
 ---
 
