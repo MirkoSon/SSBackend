@@ -1,4 +1,4 @@
-# Local Game Backend Simulator  
+# Stupid Simple Backend  
 
 [![Build](https://github.com/OWNER/REPO/actions/workflows/release.yml/badge.svg)](https://github.com/OWNER/REPO/actions)  
 [![Latest Release](https://img.shields.io/github/v/release/OWNER/REPO?logo=github)](https://github.com/OWNER/REPO/releases)  
@@ -7,7 +7,7 @@
 
 ## 📖 Overview  
 
-The **Local Game Backend Simulator** is a lightweight, standalone backend service for **game prototyping**.  
+The **Stupid Simple Backend** is a lightweight, standalone backend service for **game prototyping**.  
 
 It provides:  
 - **Save/Load** endpoints for arbitrary JSON game state  
@@ -23,7 +23,7 @@ Designed to be **stupid simple**: built for designers/prototypers to iterate fas
 
 - ✅ Save & load JSON game state  
 - ✅ Basic authentication (register/login with JWT)  
-- ✅ Simple inventory endpoints (add/get/delete)  
+- ✅ Simple inventory endpoints (add/get/delete)
 - ✅ SQLite persistence in `game.db`  
 - ✅ One-click reset (delete `game.db`)  
 - ✅ Executables for Windows & macOS/Linux  
@@ -87,38 +87,7 @@ Designed to be **stupid simple**: built for designers/prototypers to iterate fas
 
 ## 🗄️ Architecture
 
-```mermaid
-flowchart TD
-    A[Game Prototype (HTML/JS)] -->|HTTP REST| B[Express API Server]
-
-    subgraph API Endpoints
-        B --> C1[POST /save]
-        B --> C2[GET /save/:id]
-        B --> C3[DELETE /save/:id]
-        B --> D1[POST /auth/register]
-        B --> D2[POST /auth/login]
-        B --> E1[POST /inventory/add]
-        B --> E2[GET /inventory/:userId]
-        B --> E3[DELETE /inventory/:userId/:itemId]
-    end
-
-    subgraph SQLite Database (game.db)
-        F1[(saves table)]
-        F2[(users table)]
-        F3[(inventory table)]
-    end
-
-    C1 --> F1
-    C2 --> F1
-    C3 --> F1
-
-    D1 --> F2
-    D2 --> F2
-
-    E1 --> F3
-    E2 --> F3
-    E3 --> F3
-```
+![Architecture Diagram](assets/architecture.png)
 
 ---
 
