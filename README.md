@@ -1,7 +1,7 @@
 # Stupid Simple Backend
 
-[![Build](https://github.com/OWNER/REPO/actions/workflows/release.yml/badge.svg)](https://github.com/OWNER/REPO/actions)
-[![Latest Release](https://img.shields.io/github/v/release/OWNER/REPO?logo=github)](https://github.com/OWNER/REPO/releases)
+[![Build](https://github.com/MirkoSon/SSBackend/actions/workflows/release.yml/badge.svg)](https://github.com/MirkoSon/SSBackend/actions)
+[![Latest Release](https://img.shields.io/github/v/release/MirkoSon/SSBackend?logo=github)](https://github.com/MirkoSon/SSBackend/releases)
 
 ---
 
