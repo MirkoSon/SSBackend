@@ -1,5 +1,8 @@
 name: Build & Release Stupid Simple Backend
 
+permissions:
+  contents: write
+
 on:
   push:
     tags:
