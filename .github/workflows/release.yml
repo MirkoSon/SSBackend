@@ -25,15 +25,17 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build executable
-        run: |
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            npm run build:exe
-          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            npx pkg package.json --targets node18-macos-x64 --output dist/ssbackend-macos
-          else
-            npx pkg package.json --targets node18-linux-x64 --output dist/ssbackend-linux
-          fi
+      - name: Build executable (Windows)
+        if: matrix.os == 'windows-latest'
+        run: npm run build:exe
+
+      - name: Build executable (macOS)
+        if: matrix.os == 'macos-latest'
+        run: npx pkg package.json --targets node18-macos-x64 --output dist/ssbackend-macos
+
+      - name: Build executable (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: npx pkg package.json --targets node18-linux-x64 --output dist/ssbackend-linux
 
       - name: Upload Release Artifacts
         uses: actions/upload-artifact@v4
