@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const session = require('express-session');
 const path = require('path');
 
 // Parse command-line arguments
@@ -48,6 +49,9 @@ API Endpoints:
 const saveRoutes = require('./routes/save');
 const authRoutes = require('./routes/auth');
 const inventoryRoutes = require('./routes/inventory');
+const progressRoutes = require('./routes/progress');
+const achievementsRoutes = require('./routes/achievements');
+const adminRoutes = require('./routes/admin');
 
 // Import database initialization
 const { initializeDatabase } = require('./db/database');
@@ -68,6 +72,30 @@ if (isNaN(PORT) || PORT < 1 || PORT > 65535) {
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Session middleware for admin authentication
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'admin-session-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: false, // Set to true if using HTTPS
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
+// Serve static files for admin dashboard
+app.use('/admin', express.static(path.join(__dirname, '..', 'public', 'admin')));
+
+// Admin dashboard route - serve index.html for /admin path
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'admin', 'index.html'));
+});
+
+// Admin login page
+app.get('/admin/login', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'admin', 'login.html'));
+});
+
 // Basic request logging
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
@@ -78,6 +106,9 @@ app.use((req, res, next) => {
 app.use('/save', saveRoutes);
 app.use('/auth', authRoutes);
 app.use('/inventory', inventoryRoutes);
+app.use('/progress', progressRoutes);
+app.use('/achievements', achievementsRoutes);
+app.use('/admin', adminRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -104,10 +135,13 @@ async function startServer() {
     app.listen(PORT, () => {
       console.log(`🎮 Stupid Simple Backend running on port ${PORT}`);
       console.log(`📡 Server URL: http://localhost:${PORT}`);
+      console.log(`🔧 Admin Dashboard: http://localhost:${PORT}/admin`);
       console.log(`Health check: http://localhost:${PORT}/health`);
       console.log(`Save API: http://localhost:${PORT}/save`);
       console.log(`Auth API: http://localhost:${PORT}/auth`);
       console.log(`Inventory API: http://localhost:${PORT}/inventory`);
+      console.log(`Progress API: http://localhost:${PORT}/progress`);
+      console.log(`Achievements API: http://localhost:${PORT}/achievements`);
       console.log(`💡 Use --help for usage options`);
     });
   } catch (error) {

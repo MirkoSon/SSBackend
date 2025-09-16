@@ -3,6 +3,7 @@ const { verifyToken, extractTokenFromHeader } = require('../utils/jwt');
 /**
  * Authentication middleware
  * Verifies JWT token and adds user info to request object
+ * Now includes token store validation and activity tracking
  */
 function authenticateToken(req, res, next) {
   try {
@@ -16,7 +17,7 @@ function authenticateToken(req, res, next) {
       });
     }
 
-    // Verify token
+    // Verify token (now includes token store validation and activity tracking)
     const decoded = verifyToken(token);
 
     // Add user info to request object
@@ -24,6 +25,9 @@ function authenticateToken(req, res, next) {
       id: decoded.userId,
       username: decoded.username
     };
+
+    // Store token in request for logout and session management
+    req.token = token;
 
     next();
 
@@ -38,6 +42,10 @@ function authenticateToken(req, res, next) {
       return res.status(401).json({ 
         error: 'Access denied. Invalid token.' 
       });
+    } else if (error.message === 'Token is invalid or has been revoked') {
+      return res.status(401).json({ 
+        error: 'Access denied. Token has been revoked.' 
+      });
     } else {
       return res.status(401).json({ 
         error: 'Access denied. Token verification failed.' 
@@ -49,6 +57,7 @@ function authenticateToken(req, res, next) {
 /**
  * Optional authentication middleware
  * Sets user info if token is valid, but doesn't block request if missing
+ * Now includes token store validation
  */
 function optionalAuth(req, res, next) {
   try {
@@ -61,6 +70,7 @@ function optionalAuth(req, res, next) {
         id: decoded.userId,
         username: decoded.username
       };
+      req.token = token;
     }
   } catch (error) {
     // Ignore token errors for optional auth

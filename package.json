@@ -23,8 +23,10 @@
   "author": "Game Developer",
   "license": "MIT",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "body-parser": "^1.20.2",
     "express": "^4.18.2",
+    "express-session": "^1.18.2",
     "jsonwebtoken": "^9.0.2",
     "sqlite3": "^5.1.6"
   },

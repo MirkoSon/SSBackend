@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stupid Simple Backend - Admin Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="admin-nav">
+        <div class="nav-brand">
+            <h1>🎮 Stupid Simple Backend</h1>
+            <span class="nav-subtitle">Data Browser & Management</span>
+        </div>
+        <ul class="nav-menu">
+            <li><a href="#users" class="nav-link active" data-view="users">👥 Users</a></li>
+            <li><a href="#saves" class="nav-link" data-view="saves">💾 Saves</a></li>
+            <li><a href="#inventories" class="nav-link" data-view="inventories">🎒 Inventories</a></li>
+            <li><a href="#progress" class="nav-link" data-view="progress">⭐ Progress</a></li>
+            <li><a href="#exports" class="nav-link" data-view="exports">📥 Export</a></li>
+        </ul>
+        <div class="nav-actions">
+            <button id="refreshButton" class="btn btn-secondary">🔄 Refresh</button>
+            <button id="logoutButton" class="btn btn-danger">🚪 Logout</button>
+        </div>
+    </nav>
+
+    <main class="dashboard-main">
+        <div class="dashboard-header">
+            <h2 id="viewTitle">Users Management</h2>
+            <div class="dashboard-stats" id="dashboardStats">
+                <div class="stat-card">
+                    <span class="stat-number" id="statNumber">-</span>
+                    <span class="stat-label" id="statLabel">Loading...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-controls">
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Search..." 
+                    class="search-input"
+                >
+                <button id="searchButton" class="btn btn-primary">🔍 Search</button>
+            </div>
+            <div class="view-controls">
+                <button id="exportCurrentButton" class="btn btn-success">📥 Export Current</button>
+                <button id="autoRefreshToggle" class="btn btn-secondary">⏰ Auto-refresh: OFF</button>
+            </div>
+        </div>
+
+        <div class="dashboard-content" id="dashboardContent">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Loading data...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for detailed views -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Details</h3>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Dynamic content -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast notifications -->
+    <div id="toast" class="toast">
+        <div class="toast-content">
+            <span id="toastMessage"></span>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
