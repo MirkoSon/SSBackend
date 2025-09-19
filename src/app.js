@@ -3,25 +3,51 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
 const path = require('path');
 
+// Load configuration (handles missing config.yml automatically)
+const { loadConfig, getConfigValue } = require('./utils/config');
+const config = loadConfig();
+
+// Initialize JWT with configuration
+const { initializeJWT } = require('./utils/jwt');
+initializeJWT(config);
+
 // Parse command-line arguments
 const args = process.argv.slice(2);
 let customPort = null;
 
 // Parse command-line arguments
+const PluginCLI = require('./plugins/PluginCLI');
+const pluginCLI = new PluginCLI();
+
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--port' && args[i + 1]) {
     customPort = parseInt(args[i + 1]);
     i++; // Skip the next argument since we used it as the port value
+  } else if (args[i] === 'plugins') {
+    // Handle plugin commands
+    pluginCLI.handlePluginCommand(args.slice(i)).then(() => {
+      process.exit(0);
+    }).catch(error => {
+      console.error('❌ Plugin command failed:', error.message);
+      process.exit(1);
+    });
+    return; // Exit early for plugin commands
   } else if (args[i] === '--help' || args[i] === '-h') {
     console.log(`
 🎮 Stupid Simple Backend
 
 Usage:
   ssbackend [options]
+  ssbackend plugins <command> [options]
 
 Options:
   --port <number>    Set custom port (default: 3000)
   --help, -h         Show this help message
+
+Plugin Commands:
+  plugins list                     List all available plugins
+  plugins enable <name|number>     Enable a plugin
+  plugins disable <name|number>    Disable a plugin
 
 Environment Variables:
   PORT               Set port via environment variable
@@ -29,7 +55,8 @@ Environment Variables:
 Examples:
   ssbackend                    # Run on default port 3000
   ssbackend --port 8080        # Run on port 8080
-  PORT=8080 ssbackend          # Run on port 8080 via env var
+  ssbackend plugins list       # List all plugins
+  ssbackend plugins enable 1   # Enable first plugin
 
 API Endpoints:
   GET  /health                         # Health check
@@ -40,6 +67,7 @@ API Endpoints:
   POST /inventory/add                 # Add inventory item
   GET  /inventory/:userId             # Get user inventory
   DELETE /inventory/:userId/:itemId   # Remove inventory item
+  GET  /achievements/*                # Achievement endpoints (via plugins)
 `);
     process.exit(0);
   }
@@ -50,16 +78,19 @@ const saveRoutes = require('./routes/save');
 const authRoutes = require('./routes/auth');
 const inventoryRoutes = require('./routes/inventory');
 const progressRoutes = require('./routes/progress');
-const achievementsRoutes = require('./routes/achievements');
+// Note: achievements routes are now handled by plugin system
 const adminRoutes = require('./routes/admin');
 
 // Import database initialization
 const { initializeDatabase } = require('./db/database');
 
+// Import plugin system
+const PluginManager = require('./plugins/PluginManager');
+
 const app = express();
 
-// Port configuration with priority: CLI args > Environment variable > Default
-const PORT = customPort || process.env.PORT || 3000;
+// Port configuration with priority: CLI args > Environment variable > Config file > Default
+const PORT = customPort || process.env.PORT || getConfigValue('server.port', 3000);
 
 // Validate port
 if (isNaN(PORT) || PORT < 1 || PORT > 65535) {
@@ -74,7 +105,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Session middleware for admin authentication
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'admin-session-secret-key',
+  secret: process.env.SESSION_SECRET || getConfigValue('auth.session_secret', 'admin-session-secret-key'),
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -107,7 +138,7 @@ app.use('/save', saveRoutes);
 app.use('/auth', authRoutes);
 app.use('/inventory', inventoryRoutes);
 app.use('/progress', progressRoutes);
-app.use('/achievements', achievementsRoutes);
+// Note: /achievements routes are now handled by plugin system
 app.use('/admin', adminRoutes);
 
 // Health check endpoint
@@ -115,22 +146,24 @@ app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// Basic error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Error:', err.message);
-  res.status(500).json({ error: 'Internal server error' });
-});
-
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: 'Endpoint not found' });
-});
-
 // Initialize database and start server
 async function startServer() {
   try {
+    // Initialize database
     await initializeDatabase();
     console.log('Database initialized successfully');
+    
+    // Get database instance
+    const { getDatabase } = require('./db/database');
+    const db = getDatabase();
+    
+    // Initialize plugin system BEFORE middleware setup
+    console.log('🔌 Initializing Plugin System...');
+    const pluginManager = new PluginManager();
+    await pluginManager.initialize(app, db);
+    
+    // Setup error handling and 404 after plugins are loaded
+    setupFinalMiddleware();
     
     app.listen(PORT, () => {
       console.log(`🎮 Stupid Simple Backend running on port ${PORT}`);
@@ -141,13 +174,28 @@ async function startServer() {
       console.log(`Auth API: http://localhost:${PORT}/auth`);
       console.log(`Inventory API: http://localhost:${PORT}/inventory`);
       console.log(`Progress API: http://localhost:${PORT}/progress`);
-      console.log(`Achievements API: http://localhost:${PORT}/achievements`);
+      console.log(`Achievements API: http://localhost:${PORT}/achievements (via plugins)`);
       console.log(`💡 Use --help for usage options`);
+      console.log(`🔌 Use "ssbackend plugins list" to manage plugins`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);
   }
+}
+
+// Setup final middleware after plugins are loaded
+function setupFinalMiddleware() {
+  // Basic error handling middleware
+  app.use((err, req, res, next) => {
+    console.error('Error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  });
+
+  // 404 handler (must be last)
+  app.use((req, res) => {
+    res.status(404).json({ error: 'Endpoint not found' });
+  });
 }
 
 startServer();

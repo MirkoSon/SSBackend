@@ -179,6 +179,11 @@ cd SSBackend
 npm install
 ```
 
+### Security Documentation
+
+For detailed information about the authentication system's security implementation, see:
+- [Authentication Security Notes](docs/security/auth-security-notes.md) - Security features, production considerations, and audit recommendations
+
 Run locally (requires Node.js):
 
 ```bash

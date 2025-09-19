@@ -1,11 +1,20 @@
 const jwt = require('jsonwebtoken');
 const tokenStore = require('./tokenStore');
 
-// In-memory signing key for prototype simplicity
-const JWT_SECRET = 'game-backend-simulator-secret-key-2025';
+// Configuration will be injected
+let JWT_SECRET = 'game-backend-simulator-secret-key-2025'; // fallback default
+let JWT_EXPIRATION = '7d'; // fallback default
 
-// Token expiration: 7 days (as per session management requirements)
-const JWT_EXPIRATION = '7d';
+/**
+ * Initialize JWT configuration
+ * @param {Object} config - Configuration object
+ */
+function initializeJWT(config) {
+  if (config && config.auth) {
+    JWT_SECRET = config.auth.jwt_secret || JWT_SECRET;
+    JWT_EXPIRATION = config.auth.jwt_expires_in || JWT_EXPIRATION;
+  }
+}
 
 /**
  * Generate JWT token for user and store it
@@ -146,6 +155,7 @@ function getTokenStoreStats() {
 }
 
 module.exports = {
+  initializeJWT,
   generateToken,
   verifyToken,
   refreshToken,
@@ -153,6 +163,6 @@ module.exports = {
   getUserSessions,
   extractTokenFromHeader,
   getTokenStoreStats,
-  JWT_SECRET,
-  JWT_EXPIRATION
+  get JWT_SECRET() { return JWT_SECRET; },
+  get JWT_EXPIRATION() { return JWT_EXPIRATION; }
 };

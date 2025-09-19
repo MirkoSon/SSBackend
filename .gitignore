@@ -1,4 +1,16 @@
 # ===================================
+# Stupid Simple Backend - .gitignore
+# ===================================
+# This file excludes runtime-generated files that should not be committed:
+# - Auto-generated config.yml with secrets
+# - SQLite databases and session data
+# - Build artifacts and temporary files
+# - Development-only documentation and planning files
+#
+# Fresh deployments will auto-generate these files as needed.
+# ===================================
+
+# ===================================
 # BMAD-METHOD Framework Files (Local Development Only)
 # ===================================
 
@@ -60,6 +72,17 @@ yarn.lock
 *.sqlite3
 game.db
 
+# Database backup files (migration artifacts)
+*.db_pre_*
+*_backup_*
+
+# Auto-generated configuration files
+config.yml
+config.yml.backup.*
+
+# Session and authentication data
+src/data/sessions.json
+
 # Logs
 logs/
 *.log
@@ -110,6 +133,15 @@ tmp/
 temp/
 *.tmp
 *.temp
+
+# Process and runtime files
+*.pid
+*.lock
+
+# Development artifacts
+debug.log
+error.log
+access.log
 
 # ===================================
 # Demo files

@@ -1,14 +1,12 @@
-const { getDatabase } = require('../db/database');
-
 /**
- * Legacy Achievement validation and automatic checking utility
- * 
- * DEPRECATED: This utility is maintained for backward compatibility only.
- * New code should use the AchievementService from the achievements plugin directly.
- * 
- * This file now acts as a compatibility wrapper that uses the new plugin tables.
+ * Achievement Service - Business logic for achievement system
+ * Migrated from utils/achievementChecker.js with plugin table names
  */
-class AchievementChecker {
+class AchievementService {
+  constructor(db) {
+    this.db = db;
+  }
+
   /**
    * Check for new achievements based on updated progress
    * @param {number} userId - User ID
@@ -18,11 +16,9 @@ class AchievementChecker {
    */
   async checkAchievements(userId, metric, newValue) {
     try {
-      const db = getDatabase();
       const newlyEarned = [];
 
       // Get all achievements for this metric that user hasn't earned
-      // Updated to use plugin_ tables for compatibility
       const achievementsQuery = `
         SELECT a.* FROM plugin_achievements a
         LEFT JOIN plugin_user_achievements ua ON a.id = ua.achievement_id AND ua.user_id = ?
@@ -30,7 +26,7 @@ class AchievementChecker {
       `;
 
       const achievements = await new Promise((resolve, reject) => {
-        db.all(achievementsQuery, [userId, metric], (err, rows) => {
+        this.db.all(achievementsQuery, [userId, metric], (err, rows) => {
           if (err) reject(err);
           else resolve(rows || []);
         });
@@ -77,16 +73,13 @@ class AchievementChecker {
    * @param {number} progressValue - Progress value when earned
    */
   async unlockAchievement(userId, achievementId, progressValue) {
-    const db = getDatabase();
-
     return new Promise((resolve, reject) => {
-      // Updated to use plugin_ table for compatibility
       const insertQuery = `
         INSERT INTO plugin_user_achievements (user_id, achievement_id, progress_value)
         VALUES (?, ?, ?)
       `;
 
-      db.run(insertQuery, [userId, achievementId, progressValue], function(err) {
+      this.db.run(insertQuery, [userId, achievementId, progressValue], function(err) {
         if (err) {
           reject(err);
         } else {
@@ -108,16 +101,13 @@ class AchievementChecker {
    * @returns {boolean} Whether achievement is already earned
    */
   async hasUserEarnedAchievement(userId, achievementId) {
-    const db = getDatabase();
-
     return new Promise((resolve, reject) => {
-      // Updated to use plugin_ table for compatibility
       const query = `
         SELECT 1 FROM plugin_user_achievements 
         WHERE user_id = ? AND achievement_id = ?
       `;
 
-      db.get(query, [userId, achievementId], (err, row) => {
+      this.db.get(query, [userId, achievementId], (err, row) => {
         if (err) {
           reject(err);
         } else {
@@ -133,15 +123,12 @@ class AchievementChecker {
    * @returns {Array} Array of achievements for the metric
    */
   async getAchievementsByMetric(metric) {
-    const db = getDatabase();
-
     return new Promise((resolve, reject) => {
-      // Updated to use plugin_ table for compatibility
       const query = `
         SELECT * FROM plugin_achievements WHERE metric_name = ?
       `;
 
-      db.all(query, [metric], (err, rows) => {
+      this.db.all(query, [metric], (err, rows) => {
         if (err) {
           reject(err);
         } else {
@@ -158,10 +145,7 @@ class AchievementChecker {
    * @returns {Array} Progress info for unearned achievements
    */
   async getProgressTowardAchievements(userId, metric) {
-    const db = getDatabase();
-
     return new Promise((resolve, reject) => {
-      // Updated to use plugin_ tables for compatibility
       const query = `
         SELECT a.*, cp.current_value,
                CASE WHEN ua.achievement_id IS NOT NULL THEN 1 ELSE 0 END as earned
@@ -171,7 +155,7 @@ class AchievementChecker {
         WHERE a.metric_name = ?
       `;
 
-      db.all(query, [userId, userId, metric], (err, rows) => {
+      this.db.all(query, [userId, userId, metric], (err, rows) => {
         if (err) {
           reject(err);
         } else {
@@ -194,7 +178,4 @@ class AchievementChecker {
   }
 }
 
-// Create singleton instance
-const achievementChecker = new AchievementChecker();
-
-module.exports = achievementChecker;
+module.exports = AchievementService;
