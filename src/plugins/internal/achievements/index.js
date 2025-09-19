@@ -30,6 +30,7 @@ const manifest = {
 };
 
 // Route definitions - maintains exact same API as before
+// IMPORTANT: Specific routes MUST come before parameterized routes to avoid conflicts
 const routes = [
   {
     method: 'GET',
@@ -38,9 +39,9 @@ const routes = [
     middleware: ['auth']
   },
   {
-    method: 'GET', 
-    path: '/achievements/:userId',
-    handler: './routes/userAchievements.js',
+    method: 'GET',
+    path: '/achievements/stats',
+    handler: './routes/stats.js',
     middleware: ['auth']
   },
   {
@@ -50,15 +51,15 @@ const routes = [
     middleware: ['auth']
   },
   {
-    method: 'GET',
-    path: '/achievements/:userId/progress',
-    handler: './routes/progress.js',
+    method: 'GET', 
+    path: '/achievements/:userId',
+    handler: './routes/userAchievements.js',
     middleware: ['auth']
   },
   {
     method: 'GET',
-    path: '/achievements/stats',
-    handler: './routes/stats.js',
+    path: '/achievements/:userId/progress',
+    handler: './routes/progress.js',
     middleware: ['auth']
   }
 ];
