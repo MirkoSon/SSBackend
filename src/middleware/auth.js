@@ -23,7 +23,8 @@ function authenticateToken(req, res, next) {
     // Add user info to request object
     req.user = {
       id: decoded.userId,
-      username: decoded.username
+      username: decoded.username,
+      isAdmin: decoded.username === 'admin'
     };
 
     // Store token in request for logout and session management
@@ -68,7 +69,8 @@ function optionalAuth(req, res, next) {
       const decoded = verifyToken(token);
       req.user = {
         id: decoded.userId,
-        username: decoded.username
+        username: decoded.username,
+        isAdmin: decoded.username === 'admin'
       };
       req.token = token;
     }
