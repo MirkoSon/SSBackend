@@ -46,6 +46,47 @@ const manifest = {
         description: 'Automatically cleanup old expired boards'
       }
     }
+  },
+
+  // Admin UI Configuration for Enhanced Dashboard Navigation (Story 4.2)
+  adminUI: {
+    enabled: true,
+    navigation: {
+      label: 'Leaderboards',
+      icon: '🏆',
+      group: 'plugins',
+      priority: 2
+    },
+    routes: [
+      {
+        path: '/admin/leaderboards',
+        title: 'Leaderboards Overview',
+        icon: '📊',
+        component: 'LeaderboardsDashboard',
+        permissions: ['admin']
+      },
+      {
+        path: '/admin/leaderboards/rankings',
+        title: 'Rankings Management',
+        icon: '🥇',
+        component: 'RankingsManager',
+        permissions: ['admin']
+      },
+      {
+        path: '/admin/leaderboards/competitions',
+        title: 'Competitions',
+        icon: '🏁',
+        component: 'CompetitionsManager',
+        permissions: ['admin']
+      },
+      {
+        path: '/admin/leaderboards/configuration',
+        title: 'Board Configuration',
+        icon: '⚙️',
+        component: 'LeaderboardConfig',
+        permissions: ['admin']
+      }
+    ]
   }
 };
 

@@ -26,6 +26,47 @@ const manifest = {
         description: 'Remove achievement data when plugin is disabled'
       }
     }
+  },
+
+  // Admin UI Configuration for Enhanced Dashboard Navigation (Story 4.2)
+  adminUI: {
+    enabled: true,
+    navigation: {
+      label: 'Achievements',
+      icon: '🏅',
+      group: 'plugins',
+      priority: 3
+    },
+    routes: [
+      {
+        path: '/admin/achievements',
+        title: 'Achievements Overview',
+        icon: '📊',
+        component: 'AchievementsDashboard',
+        permissions: ['admin']
+      },
+      {
+        path: '/admin/achievements/management',
+        title: 'Achievement Management',
+        icon: '🏅',
+        component: 'AchievementManager',
+        permissions: ['admin']
+      },
+      {
+        path: '/admin/achievements/progress',
+        title: 'User Progress',
+        icon: '📈',
+        component: 'ProgressMonitor',
+        permissions: ['admin']
+      },
+      {
+        path: '/admin/achievements/configuration',
+        title: 'Achievement Configuration',
+        icon: '⚙️',
+        component: 'AchievementConfig',
+        permissions: ['admin']
+      }
+    ]
   }
 };
 

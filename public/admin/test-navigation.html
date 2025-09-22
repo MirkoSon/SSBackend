@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navigation Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-result { padding: 10px; margin: 5px; border-radius: 4px; }
+        .pass { background: #d4edda; color: #155724; }
+        .fail { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>Plugin Navigation Component Test</h1>
+    <div id="test-results"></div>
+    
+    <script src="components/navigationRenderer.js"></script>
+    <script src="components/pluginNavigation.js"></script>
+    <script src="components/navigation.js"></script>
+    
+    <script>
+        function runTests() {
+            const results = document.getElementById('test-results');
+            
+            function addResult(test, passed) {
+                const div = document.createElement('div');
+                div.className = `test-result ${passed ? 'pass' : 'fail'}`;
+                div.textContent = `${passed ? '✅' : '❌'} ${test}`;
+                results.appendChild(div);
+            }
+            
+            // Test 1: Components loaded
+            addResult('NavigationRenderer class available', typeof NavigationRenderer !== 'undefined');
+            addResult('PluginNavigationManager class available', typeof PluginNavigationManager !== 'undefined');
+            addResult('DynamicNavigation class available', typeof DynamicNavigation !== 'undefined');
+            
+            // Test 2: Component instantiation
+            try {
+                const renderer = new NavigationRenderer();
+                addResult('NavigationRenderer instantiation', true);
+            } catch (e) {
+                addResult('NavigationRenderer instantiation: ' + e.message, false);
+            }
+            
+            try {
+                const manager = new PluginNavigationManager();
+                addResult('PluginNavigationManager instantiation', true);
+            } catch (e) {
+                addResult('PluginNavigationManager instantiation: ' + e.message, false);
+            }
+            
+            // Test 3: Plugin navigation validation
+            try {
+                const manager = new PluginNavigationManager();
+                const testManifest = {
+                    name: 'test-plugin',
+                    adminUI: {
+                        navigation: { label: 'Test', icon: '🧪' },
+                        routes: [{ path: '/test', title: 'Test Route' }]
+                    }
+                };
+                const validation = manager.validatePluginNavigation(testManifest);
+                addResult('Plugin navigation validation', validation.valid);
+            } catch (e) {
+                addResult('Plugin navigation validation: ' + e.message, false);
+            }
+            
+            console.log('🧪 Navigation component tests completed');
+        }
+        
+        // Run tests when page loads
+        document.addEventListener('DOMContentLoaded', runTests);
+    </script>
+</body>
+</html>

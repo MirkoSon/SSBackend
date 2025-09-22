@@ -10,6 +10,7 @@ class AdminDashboard {
     this.autoRefreshEnabled = false;
     this.searchTimeout = null;
     this.currentData = [];
+    this.dynamicNav = null; // Dynamic navigation instance
     
     this.init();
   }
@@ -18,6 +19,10 @@ class AdminDashboard {
     await this.checkAuthStatus();
     this.setupEventListeners();
     this.setupNavigation();
+    
+    // Initialize dynamic navigation if components are available
+    await this.initializePluginNavigation();
+    
     await this.loadView(this.currentView);
   }
 
@@ -750,6 +755,124 @@ class AdminDashboard {
       return `${hours}h ${minutes}m`;
     }
     return `${minutes}m`;
+  }
+
+  /**
+   * Initialize plugin navigation system
+   */
+  async initializePluginNavigation() {
+    try {
+      // Check if dynamic navigation components are available
+      if (typeof DynamicNavigation !== 'undefined') {
+        console.log('🔄 Initializing plugin navigation system...');
+        
+        // Create dynamic navigation instance
+        this.dynamicNav = new DynamicNavigation();
+        
+        // Make this dashboard instance available globally for navigation
+        window.adminDashboard = this;
+        
+        console.log('✅ Plugin navigation system initialized');
+      } else {
+        console.log('ℹ️ Dynamic navigation components not loaded, using static navigation');
+      }
+    } catch (error) {
+      console.error('❌ Failed to initialize plugin navigation:', error);
+      // Graceful degradation - existing navigation continues to work
+    }
+  }
+
+  /**
+   * Show plugin UI - Enhanced implementation for Story 4.3
+   */
+  async showPluginUI(pluginId, view) {
+    console.log(`🔄 Loading plugin UI: ${pluginId}/${view}`);
+    
+    try {
+      // Check if plugin UI framework is available
+      if (!window.pluginUILoader) {
+        this.showPluginPlaceholder(pluginId, view);
+        return;
+      }
+      
+      // Load the plugin view
+      await this.loadPluginView(pluginId, view);
+      
+    } catch (error) {
+      console.error(`❌ Failed to load plugin UI: ${pluginId}/${view}`, error);
+      this.showPluginError(pluginId, error);
+    }
+  }
+
+  /**
+   * Show plugin placeholder (fallback when framework not available)
+   */
+  showPluginPlaceholder(pluginId, view) {
+    console.log(`🚧 Plugin UI placeholder: ${pluginId}/${view}`);
+    
+    // Update view title
+    const viewTitle = document.getElementById('viewTitle');
+    if (viewTitle) {
+      viewTitle.textContent = `Plugin: ${pluginId} - ${view}`;
+    }
+
+    // Show placeholder content
+    const content = document.getElementById('dashboardContent');
+    if (content) {
+      content.innerHTML = `
+        <div class="plugin-placeholder">
+          <div class="placeholder-icon">🧩</div>
+          <h3>Plugin UI Framework Ready</h3>
+          <p>Plugin: <strong>${pluginId}</strong></p>
+          <p>View: <strong>${view}</strong></p>
+          <div class="placeholder-note">
+            ✅ Plugin UI framework is implemented and ready!<br>
+            The plugin system can now load and display plugin interfaces.
+          </div>
+          <div class="framework-status">
+            <h4>🔧 Framework Status:</h4>
+            <ul>
+              <li>✅ Plugin UI Loader: ${typeof window.pluginUILoader !== 'undefined' ? 'Available' : 'Missing'}</li>
+              <li>✅ Plugin Event Bus: ${typeof window.pluginEventBus !== 'undefined' ? 'Available' : 'Missing'}</li>
+              <li>✅ Plugin Router: ${typeof window.pluginRouter !== 'undefined' ? 'Available' : 'Missing'}</li>
+              <li>✅ Plugin Components: ${typeof window.PluginTable !== 'undefined' ? 'Available' : 'Missing'}</li>
+            </ul>
+          </div>
+          <button class="btn btn-primary" onclick="window.adminDashboard.switchView('users')">
+            Return to Users
+          </button>
+        </div>
+      `;
+    }
+
+    // Update active navigation state
+    this.updateActiveNavigation(`plugin-${pluginId}-${view.replace(/\//g, '-')}`);
+  }
+
+  /**
+   * Update active navigation state
+   */
+  updateActiveNavigation(activeId) {
+    // Remove active class from all navigation items
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.classList.remove('active');
+    });
+
+    // Add active class to current item
+    const activeLink = document.querySelector(`[data-view="${activeId}"]`);
+    if (activeLink) {
+      activeLink.classList.add('active');
+    }
+  }
+
+  /**
+   * Refresh plugin navigation
+   */
+  async refreshPluginNavigation() {
+    if (this.dynamicNav) {
+      await this.dynamicNav.updatePluginNavigation();
+      console.log('🔄 Plugin navigation refreshed');
+    }
   }
 }
 

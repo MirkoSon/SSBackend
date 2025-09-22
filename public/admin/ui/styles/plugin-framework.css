@@ -1,0 +1,625 @@
+/* Plugin UI Framework Core Styles */
+/* Main framework styling that integrates with existing admin dashboard */
+
+:root {
+  --plugin-primary-color: #007bff;
+  --plugin-secondary-color: #6c757d;
+  --plugin-success-color: #28a745;
+  --plugin-danger-color: #dc3545;
+  --plugin-warning-color: #ffc107;
+  --plugin-info-color: #17a2b8;
+  --plugin-light-color: #f8f9fa;
+  --plugin-dark-color: #343a40;
+  
+  --plugin-border-radius: 4px;
+  --plugin-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --plugin-transition: all 0.15s ease-in-out;
+  
+  --plugin-accent-color: var(--plugin-primary-color);
+  --plugin-text-color: #495057;
+  --plugin-bg-color: #ffffff;
+  --plugin-border-color: #dee2e6;
+}
+
+/* Plugin Framework Container */
+.plugin-ui-framework {
+  --primary-color: var(--plugin-primary-color);
+  --secondary-color: var(--plugin-secondary-color);
+  --success-color: var(--plugin-success-color);
+  --danger-color: var(--plugin-danger-color);
+  --warning-color: var(--plugin-warning-color);
+  --info-color: var(--plugin-info-color);
+}
+
+/* Plugin Component Base */
+.plugin-component {
+  border-left: 3px solid var(--plugin-accent-color);
+  background: var(--plugin-bg-color);
+  border-radius: var(--plugin-border-radius);
+  margin: 1rem 0;
+  box-shadow: var(--plugin-box-shadow);
+  transition: var(--plugin-transition);
+}
+
+.plugin-component:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.plugin-component[data-plugin] {
+  position: relative;
+}
+
+.plugin-component[data-plugin]::before {
+  content: attr(data-plugin);
+  position: absolute;
+  top: -0.5rem;
+  right: 0.5rem;
+  background: var(--plugin-accent-color);
+  color: white;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.7rem;
+  border-radius: 0 0 var(--plugin-border-radius) var(--plugin-border-radius);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.plugin-component[data-plugin]:hover::before {
+  opacity: 0.8;
+}
+
+/* Plugin Status Indicators */
+.plugin-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.plugin-status.enabled {
+  background: rgba(40, 167, 69, 0.1);
+  color: var(--plugin-success-color);
+}
+
+.plugin-status.disabled {
+  background: rgba(220, 53, 69, 0.1);
+  color: var(--plugin-danger-color);
+}
+
+.plugin-status.loading {
+  background: rgba(255, 193, 7, 0.1);
+  color: var(--plugin-warning-color);
+}
+
+.plugin-status.error {
+  background: rgba(220, 53, 69, 0.1);
+  color: var(--plugin-danger-color);
+}
+
+.plugin-status-icon {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Plugin Loading States */
+.plugin-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--plugin-secondary-color);
+}
+
+.plugin-loading-spinner {
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid var(--plugin-primary-color);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: plugin-spin 1s linear infinite;
+  margin-right: 0.5rem;
+}
+
+@keyframes plugin-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Plugin Notifications */
+.plugin-notification {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  max-width: 300px;
+  background: var(--plugin-bg-color);
+  border: 1px solid var(--plugin-border-color);
+  border-radius: var(--plugin-border-radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 1rem;
+  z-index: 1060;
+  transform: translateX(calc(100% + 1rem));
+  transition: transform 0.3s ease;
+}
+
+.plugin-notification.show {
+  transform: translateX(0);
+}
+
+.plugin-notification.success {
+  border-left: 4px solid var(--plugin-success-color);
+}
+
+.plugin-notification.error {
+  border-left: 4px solid var(--plugin-danger-color);
+}
+
+.plugin-notification.warning {
+  border-left: 4px solid var(--plugin-warning-color);
+}
+
+.plugin-notification.info {
+  border-left: 4px solid var(--plugin-info-color);
+}
+
+.plugin-notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.plugin-notification-title {
+  font-weight: 500;
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.plugin-notification-close {
+  background: none;
+  border: none;
+  font-size: 1.125rem;
+  cursor: pointer;
+  color: var(--plugin-secondary-color);
+  padding: 0;
+  line-height: 1;
+}
+
+.plugin-notification-close:hover {
+  color: var(--plugin-text-color);
+}
+
+.plugin-notification-body {
+  font-size: 0.8rem;
+  color: var(--plugin-text-color);
+  line-height: 1.4;
+}
+
+/* Plugin Error States */
+.plugin-error {
+  border: 1px solid var(--plugin-danger-color);
+  border-radius: var(--plugin-border-radius);
+  background: rgba(220, 53, 69, 0.05);
+  padding: 1rem;
+  margin: 1rem 0;
+  color: var(--plugin-danger-color);
+}
+
+.plugin-error.unauthorized {
+  border-color: var(--plugin-warning-color);
+  background: rgba(255, 193, 7, 0.05);
+  color: var(--plugin-warning-color);
+}
+
+.plugin-error.route-error {
+  border-color: var(--plugin-info-color);
+  background: rgba(23, 162, 184, 0.05);
+  color: var(--plugin-info-color);
+}
+
+.plugin-error.component-error {
+  border-color: var(--plugin-secondary-color);
+  background: rgba(108, 117, 125, 0.05);
+  color: var(--plugin-secondary-color);
+}
+
+.plugin-error .error-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.plugin-error h2 {
+  margin: 0.5rem 0;
+  font-size: 1.25rem;
+  color: inherit;
+}
+
+.plugin-error .error-details {
+  margin: 1rem 0;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: var(--plugin-border-radius);
+  padding: 0.75rem;
+}
+
+.plugin-error .error-details pre {
+  margin: 0;
+  font-size: 0.75rem;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+
+.plugin-error .error-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Plugin Navigation Integration */
+.nav-menu .plugin-nav-section {
+  border-top: 1px solid var(--plugin-border-color);
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+.nav-menu .plugin-nav-section .nav-section-title {
+  font-size: 0.75rem;
+  color: var(--plugin-secondary-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.25rem 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.nav-menu .plugin-nav-item {
+  position: relative;
+}
+
+.nav-menu .plugin-nav-item::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--plugin-accent-color);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.nav-menu .plugin-nav-item.active::after,
+.nav-menu .plugin-nav-item:hover::after {
+  opacity: 1;
+}
+
+.nav-menu .plugin-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  color: var(--plugin-text-color);
+  text-decoration: none;
+  transition: var(--plugin-transition);
+  border-radius: 0 var(--plugin-border-radius) var(--plugin-border-radius) 0;
+  margin-right: 0.5rem;
+}
+
+.nav-menu .plugin-nav-link:hover {
+  background: rgba(0, 123, 255, 0.1);
+  color: var(--plugin-primary-color);
+  text-decoration: none;
+}
+
+.nav-menu .plugin-nav-link.active {
+  background: rgba(0, 123, 255, 0.15);
+  color: var(--plugin-primary-color);
+  font-weight: 500;
+}
+
+.plugin-nav-icon {
+  font-size: 1rem;
+  width: 1.25rem;
+  text-align: center;
+}
+
+/* Plugin Badges and Labels */
+.plugin-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  background: var(--plugin-light-color);
+  color: var(--plugin-text-color);
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  gap: 0.25rem;
+}
+
+.plugin-badge.primary {
+  background: var(--plugin-primary-color);
+  color: white;
+}
+
+.plugin-badge.success {
+  background: var(--plugin-success-color);
+  color: white;
+}
+
+.plugin-badge.danger {
+  background: var(--plugin-danger-color);
+  color: white;
+}
+
+.plugin-badge.warning {
+  background: var(--plugin-warning-color);
+  color: var(--plugin-dark-color);
+}
+
+.plugin-badge.info {
+  background: var(--plugin-info-color);
+  color: white;
+}
+
+/* Plugin Buttons */
+.btn.plugin-btn {
+  border-left: 3px solid transparent;
+  transition: var(--plugin-transition);
+  position: relative;
+}
+
+.btn.plugin-btn:hover {
+  border-left-color: var(--plugin-accent-color);
+  transform: translateX(2px);
+}
+
+.btn.plugin-btn.btn-primary {
+  border-left-color: var(--plugin-primary-color);
+}
+
+.btn.plugin-btn.btn-success {
+  border-left-color: var(--plugin-success-color);
+}
+
+.btn.plugin-btn.btn-danger {
+  border-left-color: var(--plugin-danger-color);
+}
+
+.btn.plugin-btn.btn-warning {
+  border-left-color: var(--plugin-warning-color);
+}
+
+.btn.plugin-btn.btn-info {
+  border-left-color: var(--plugin-info-color);
+}
+
+/* Plugin Layouts */
+.plugin-layout-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.plugin-layout-sidebar {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  gap: 1rem;
+  min-height: 400px;
+}
+
+.plugin-layout-tabs {
+  border-bottom: 1px solid var(--plugin-border-color);
+  margin-bottom: 1rem;
+}
+
+.plugin-tab-nav {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: -1px;
+}
+
+.plugin-tab-nav-item {
+  padding: 0.75rem 1rem;
+  background: none;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: var(--plugin-border-radius) var(--plugin-border-radius) 0 0;
+  cursor: pointer;
+  transition: var(--plugin-transition);
+  color: var(--plugin-secondary-color);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.plugin-tab-nav-item:hover {
+  background: var(--plugin-light-color);
+  color: var(--plugin-text-color);
+  text-decoration: none;
+}
+
+.plugin-tab-nav-item.active {
+  background: var(--plugin-bg-color);
+  border-color: var(--plugin-border-color);
+  border-bottom-color: var(--plugin-bg-color);
+  color: var(--plugin-primary-color);
+}
+
+.plugin-tab-content {
+  min-height: 200px;
+}
+
+.plugin-tab-pane {
+  display: none;
+}
+
+.plugin-tab-pane.active {
+  display: block;
+}
+
+/* Plugin Utilities */
+.plugin-text-primary {
+  color: var(--plugin-primary-color) !important;
+}
+
+.plugin-text-secondary {
+  color: var(--plugin-secondary-color) !important;
+}
+
+.plugin-text-success {
+  color: var(--plugin-success-color) !important;
+}
+
+.plugin-text-danger {
+  color: var(--plugin-danger-color) !important;
+}
+
+.plugin-text-warning {
+  color: var(--plugin-warning-color) !important;
+}
+
+.plugin-text-info {
+  color: var(--plugin-info-color) !important;
+}
+
+.plugin-bg-primary {
+  background-color: var(--plugin-primary-color) !important;
+}
+
+.plugin-bg-secondary {
+  background-color: var(--plugin-secondary-color) !important;
+}
+
+.plugin-bg-success {
+  background-color: var(--plugin-success-color) !important;
+}
+
+.plugin-bg-danger {
+  background-color: var(--plugin-danger-color) !important;
+}
+
+.plugin-bg-warning {
+  background-color: var(--plugin-warning-color) !important;
+}
+
+.plugin-bg-info {
+  background-color: var(--plugin-info-color) !important;
+}
+
+.plugin-border-primary {
+  border-color: var(--plugin-primary-color) !important;
+}
+
+.plugin-border-secondary {
+  border-color: var(--plugin-secondary-color) !important;
+}
+
+.plugin-border-success {
+  border-color: var(--plugin-success-color) !important;
+}
+
+.plugin-border-danger {
+  border-color: var(--plugin-danger-color) !important;
+}
+
+.plugin-border-warning {
+  border-color: var(--plugin-warning-color) !important;
+}
+
+.plugin-border-info {
+  border-color: var(--plugin-info-color) !important;
+}
+
+/* Plugin Responsive Utilities */
+@media (max-width: 768px) {
+  .plugin-layout-sidebar {
+    grid-template-columns: 1fr;
+  }
+  
+  .plugin-layout-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .plugin-tab-nav {
+    flex-wrap: wrap;
+  }
+  
+  .plugin-notification {
+    position: fixed;
+    top: auto;
+    bottom: 1rem;
+    left: 1rem;
+    right: 1rem;
+    max-width: none;
+    transform: translateY(calc(100% + 1rem));
+  }
+  
+  .plugin-notification.show {
+    transform: translateY(0);
+  }
+}
+
+/* Plugin Animation Support */
+@keyframes plugin-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes plugin-slide-in {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.plugin-animate-fade-in {
+  animation: plugin-fade-in 0.3s ease-out;
+}
+
+.plugin-animate-slide-in {
+  animation: plugin-slide-in 0.3s ease-out;
+}
+
+/* Plugin Framework Integration with Admin Dashboard */
+body.admin-dashboard .plugin-ui-framework {
+  font-family: inherit;
+  color: inherit;
+}
+
+body.admin-dashboard .plugin-component {
+  background: inherit;
+}
+
+/* Dark mode integration */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --plugin-bg-color: #2d3748;
+    --plugin-text-color: #e2e8f0;
+    --plugin-border-color: #4a5568;
+    --plugin-light-color: #1a202c;
+  }
+  
+  .plugin-notification {
+    background: var(--plugin-bg-color);
+    color: var(--plugin-text-color);
+  }
+  
+  .plugin-error .error-details {
+    background: rgba(0, 0, 0, 0.3);
+  }
+}

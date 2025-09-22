@@ -1,0 +1,682 @@
+/* Plugin UI Framework Styles */
+/* Extends existing admin dashboard styling with plugin-specific components */
+
+/* Plugin Framework Base Styles */
+.plugin-ui-framework {
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.plugin-ui-framework *,
+.plugin-ui-framework *::before,
+.plugin-ui-framework *::after {
+  box-sizing: inherit;
+}
+
+/* Plugin Error Boundary Styles */
+.plugin-error-boundary {
+  border: 2px solid #dc3545;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+  background: #f8d7da;
+  color: #721c24;
+  text-align: center;
+}
+
+.plugin-error-boundary .error-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.plugin-error-boundary h3 {
+  margin: 0.5rem 0;
+  color: #721c24;
+}
+
+.plugin-error-boundary .error-context {
+  font-size: 0.875rem;
+  color: #856404;
+  margin: 0.5rem 0;
+}
+
+.plugin-error-boundary .error-details {
+  margin: 1rem 0;
+  text-align: left;
+}
+
+.plugin-error-boundary .error-details summary {
+  cursor: pointer;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.plugin-error-boundary .error-message {
+  background: #ffffff;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 0.75rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+
+.plugin-error-boundary .error-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Plugin Route Container Styles */
+.plugin-route-container {
+  min-height: 400px;
+  padding: 1rem;
+}
+
+.plugin-route-header {
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 1rem;
+}
+
+.plugin-route-breadcrumb {
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+}
+
+.plugin-route-breadcrumb a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.plugin-route-breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.breadcrumb-separator {
+  margin: 0 0.5rem;
+}
+
+.plugin-route-title {
+  margin: 0;
+  font-size: 1.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.route-icon {
+  font-size: 1.5rem;
+}
+
+.plugin-route-content {
+  flex: 1;
+}
+
+/* Plugin Table Styles */
+.plugin-table-wrapper {
+  margin: 1rem 0;
+}
+
+.plugin-table-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.table-search {
+  position: relative;
+  min-width: 250px;
+  flex: 1;
+  max-width: 400px;
+}
+
+.table-search .search-input {
+  padding-right: 2.5rem;
+}
+
+.table-search .clear-search {
+  position: absolute;
+  right: 0.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: none;
+  font-size: 1.25rem;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 3px;
+}
+
+.table-search .clear-search:hover {
+  background: #f8f9fa;
+  color: #495057;
+}
+
+.table-info {
+  color: #6c757d;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+/* Plugin Table Core Styles */
+.plugin-table {
+  border-left: 3px solid #007bff;
+  margin-bottom: 0;
+}
+
+.plugin-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  transition: background-color 0.15s ease;
+}
+
+.plugin-table th.sortable:hover {
+  background-color: #f8f9fa;
+}
+
+.plugin-table th.sortable:focus {
+  outline: 2px solid #007bff;
+  outline-offset: -2px;
+}
+
+.plugin-table .sort-icon {
+  margin-left: 0.5rem;
+  color: #6c757d;
+}
+
+.plugin-table th.sorted-asc .sort-icon,
+.plugin-table th.sorted-desc .sort-icon {
+  color: #007bff;
+}
+
+.plugin-table .select-column {
+  width: 40px;
+  text-align: center;
+}
+
+.plugin-table .actions-column {
+  width: 120px;
+  text-align: center;
+}
+
+.plugin-table .action-btn {
+  margin: 0 0.125rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.plugin-table .no-data {
+  text-align: center;
+  padding: 2rem;
+  color: #6c757d;
+}
+
+.plugin-table .no-data-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.plugin-table .no-data-icon {
+  font-size: 2rem;
+  opacity: 0.5;
+}
+
+.plugin-table .boolean-value.true {
+  color: #28a745;
+}
+
+.plugin-table .boolean-value.false {
+  color: #dc3545;
+}
+
+.plugin-table .null-value {
+  color: #6c757d;
+  font-style: italic;
+}
+
+.plugin-table .number-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.plugin-table .date-value {
+  white-space: nowrap;
+}
+
+/* Plugin Table Pagination */
+.plugin-table-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #dee2e6;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.pagination-info {
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.page-size-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.page-size-selector select {
+  width: auto;
+  min-width: 60px;
+}
+
+.page-navigation {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.page-navigation .btn {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.page-navigation .btn-page {
+  min-width: 2.5rem;
+}
+
+/* Plugin Form Styles */
+.plugin-form {
+  margin: 1rem 0;
+}
+
+.plugin-form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.plugin-form-horizontal .plugin-form-fields {
+  gap: 0.75rem;
+}
+
+.plugin-form-inline .plugin-form-fields {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 1rem;
+}
+
+.plugin-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.plugin-form-horizontal .plugin-form-field {
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+}
+
+.plugin-form-inline .plugin-form-field {
+  flex-direction: column;
+  min-width: 200px;
+}
+
+.plugin-form-label {
+  font-weight: 500;
+  color: #495057;
+  font-size: 0.875rem;
+}
+
+.plugin-form-horizontal .plugin-form-label {
+  min-width: 120px;
+  margin-bottom: 0;
+}
+
+.plugin-form-label .required-indicator {
+  color: #dc3545;
+  margin-left: 0.25rem;
+}
+
+.plugin-form-input {
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.plugin-form-input:focus {
+  outline: 0;
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.plugin-form-field.has-error .plugin-form-input {
+  border-color: #dc3545;
+}
+
+.plugin-form-field.has-error .plugin-form-input:focus {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.plugin-form-help {
+  font-size: 0.75rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
+}
+
+.plugin-form-error {
+  font-size: 0.75rem;
+  color: #dc3545;
+  margin-top: 0.25rem;
+}
+
+.plugin-form-general-error {
+  margin-bottom: 1rem;
+}
+
+/* Form Field Type Specific Styles */
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.checkbox-wrapper .plugin-form-input {
+  width: auto;
+  margin: 0;
+}
+
+.checkbox-label {
+  margin: 0;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.radio-input {
+  width: auto;
+  margin: 0;
+}
+
+.radio-label {
+  margin: 0;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.plugin-form-submit {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #dee2e6;
+}
+
+/* Plugin Card Styles */
+.plugin-card {
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  background: #ffffff;
+  margin: 1rem 0;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.15s ease;
+}
+
+.plugin-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.plugin-card-header {
+  background: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  padding: 1rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.plugin-card-title {
+  margin: 0;
+  font-size: 1.125rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.plugin-card-body {
+  padding: 1rem;
+}
+
+.plugin-card-footer {
+  background: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: end;
+  gap: 0.5rem;
+}
+
+/* Plugin Modal Styles */
+.plugin-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  padding: 1rem;
+}
+
+.plugin-modal {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.plugin-modal-header {
+  background: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.plugin-modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.plugin-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  color: #6c757d;
+  border-radius: 4px;
+}
+
+.plugin-modal-close:hover {
+  background: #dee2e6;
+  color: #495057;
+}
+
+.plugin-modal-body {
+  padding: 1rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.plugin-modal-footer {
+  background: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+  padding: 1rem;
+  display: flex;
+  justify-content: end;
+  gap: 0.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .plugin-table-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .table-search {
+    min-width: auto;
+    max-width: none;
+  }
+  
+  .plugin-table-pagination {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+  
+  .pagination-controls {
+    justify-content: center;
+  }
+  
+  .page-navigation {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .plugin-form-horizontal .plugin-form-field {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .plugin-form-horizontal .plugin-form-label {
+    min-width: auto;
+    margin-bottom: 0.25rem;
+  }
+  
+  .plugin-form-inline .plugin-form-fields {
+    flex-direction: column;
+  }
+  
+  .plugin-form-inline .plugin-form-field {
+    min-width: auto;
+  }
+  
+  .plugin-modal {
+    max-width: 95vw;
+    max-height: 95vh;
+  }
+  
+  .plugin-route-title {
+    font-size: 1.5rem;
+  }
+  
+  .plugin-table .action-btn {
+    padding: 0.125rem 0.25rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* Dark Mode Support (if admin dashboard supports it) */
+@media (prefers-color-scheme: dark) {
+  .plugin-error-boundary {
+    background: #2d1a1e;
+    color: #f8d7da;
+    border-color: #dc3545;
+  }
+  
+  .plugin-card {
+    background: #2d3748;
+    border-color: #4a5568;
+    color: #e2e8f0;
+  }
+  
+  .plugin-card-header,
+  .plugin-card-footer {
+    background: #1a202c;
+    border-color: #4a5568;
+  }
+  
+  .plugin-modal {
+    background: #2d3748;
+    color: #e2e8f0;
+  }
+  
+  .plugin-modal-header,
+  .plugin-modal-footer {
+    background: #1a202c;
+    border-color: #4a5568;
+  }
+}
+
+/* Focus and Accessibility */
+.plugin-form-input:focus,
+.plugin-table th.sortable:focus,
+.action-btn:focus,
+.page-navigation .btn:focus,
+.plugin-modal-close:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* Print Styles */
+@media print {
+  .plugin-table-controls,
+  .plugin-table-pagination,
+  .plugin-form-submit,
+  .plugin-card-footer,
+  .plugin-modal-footer {
+    display: none;
+  }
+  
+  .plugin-table {
+    border: 1px solid #000;
+  }
+  
+  .plugin-error-boundary {
+    border: 2px solid #000;
+    background: #fff;
+    color: #000;
+  }
+}

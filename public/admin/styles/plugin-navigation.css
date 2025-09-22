@@ -1,0 +1,343 @@
+/**
+ * Plugin Navigation Styles
+ * Extends existing admin dashboard styles with plugin-specific navigation
+ */
+
+/* Plugin Navigation Section */
+.nav-section-header {
+  margin: 0.5rem 0;
+  padding: 0;
+}
+
+.nav-section-title {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: var(--nav-section-bg, #f8f9fa);
+  border-radius: 0.25rem;
+  font-weight: 600;
+  color: var(--nav-section-color, #495057);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.nav-section-icon {
+  margin-right: 0.5rem;
+  font-size: 1rem;
+}
+
+.nav-section-toggle {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--nav-toggle-color, #6c757d);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.125rem;
+  transition: all 0.2s ease;
+}
+
+.nav-section-toggle:hover {
+  background: var(--nav-toggle-hover-bg, rgba(0, 0, 0, 0.1));
+  color: var(--nav-toggle-hover-color, #495057);
+}
+
+/* Navigation Separator */
+.nav-separator {
+  margin: 0.75rem 0;
+  padding: 0;
+}
+
+.nav-separator hr {
+  border: none;
+  height: 1px;
+  background: var(--nav-separator-color, #dee2e6);
+  margin: 0;
+}
+
+/* Plugin Groups */
+.nav-plugin-group {
+  margin: 0.25rem 0;
+  padding: 0;
+}
+
+.nav-plugin-header {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: var(--plugin-header-bg, #ffffff);
+  border: 1px solid var(--plugin-header-border, #e9ecef);
+  border-radius: 0.375rem;
+  margin-bottom: 0.25rem;
+  transition: all 0.2s ease;
+}
+
+.nav-plugin-header:hover {
+  background: var(--plugin-header-hover-bg, #f8f9fa);
+  border-color: var(--plugin-header-hover-border, #dee2e6);
+}
+
+.nav-plugin-icon {
+  margin-right: 0.75rem;
+  font-size: 1.125rem;
+}
+
+.nav-plugin-label {
+  font-weight: 500;
+  color: var(--plugin-label-color, #495057);
+  flex: 1;
+}
+
+.nav-plugin-indicators {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Plugin Status Indicators */
+.plugin-status-indicator {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.plugin-status-indicator.status-active {
+  color: var(--status-active-color, #28a745);
+}
+
+.plugin-status-indicator.status-healthy {
+  color: var(--status-healthy-color, #28a745);
+}
+
+.plugin-status-indicator.status-warning {
+  color: var(--status-warning-color, #ffc107);
+}
+
+.plugin-status-indicator.status-error {
+  color: var(--status-error-color, #dc3545);
+}
+
+.plugin-status-indicator.status-update {
+  color: var(--status-update-color, #007bff);
+}
+
+/* Plugin Navigation Items */
+.nav-plugin-items {
+  list-style: none;
+  margin: 0;
+  padding-left: 1rem;
+  border-left: 2px solid var(--plugin-items-border, #e9ecef);
+}
+
+.nav-plugin-item {
+  position: relative;
+  padding: 0.5rem 0.75rem !important;
+  margin: 0.125rem 0;
+  color: var(--plugin-item-color, #6c757d) !important;
+  background: var(--plugin-item-bg, transparent);
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+  text-decoration: none;
+  display: block;
+  transition: all 0.2s ease;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.nav-plugin-item:hover {
+  color: var(--plugin-item-hover-color, #495057) !important;
+  background: var(--plugin-item-hover-bg, #f8f9fa);
+  border-color: var(--plugin-item-hover-border, #dee2e6);
+  text-decoration: none;
+}
+
+.nav-plugin-item.active {
+  color: var(--plugin-item-active-color, #007bff) !important;
+  background: var(--plugin-item-active-bg, #e3f2fd);
+  border-color: var(--plugin-item-active-border, #90caf9);
+  font-style: normal;
+}
+
+/* Core Navigation Items Enhancement */
+.nav-core-item {
+  font-weight: 600 !important;
+  color: var(--core-item-color, #212529) !important;
+}
+
+.nav-core-item:hover {
+  color: var(--core-item-hover-color, #007bff) !important;
+}
+
+.nav-core-item.active {
+  color: var(--core-item-active-color, #ffffff) !important;
+  background: var(--core-item-active-bg, #007bff) !important;
+}
+
+/* Navigation Search */
+.nav-search-container {
+  margin: 0.5rem 0;
+  padding: 0;
+}
+
+.nav-search {
+  position: relative;
+  margin: 0 1rem;
+}
+
+.nav-search-input {
+  width: 100%;
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  border: 1px solid var(--search-border-color, #ced4da);
+  border-radius: 0.375rem;
+  background: var(--search-bg, #ffffff);
+  color: var(--search-color, #495057);
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.nav-search-input:focus {
+  outline: none;
+  border-color: var(--search-focus-border, #007bff);
+  box-shadow: 0 0 0 0.125rem var(--search-focus-shadow, rgba(0, 123, 255, 0.25));
+}
+
+.nav-search-input::placeholder {
+  color: var(--search-placeholder-color, #6c757d);
+}
+
+.nav-search-input.has-results {
+  border-color: var(--search-results-border, #28a745);
+}
+
+.nav-search-clear {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--search-clear-color, #6c757d);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.125rem;
+  transition: all 0.2s ease;
+  display: none;
+}
+
+.nav-search-input:not(:placeholder-shown) + .nav-search-clear {
+  display: block;
+}
+
+.nav-search-clear:hover {
+  color: var(--search-clear-hover-color, #495057);
+  background: var(--search-clear-hover-bg, rgba(0, 0, 0, 0.1));
+}
+
+/* Search Highlighting */
+.nav-search-highlight {
+  background: var(--search-highlight-bg, #fff3cd);
+  color: var(--search-highlight-color, #856404);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.125rem;
+  font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .nav-section-title {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+  
+  .nav-plugin-header {
+    padding: 0.375rem 0.75rem;
+  }
+  
+  .nav-plugin-items {
+    padding-left: 0.75rem;
+  }
+  
+  .nav-plugin-item {
+    padding: 0.375rem 0.5rem !important;
+    font-size: 0.875rem;
+  }
+  
+  .nav-search {
+    margin: 0 0.75rem;
+  }
+  
+  .nav-search-input {
+    padding: 0.375rem 1.75rem 0.375rem 0.5rem;
+    font-size: 0.8125rem;
+  }
+}
+
+/* Animation and Transitions */
+.nav-plugin-group {
+  animation: pluginGroupFadeIn 0.3s ease-out;
+}
+
+@keyframes pluginGroupFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Focus Management for Accessibility */
+.nav-link:focus,
+.nav-section-toggle:focus,
+.nav-search-input:focus,
+.nav-search-clear:focus {
+  outline: 2px solid var(--focus-outline-color, #007bff);
+  outline-offset: 2px;
+}
+
+/* Plugin Placeholder Styles */
+.plugin-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+  background: var(--placeholder-bg, #f8f9fa);
+  border-radius: 0.5rem;
+  border: 2px dashed var(--placeholder-border, #dee2e6);
+  margin: 2rem auto;
+  max-width: 500px;
+}
+
+.placeholder-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.7;
+}
+
+.plugin-placeholder h3 {
+  color: var(--placeholder-title-color, #495057);
+  margin-bottom: 1rem;
+}
+
+.plugin-placeholder p {
+  color: var(--placeholder-text-color, #6c757d);
+  margin: 0.5rem 0;
+}
+
+.placeholder-note {
+  background: var(--placeholder-note-bg, #e3f2fd);
+  color: var(--placeholder-note-color, #0d47a1);
+  padding: 0.75rem 1rem;
+  border-radius: 0.375rem;
+  margin: 1.5rem 0;
+  font-size: 0.875rem;
+  border-left: 4px solid var(--placeholder-note-border, #2196f3);
+}

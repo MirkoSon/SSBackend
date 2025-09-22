@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plugin UI Framework Test</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="styles/plugin-framework.css">
+    <link rel="stylesheet" href="styles/plugin-components.css">
+    <link rel="stylesheet" href="styles/plugin-demo.css">
+</head>
+<body>
+    <div class="test-container" style="padding: 2rem; max-width: 1200px; margin: 0 auto;">
+        <h1>🧪 Plugin UI Framework Test</h1>
+        
+        <div class="test-section">
+            <h2>Framework Status</h2>
+            <div id="framework-status" class="framework-status">
+                <p>Loading framework components...</p>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Plugin Registration Test</h2>
+            <button id="test-registration" class="btn btn-primary">
+                🔄 Test Plugin Registration
+            </button>
+            <div id="registration-results" class="test-results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Plugin Table Demo</h2>
+            <div id="plugin-table-demo"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Plugin Form Demo</h2>
+            <div id="plugin-form-demo"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Event System Test</h2>
+            <button id="test-events" class="btn btn-secondary">
+                📡 Test Event System
+            </button>
+            <div id="event-log" class="event-log" style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 1rem; margin-top: 1rem; background: #f8f9fa;">
+                <p><em>Event log will appear here...</em></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Plugin UI Framework -->
+    <script src="framework/PluginErrorBoundary.js"></script>
+    <script src="framework/PluginEventBus.js"></script>
+    <script src="framework/PluginRouter.js"></script>
+    <script src="framework/PluginUILoader.js"></script>
+    
+    <!-- Plugin Components -->
+    <script src="components/PluginTable.js"></script>
+    <script src="components/PluginForm.js"></script>
+    <script src="components/PluginChart.js"></script>
+    <script src="components/PluginCard.js"></script>
+    <script src="components/PluginModal.js"></script>
+    <script src="components/PluginButton.js"></script>
+    <script src="components/PluginInput.js"></script>
+    
+    <!-- Plugin Examples -->
+    <script src="examples/plugin-examples.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🚀 Plugin Framework Test Page Loaded');
+            
+            // Check framework status
+            const statusDiv = document.getElementById('framework-status');
+            const components = [
+                { name: 'PluginUILoader', check: typeof PluginUILoader !== 'undefined' },
+                { name: 'PluginEventBus', check: typeof PluginEventBus !== 'undefined' },
+                { name: 'PluginRouter', check: typeof PluginRouter !== 'undefined' },
+                { name: 'PluginErrorBoundary', check: typeof PluginErrorBoundary !== 'undefined' },
+                { name: 'PluginTable', check: typeof PluginTable !== 'undefined' },
+                { name: 'PluginForm', check: typeof PluginForm !== 'undefined' }
+            ];
+            
+            let statusHtml = '<ul>';
+            let allLoaded = true;
+            
+            components.forEach(comp => {
+                const status = comp.check ? '✅' : '❌';
+                const className = comp.check ? 'text-success' : 'text-danger';
+                statusHtml += `<li class="${className}">${status} ${comp.name}: ${comp.check ? 'Available' : 'Missing'}</li>`;
+                if (!comp.check) allLoaded = false;
+            });
+            
+            statusHtml += '</ul>';
+            statusDiv.innerHTML = statusHtml;
+            
+            if (allLoaded) {
+                // Initialize framework
+                try {
+                    window.pluginUILoader = new PluginUILoader();
+                    window.pluginEventBus = new PluginEventBus();
+                    window.pluginRouter = new PluginRouter();
+                    
+                    statusDiv.innerHTML += '<p class="text-success">✅ Framework initialized successfully!</p>';
+                    
+                    // Set up test buttons
+                    setupTests();
+                    
+                } catch (error) {
+                    statusDiv.innerHTML += `<p class="text-danger">❌ Framework initialization failed: ${error.message}</p>`;
+                }
+            } else {
+                statusDiv.innerHTML += '<p class="text-warning">⚠️ Some components are missing - tests may fail</p>';
+            }
+        });
+        
+        function setupTests() {
+            // Registration test
+            document.getElementById('test-registration').addEventListener('click', async () => {
+                const resultsDiv = document.getElementById('registration-results');
+                resultsDiv.innerHTML = '<p>🔄 Testing plugin registration...</p>';
+                
+                try {
+                    const results = await window.pluginExamples.demonstratePluginFramework();
+                    resultsDiv.innerHTML = `
+                        <div class="test-success">
+                            <h4>✅ Registration Test Passed</h4>
+                            <ul>
+                                <li>Economy Plugin: ${results.economyRegistered ? '✅' : '❌'}</li>
+                                <li>Leaderboards Plugin: ${results.leaderboardsRegistered ? '✅' : '❌'}</li>
+                                <li>Total Plugins: ${results.totalPlugins}</li>
+                            </ul>
+                        </div>
+                    `;
+                } catch (error) {
+                    resultsDiv.innerHTML = `
+                        <div class="test-error">
+                            <h4>❌ Registration Test Failed</h4>
+                            <p>${error.message}</p>
+                        </div>
+                    `;
+                }
+            });
+            
+            // Event system test
+            document.getElementById('test-events').addEventListener('click', () => {
+                const eventLogDiv = document.getElementById('event-log');
+                eventLogDiv.innerHTML = '';
+                
+                // Set up event listeners
+                window.pluginEventBus.on('test-event', (payload) => {
+                    addEventLogEntry('test-event', payload);
+                });
+                
+                window.pluginEventBus.on('delayed-test-event', (payload) => {
+                    addEventLogEntry('delayed-test-event', payload);
+                });
+                
+                // Run test
+                window.pluginExamples.testPluginEventSystem();
+            });
+            
+            // Initialize demo components
+            initializeDemoComponents();
+        }
+        
+        function addEventLogEntry(eventName, payload) {
+            const eventLogDiv = document.getElementById('event-log');
+            const entry = document.createElement('div');
+            entry.className = 'event-log-entry';
+            entry.innerHTML = `
+                <div class="event-header">
+                    <span class="event-name">${eventName}</span>
+                    <span class="event-time">${new Date().toLocaleTimeString()}</span>
+                </div>
+                <div class="event-payload">
+                    <pre>${JSON.stringify(payload, null, 2)}</pre>
+                </div>
+            `;
+            eventLogDiv.appendChild(entry);
+            eventLogDiv.scrollTop = eventLogDiv.scrollHeight;
+        }
+        
+        function initializeDemoComponents() {
+            // Initialize demo table
+            if (typeof PluginTable !== 'undefined') {
+                const demoData = [
+                    { id: 1, name: 'Test Item 1', status: 'Active', value: 100 },
+                    { id: 2, name: 'Test Item 2', status: 'Inactive', value: 250 },
+                    { id: 3, name: 'Test Item 3', status: 'Pending', value: 75 }
+                ];
+                
+                const columns = [
+                    { key: 'id', title: 'ID', sortable: true },
+                    { key: 'name', title: 'Name', sortable: true },
+                    { key: 'status', title: 'Status', sortable: true },
+                    { key: 'value', title: 'Value', sortable: true }
+                ];
+                
+                new PluginTable({
+                    container: '#plugin-table-demo',
+                    data: demoData,
+                    columns: columns,
+                    pagination: true,
+                    filtering: true,
+                    onRowAction: (action, row) => {
+                        console.log('Table action:', action, row);
+                        window.pluginEventBus.emit('demo-table-action', { action, row });
+                    }
+                });
+            }
+            
+            // Initialize demo form
+            if (typeof PluginForm !== 'undefined') {
+                new PluginForm({
+                    container: '#plugin-form-demo',
+                    fields: [
+                        { name: 'name', label: 'Name', type: 'text', required: true },
+                        { name: 'description', label: 'Description', type: 'textarea' },
+                        { name: 'enabled', label: 'Enabled', type: 'checkbox' }
+                    ],
+                    onSubmit: (formData) => {
+                        console.log('Form submitted:', formData);
+                        window.pluginEventBus.emit('demo-form-submit', formData);
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>

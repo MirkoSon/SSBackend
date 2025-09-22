@@ -64,6 +64,54 @@ const manifest = {
         description: 'Cache settings for performance optimization'
       }
     }
+  },
+
+  // Admin UI Configuration for Enhanced Dashboard Navigation (Story 4.2)
+  adminUI: {
+    enabled: true,
+    navigation: {
+      label: 'Economy',
+      icon: '💰',
+      group: 'plugins',
+      priority: 1
+    },
+    routes: [
+      {
+        path: '/admin/economy',
+        title: 'Economy Overview',
+        icon: '📊',
+        component: 'EconomyDashboard',
+        permissions: ['admin']
+      },
+      {
+        path: '/admin/economy/balances',
+        title: 'Balance Management',
+        icon: '💳',
+        component: 'BalanceManager',
+        permissions: ['admin']
+      },
+      {
+        path: '/admin/economy/transactions',
+        title: 'Transaction Monitor',
+        icon: '📈',
+        component: 'TransactionMonitor',
+        permissions: ['admin']
+      },
+      {
+        path: '/admin/economy/analytics',
+        title: 'Economic Analytics',
+        icon: '📊',
+        component: 'EconomyAnalytics',
+        permissions: ['admin']
+      },
+      {
+        path: '/admin/economy/currencies',
+        title: 'Currency Configuration',
+        icon: '⚙️',
+        component: 'CurrencyConfig',
+        permissions: ['admin']
+      }
+    ]
   }
 };
 /**

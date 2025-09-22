@@ -83,6 +83,7 @@ const adminRoutes = require('./routes/admin');
 
 // Import database initialization
 const { initializeDatabase } = require('./db/database');
+const { initializeEpic4Database } = require('./db/migrations/epic4-tables');
 
 // Import plugin system
 const PluginManager = require('./plugins/PluginManager');
@@ -140,6 +141,7 @@ app.use('/inventory', inventoryRoutes);
 app.use('/progress', progressRoutes);
 // Note: /achievements routes are now handled by plugin system
 app.use('/admin', adminRoutes);
+app.use('/admin/api', require('./routes/admin/plugins')); // NEW: Plugin management API routes
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -152,6 +154,9 @@ async function startServer() {
     // Initialize database
     await initializeDatabase();
     console.log('Database initialized successfully');
+    
+    // Initialize Epic 4 database features
+    await initializeEpic4Database();
     
     // Get database instance
     const { getDatabase } = require('./db/database');
