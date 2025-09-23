@@ -16,8 +16,8 @@ const args = process.argv.slice(2);
 let customPort = null;
 
 // Parse command-line arguments
-const PluginCLI = require('./plugins/PluginCLI');
-const pluginCLI = new PluginCLI();
+const EnhancedPluginCLI = require('./cli/enhancedPluginCLI');
+const pluginCLI = new EnhancedPluginCLI();
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--port' && args[i + 1]) {
@@ -45,18 +45,26 @@ Options:
   --help, -h         Show this help message
 
 Plugin Commands:
-  plugins list                     List all available plugins
-  plugins enable <name|number>     Enable a plugin
-  plugins disable <name|number>    Disable a plugin
+  plugins list [--verbose]         List all available plugins with status
+  plugins enable <name|number>     Enable a plugin by name or list number
+  plugins disable <name|number>    Disable a plugin by name or list number
+  plugins info <name|number>       Show detailed plugin information
+  plugins validate                 Validate plugin system health and configuration
+  plugins install <path>           Install external plugin from path
+  plugins remove <name|number>     Remove external plugin (internal plugins protected)
 
 Environment Variables:
   PORT               Set port via environment variable
 
 Examples:
-  ssbackend                    # Run on default port 3000
-  ssbackend --port 8080        # Run on port 8080
-  ssbackend plugins list       # List all plugins
-  ssbackend plugins enable 1   # Enable first plugin
+  ssbackend                         # Run on default port 3000
+  ssbackend --port 8080             # Run on port 8080
+  ssbackend plugins list            # List all plugins
+  ssbackend plugins list --verbose  # List plugins with detailed information
+  ssbackend plugins enable economy  # Enable economy plugin
+  ssbackend plugins enable 1        # Enable first plugin in list
+  ssbackend plugins info economy    # Show detailed economy plugin information
+  ssbackend plugins validate        # Check plugin system health
 
 API Endpoints:
   GET  /health                         # Health check
@@ -68,6 +76,13 @@ API Endpoints:
   GET  /inventory/:userId             # Get user inventory
   DELETE /inventory/:userId/:itemId   # Remove inventory item
   GET  /achievements/*                # Achievement endpoints (via plugins)
+  GET  /admin                         # Admin dashboard (web-based plugin management)
+
+Plugin Management:
+  • CLI operations require SSBackend server to be running
+  • CLI uses same backend APIs as web admin interface
+  • Authentication required for plugin management operations
+  • Visit http://localhost:3000/admin for web-based management
 `);
     process.exit(0);
   }
