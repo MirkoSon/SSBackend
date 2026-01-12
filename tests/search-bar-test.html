@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SearchBar Component Test</title>
+    <style>
+        /* SSBackend Theme System - CSS Variables
+ * Foundation for consistent theming across all UI components
+ * Based on Economy Dashboard dark theme specifications
+ */
+
+:root {
+  /* =================================================================
+   * COLOR SYSTEM
+   * ================================================================= */
+  
+  /* Primary Colors - Orange accent from Economy Dashboard */
+  --color-primary: #ff6b35;
+  --color-primary-light: #ff8555;
+  --color-primary-dark: #e55a2b;
+  --color-primary-hover: #ff8555;
+  --color-primary-active: #e55a2b;
+  
+  /* Secondary Colors - Teal from Economy Dashboard */
+  --color-secondary: #20a39e;
+  --color-secondary-light: #2bb5b0;
+  --color-secondary-dark: #1a8a85;
+  --color-secondary-hover: #2bb5b0;
+  --color-secondary-active: #1a8a85;
+  
+  /* Background Colors - Dark theme foundation */
+  --color-background: #1a1a1a;
+  --color-background-secondary: #242424;
+  --color-background-tertiary: #2d2d2d;
+  --color-surface: #2d2d2d;
+  --color-surface-hover: #353535;
+  --color-surface-active: #3d3d3d;
+  
+  /* Text Colors - High contrast for dark theme */
+  --color-text: #ffffff;
+  --color-text-secondary: #b0b0b0;
+  --color-text-tertiary: #888888;
+  --color-text-muted: #666666;
+  --color-text-inverse: #1a1a1a;
+  
+  /* Border Colors - Subtle separators */
+  --color-border: #404040;
+  --color-border-light: #505050;
+  --color-border-dark: #303030;
+  
+  /* Status Colors - Semantic colors */
+  --color-success: #4caf50;
+  --color-warning: #ff9800;
+  --color-error: #f44336;
+  --color-info: #2196f3;
+  
+  /* Overlay Colors - Transparency for modals/overlays */
+  --color-overlay: rgba(0, 0, 0, 0.5);
+  --color-overlay-light: rgba(0, 0, 0, 0.3);
+  --color-overlay-dark: rgba(0, 0, 0, 0.7);
+  
+  /* =================================================================
+   * SPACING SYSTEM
+   * ================================================================= */
+  
+  /* Base spacing unit: 0.25rem (4px) */
+  --spacing-xs: 0.25rem;    /* 4px */
+  --spacing-sm: 0.5rem;     /* 8px */
+  --spacing-md: 1rem;       /* 16px */
+  --spacing-lg: 1.5rem;     /* 24px */
+  --spacing-xl: 2rem;       /* 32px */
+  --spacing-2xl: 3rem;      /* 48px */
+  --spacing-3xl: 4rem;      /* 64px */
+  
+  /* Component-specific spacing */
+  --spacing-component-sm: 0.75rem;   /* 12px */
+  --spacing-component-md: 1.25rem;   /* 20px */
+  --spacing-component-lg: 2.5rem;    /* 40px */
+  
+  /* =================================================================
+   * TYPOGRAPHY SYSTEM
+   * ================================================================= */
+  
+  /* Font Families */
+  --font-family-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --font-family-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  
+  /* Font Sizes */
+  --font-size-xs: 0.75rem;     /* 12px */
+  --font-size-sm: 0.875rem;    /* 14px */
+  --font-size-base: 1rem;      /* 16px */
+  --font-size-lg: 1.125rem;    /* 18px */
+  --font-size-xl: 1.25rem;     /* 20px */
+  --font-size-2xl: 1.5rem;     /* 24px */
+  --font-size-3xl: 1.875rem;   /* 30px */
+  --font-size-4xl: 2.25rem;    /* 36px */
+  
+  /* Font Weights */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* Line Heights */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+  
+  /* =================================================================
+   * SHADOW SYSTEM
+   * ================================================================= */
+  
+  /* Box Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+  
+  /* Glow Effects */
+  --glow-primary: 0 0 20px rgba(255, 107, 53, 0.3);
+  --glow-secondary: 0 0 20px rgba(32, 163, 158, 0.3);
+  
+  /* =================================================================
+   * BORDER RADIUS SYSTEM
+   * ================================================================= */
+  
+  --border-radius-none: 0;
+  --border-radius-sm: 0.25rem;    /* 4px */
+  --border-radius-md: 0.5rem;     /* 8px */
+  --border-radius-lg: 1rem;       /* 16px */
+  --border-radius-xl: 1.5rem;     /* 24px */
+  --border-radius-full: 9999px;   /* Fully rounded */
+  
+  /* =================================================================
+   * TRANSITIONS & ANIMATIONS
+   * ================================================================= */
+  
+  /* Transition Durations */
+  --transition-fast: 150ms;
+  --transition-normal: 250ms;
+  --transition-slow: 350ms;
+  
+  /* Transition Timing Functions */
+  --transition-ease: ease;
+  --transition-ease-in: ease-in;
+  --transition-ease-out: ease-out;
+  --transition-ease-in-out: ease-in-out;
+  
+  /* =================================================================
+   * Z-INDEX SYSTEM
+   * ================================================================= */
+  
+  --z-index-dropdown: 1000;
+  --z-index-sticky: 1020;
+  --z-index-fixed: 1030;
+  --z-index-modal-backdrop: 1040;
+  --z-index-modal: 1050;
+  --z-index-popover: 1060;
+  --z-index-tooltip: 1070;
+  --z-index-toast: 1080;
+  
+  /* =================================================================
+   * COMPONENT-SPECIFIC VARIABLES
+   * ================================================================= */
+  
+  /* Navigation */
+  --nav-height: 4rem;
+  --nav-background: var(--color-surface);
+  --nav-border: var(--color-border);
+  
+  /* Buttons */
+  --btn-padding-x: var(--spacing-md);
+  --btn-padding-y: var(--spacing-sm);
+  --btn-border-radius: var(--border-radius-md);
+  --btn-font-weight: var(--font-weight-medium);
+  
+  /* Forms */
+  --input-padding-x: var(--spacing-md);
+  --input-padding-y: var(--spacing-sm);
+  --input-border-radius: var(--border-radius-md);
+  --input-border-color: var(--color-border);
+  --input-focus-border-color: var(--color-primary);
+  
+  /* Cards */
+  --card-padding: var(--spacing-lg);
+  --card-border-radius: var(--border-radius-lg);
+  --card-shadow: var(--shadow-md);
+  --card-background: var(--color-surface);
+}
+
+/* =================================================================
+ * DARK THEME OVERRIDES (for future theme switching)
+ * ================================================================= */
+[data-theme="dark"] {
+  /* All current values are already optimized for dark theme */
+}
+
+/* =================================================================
+ * LIGHT THEME OVERRIDES (for future theme switching)
+ * ================================================================= */
+[data-theme="light"] {
+  /* Background Colors */
+  --color-background: #ffffff;
+  --color-background-secondary: #f8f9fa;
+  --color-background-tertiary: #e9ecef;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f8f9fa;
+  --color-surface-active: #e9ecef;
+  
+  /* Text Colors */
+  --color-text: #212529;
+  --color-text-secondary: #6c757d;
+  --color-text-tertiary: #868e96;
+  --color-text-muted: #adb5bd;
+  --color-text-inverse: #ffffff;
+  
+  /* Border Colors */
+  --color-border: #dee2e6;
+  --color-border-light: #e9ecef;
+  --color-border-dark: #ced4da;
+  
+  /* Shadows - Adjusted for light theme */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* =================================================================
+ * ACCESSIBILITY & REDUCED MOTION
+ * ================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* =================================================================
+ * PRINT STYLES
+ * ================================================================= */
+@media print {
+  :root {
+    --color-background: #ffffff;
+    --color-text: #000000;
+    --color-border: #000000;
+    --shadow-sm: none;
+    --shadow-md: none;
+    --shadow-lg: none;
+    --shadow-xl: none;
+  }
+}
+        .search-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.search-bar__input-container {
+  position: relative;
+  flex: 1;
+}
+
+.search-bar__input {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  padding-left: 2.5rem;
+  padding-right: 2.5rem; /* Make space for clear button */
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.search-bar__icon {
+  position: absolute;
+  left: var(--spacing-sm);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-secondary);
+}
+
+.search-bar__clear-btn {
+    position: absolute;
+    right: var(--spacing-sm);
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: var(--color-text-secondary);
+}
+
+.search-bar__filter-btn {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-primary);
+  color: var(--color-text);
+  border: none;
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+}
+
+.search-bar__input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--color-background);
+            color: var(--color-text);
+        }
+        .test-section {
+            margin-bottom: 40px;
+            background: var(--color-surface);
+            padding: 20px;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-md);
+        }
+        .test-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 16px;
+            color: var(--color-text);
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: 8px;
+        }
+        .output {
+            margin-top: 10px;
+            padding: 10px;
+            background: var(--color-background);
+            border-radius: var(--border-radius-md);
+            min-height: 20px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>SearchBar Component Test Page</h1>
+
+    <div class="test-section">
+        <div class="test-title">1. Basic SearchBar</div>
+        <p>Should allow typing, clearing with 'X' button, and clearing with 'Escape' key.</p>
+        <div id="search-bar-1"></div>
+        <div class="output" id="output-1"></div>
+    </div>
+
+    <div class="test-section">
+        <div class="test-title">2. SearchBar with Debounce (500ms)</div>
+        <p>Search output should only update after you stop typing for 500ms.</p>
+        <div id="search-bar-2"></div>
+        <div class="output" id="output-2"></div>
+    </div>
+
+    <div class="test-section">
+        <div class="test-title">3. SearchBar with Filter Button</div>
+        <p>Should show a filter button. Clicking it logs to the output.</p>
+        <div id="search-bar-3"></div>
+        <div class="output" id="output-3"></div>
+    </div>
+
+    <script>
+        // Inlined SearchBar component code
+        
+/**
+ * SearchBar - Reusable search input component
+ * 
+ * @component
+ * @example
+ * const searchBar = new SearchBar({
+ *   placeholder: 'Search users...',
+ *   onSearch: (query) => console.log('Searching:', query),
+ *   showFilter: true,
+ *   onFilter: () => console.log('Filter clicked')
+ * });
+ * document.body.innerHTML = searchBar.render();
+ * searchBar.addEventListeners();
+ * 
+ * @param {Object} config - SearchBar configuration
+ * @param {string} [config.placeholder='Search...'] - Placeholder text for input
+ * @param {Function} config.onSearch - Callback function for search input changes
+ * @param {boolean} [config.showFilter=false] - Whether to show filter button
+ * @param {Function} [config.onFilter] - Callback for filter button click
+ * @param {number} [config.debounceMs=300] - Debounce delay in milliseconds
+ */
+class SearchBar {
+  constructor(config) {
+    this.config = {
+      placeholder: 'Search...',
+      showFilter: false,
+      debounceMs: 300,
+      ...config,
+    };
+    this.element = null;
+    this.input = null;
+    this.clearBtn = null;
+    this.debouncedSearch = this.debounce(this.handleSearch.bind(this), this.config.debounceMs);
+  }
+
+  debounce(func, delay) {
+    let timeout;
+    return (...args) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(this, args), delay);
+    };
+  }
+
+  handleSearch(event) {
+    const query = event.target.value;
+    if (this.config.onSearch) {
+      this.config.onSearch(query);
+    }
+    if (this.clearBtn) {
+      this.clearBtn.style.display = query ? 'block' : 'none';
+    }
+  }
+
+  clearSearch() {
+    if (!this.input) return;
+    this.input.value = '';
+    this.input.focus();
+    if (this.config.onSearch) {
+      this.config.onSearch('');
+    }
+    if (this.clearBtn) {
+      this.clearBtn.style.display = 'none';
+    }
+  }
+
+  handleKeyDown(event) {
+    if (event.key === 'Escape') {
+      this.clearSearch();
+    }
+  }
+
+  handleFilterClick() {
+    if (this.config.onFilter) {
+      this.config.onFilter();
+    }
+  }
+
+  render() {
+    const container = document.createElement('div');
+    container.className = 'search-bar';
+    container.innerHTML = `
+      <div class="search-bar__input-container">
+        <input type="text" class="search-bar__input" placeholder="${this.config.placeholder}">
+        <div class="search-bar__icon">🔍</div>
+        <button class="search-bar__clear-btn" style="display:none;">&times;</button>
+      </div>
+      ${this.config.showFilter ? '<button class="search-bar__filter-btn">Filter</button>' : ''}
+    `;
+    this.element = container;
+    this.input = this.element.querySelector('.search-bar__input');
+    this.clearBtn = this.element.querySelector('.search-bar__clear-btn');
+    this.addEventListeners();
+    return this.element;
+  }
+
+  addEventListeners() {
+    if (this.input) {
+      this.input.addEventListener('input', this.debouncedSearch);
+      this.input.addEventListener('keydown', this.handleKeyDown.bind(this));
+    }
+
+    if (this.clearBtn) {
+      this.clearBtn.addEventListener('click', this.clearSearch.bind(this));
+    }
+
+    if (this.config.showFilter) {
+      const filterButton = this.element.querySelector('.search-bar__filter-btn');
+      if (filterButton) {
+        filterButton.addEventListener('click', this.handleFilterClick.bind(this));
+      }
+    }
+  }
+}
+
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Test 1: Basic
+            const sb1 = new SearchBar({
+                placeholder: 'Type here...',
+                onSearch: (query) => {
+                    document.getElementById('output-1').textContent = `Searching for: ${query}`;
+                }
+            });
+            document.getElementById('search-bar-1').appendChild(sb1.render());
+
+            // Test 2: With Debounce
+            const sb2 = new SearchBar({
+                placeholder: 'Try typing quickly...',
+                debounceMs: 500,
+                onSearch: (query) => {
+                    document.getElementById('output-2').textContent = `Debounced search: ${query}`;
+                }
+            });
+            document.getElementById('search-bar-2').appendChild(sb2.render());
+
+            // Test 3: With Filter
+            const sb3 = new SearchBar({
+                placeholder: 'Search with filter...',
+                showFilter: true,
+                onSearch: (query) => {
+                    document.getElementById('output-3').textContent = `Searching for: ${query}`;
+                },
+                onFilter: () => {
+                    document.getElementById('output-3').textContent = 'Filter button clicked!';
+                }
+            });
+            document.getElementById('search-bar-3').appendChild(sb3.render());
+        });
+    </script>
+</body>
+</html>

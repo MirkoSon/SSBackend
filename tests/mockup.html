@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Economy Plugin - SSBackend Integration</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      /* SSBackend Dark Theme - Enhanced */
+      --bg-primary: #1a1d23;
+      --bg-secondary: #2c3e50;
+      --bg-tertiary: #34495e;
+      --bg-hover: #3d5a73;
+      
+      /* Sophisticated Accent Colors */
+      --accent-primary: #e67e22;    /* Warm orange */
+      --accent-hover: #d35400;
+      --accent-secondary: #16a085;  /* Teal */
+      --accent-glow: rgba(230, 126, 34, 0.3);
+      
+      --text-primary: #ecf0f1;
+      --text-secondary: #95a5a6;
+      --border-color: #34495e;
+      --border-accent: #3d5a73;
+      
+      --success: #27ae60;
+      --warning: #f39c12;
+      --danger: #c0392b;
+      
+      /* Spacing */
+      --space-xs: 0.25rem;
+      --space-sm: 0.5rem;
+      --space-md: 1rem;
+      --space-lg: 1.5rem;
+      --space-xl: 2rem;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    /* Top Navigation Bar - Enhanced contrast */
+    .top-nav {
+      background: var(--bg-secondary);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      padding: var(--space-md) var(--space-lg);
+      display: flex;
+      align-items: center;
+      gap: var(--space-xl);
+      position: relative;
+      z-index: 100;
+    }
+
+    .logo {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: var(--space-sm);
+      align-items: center;
+      margin-left: auto;
+    }
+
+    .nav-link {
+      padding: var(--space-sm) var(--space-lg);
+      color: var(--text-secondary);
+      text-decoration: none;
+      border-radius: 6px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .nav-link:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .nav-link.active {
+      background: var(--accent-primary);
+      color: white;
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    /* Plugin Tab Bar Container */
+    .plugin-tabs-wrapper {
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-end;
+    }
+
+    /* Plugin Dropdown - Icon Only, Left Aligned */
+    .plugins-dropdown {
+      position: relative;
+      padding: var(--space-md) var(--space-lg);
+      border-right: 1px solid var(--border-color);
+    }
+
+    .plugins-dropdown-trigger {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-accent);
+      border-radius: 6px;
+      color: var(--accent-primary);
+      cursor: pointer;
+      font-size: 1.25rem;
+      transition: all 0.2s;
+    }
+
+    .plugins-dropdown-trigger:hover {
+      background: var(--bg-hover);
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 8px var(--accent-glow);
+      transform: scale(1.05);
+    }
+
+    .plugins-dropdown-menu {
+      position: absolute;
+      top: 100%;
+      left: var(--space-lg);
+      margin-top: var(--space-sm);
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-accent);
+      border-radius: 8px;
+      min-width: 280px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      z-index: 1000;
+      display: none;
+    }
+
+    .plugins-dropdown-menu.show {
+      display: block;
+    }
+
+    .plugins-dropdown-header {
+      padding: var(--space-md) var(--space-lg);
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+    }
+
+    .plugins-dropdown-item {
+      padding: var(--space-md) var(--space-lg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .plugins-dropdown-item:last-child {
+      border-bottom: none;
+    }
+
+    .plugins-dropdown-item:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .plugin-info {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    .plugin-name {
+      font-size: 0.9rem;
+      color: var(--text-primary);
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      background: var(--bg-tertiary);
+      border-radius: 12px;
+      transition: all 0.3s;
+      cursor: pointer;
+      border: 1px solid var(--border-accent);
+    }
+
+    .toggle-switch.active {
+      background: var(--accent-primary);
+      border-color: var(--accent-primary);
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      background: white;
+      border-radius: 50%;
+      transition: all 0.3s;
+    }
+
+    .toggle-switch.active::after {
+      left: 22px;
+    }
+
+    /* Plugin Tabs Container */
+    .plugin-tabs-container {
+      flex: 1;
+      display: flex;
+      align-items: flex-end;
+      gap: var(--space-xs);
+      overflow-x: auto;
+      padding: 0 var(--space-lg);
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent-primary) var(--bg-primary);
+    }
+
+    .plugin-tab {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
+      padding: var(--space-sm) var(--space-lg);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      position: relative;
+      min-width: fit-content;
+      font-size: 0.9rem;
+    }
+
+    .plugin-tab:hover {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border-color: var(--border-accent);
+    }
+
+    .plugin-tab.active {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      border-color: var(--accent-primary);
+      border-bottom: 2px solid var(--bg-primary);
+      margin-bottom: -1px;
+      z-index: 1;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .plugin-tab-icon {
+      font-size: 1rem;
+    }
+
+    .plugin-tab-close {
+      margin-left: var(--space-sm);
+      opacity: 0;
+      transition: opacity 0.2s;
+      cursor: pointer;
+      font-size: 1rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+    }
+
+    .plugin-tab:hover .plugin-tab-close {
+      opacity: 0.7;
+    }
+
+    .plugin-tab-close:hover {
+      opacity: 1;
+      color: var(--danger);
+    }
+
+    /* Main Content Area */
+    .content-container {
+      padding: var(--space-xl);
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    /* Section Headers */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-lg);
+      padding-bottom: var(--space-md);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .section-subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-top: var(--space-xs);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--space-md);
+      margin-bottom: var(--space-xl);
+    }
+
+    .stat-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: var(--space-lg);
+      transition: all 0.2s;
+    }
+
+    .stat-card:hover {
+      border-color: var(--accent-primary);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--space-sm);
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .stat-icon {
+      font-size: 1.5rem;
+      opacity: 0.8;
+    }
+
+    .stat-trend {
+      font-size: 0.875rem;
+      margin-top: var(--space-sm);
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+    }
+
+    .trend-up {
+      color: var(--success);
+    }
+
+    .trend-down {
+      color: var(--danger);
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      margin-bottom: var(--space-lg);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: var(--space-lg);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .card-body {
+      padding: var(--space-lg);
+    }
+
+    /* Table */
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      text-align: left;
+      padding: var(--space-md);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    td {
+      padding: var(--space-md);
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.875rem;
+      color: var(--text-primary);
+    }
+
+    tr:hover {
+      background: var(--bg-tertiary);
+    }
+
+    /* Buttons */
+    .btn {
+      padding: var(--space-sm) var(--space-lg);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .btn-primary {
+      background: var(--accent-primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-accent);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-hover);
+      border-color: var(--accent-primary);
+    }
+
+    /* Badges */
+    .badge {
+      padding: var(--space-xs) var(--space-md);
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge-success {
+      background: rgba(39, 174, 96, 0.2);
+      color: var(--success);
+    }
+
+    .badge-warning {
+      background: rgba(243, 156, 18, 0.2);
+      color: var(--warning);
+    }
+
+    .badge-danger {
+      background: rgba(192, 57, 43, 0.2);
+      color: var(--danger);
+    }
+
+    /* Search */
+    .search-bar {
+      position: relative;
+      margin-bottom: var(--space-lg);
+    }
+
+    .search-input {
+      width: 100%;
+      max-width: 400px;
+      padding: var(--space-sm) var(--space-md);
+      padding-left: 2.5rem;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-accent);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 0.875rem;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      background: var(--bg-secondary);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: var(--space-md);
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+    }
+
+    /* Chart Placeholder */
+    .chart-area {
+      background: var(--bg-tertiary);
+      border-radius: 6px;
+      height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    /* Amount styling */
+    .amount-positive {
+      color: var(--success);
+      font-weight: 600;
+    }
+
+    .amount-negative {
+      color: var(--danger);
+      font-weight: 600;
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-tertiary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--accent-primary);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--accent-hover);
+    }
+  </style>
+</head>
+<body>
+  <!-- Top Navigation (Enhanced) -->
+  <nav class="top-nav">
+    <div class="logo">
+      <span>🎮</span>
+      <span>Stupid Simple Backend</span>
+    </div>
+    
+    <div class="nav-links">
+      <a href="#" class="nav-link">
+        <span>👥</span> Users
+      </a>
+      <a href="#" class="nav-link">
+        <span>🏆</span> Achievements
+      </a>
+      <a href="#" class="nav-link active">
+        <span>💰</span> Economy
+      </a>
+      <a href="#" class="nav-link">
+        <span>📊</span> Leaderboards
+      </a>
+      <a href="#" class="nav-link">
+        <span>⚙️</span> Admin
+      </a>
+    </div>
+  </nav>
+
+  <!-- Plugin Tab Bar -->
+  <div class="plugin-tabs-wrapper">
+    <!-- Plugin Dropdown (Icon Only, Left) -->
+    <div class="plugins-dropdown">
+      <button class="plugins-dropdown-trigger" onclick="togglePluginMenu()">
+        🧩
+      </button>
+      <div class="plugins-dropdown-menu" id="pluginMenu">
+        <div class="plugins-dropdown-header">Available Plugins</div>
+        <div class="plugins-dropdown-item">
+          <div class="plugin-info">
+            <span>💰</span>
+            <span class="plugin-name">Economy</span>
+          </div>
+          <div class="toggle-switch active" onclick="event.stopPropagation()"></div>
+        </div>
+        <div class="plugins-dropdown-item">
+          <div class="plugin-info">
+            <span>🏆</span>
+            <span class="plugin-name">Achievements</span>
+          </div>
+          <div class="toggle-switch active" onclick="event.stopPropagation()"></div>
+        </div>
+        <div class="plugins-dropdown-item">
+          <div class="plugin-info">
+            <span>📊</span>
+            <span class="plugin-name">Leaderboards</span>
+          </div>
+          <div class="toggle-switch active" onclick="event.stopPropagation()"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs Container -->
+    <div class="plugin-tabs-container">
+      <div class="plugin-tab">
+        <span class="plugin-tab-icon">📊</span>
+        <span>Dashboard</span>
+      </div>
+      <div class="plugin-tab active">
+        <span class="plugin-tab-icon">💳</span>
+        <span>Balance Manager</span>
+        <span class="plugin-tab-close">×</span>
+      </div>
+      <div class="plugin-tab">
+        <span class="plugin-tab-icon">📈</span>
+        <span>Transactions</span>
+        <span class="plugin-tab-close">×</span>
+      </div>
+      <div class="plugin-tab">
+        <span class="plugin-tab-icon">📊</span>
+        <span>Analytics</span>
+        <span class="plugin-tab-close">×</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="content-container">
+    <!-- Section Header -->
+    <div class="section-header">
+      <div>
+        <h1 class="section-title">💳 Balance Manager</h1>
+        <p class="section-subtitle">Manage user balances and currency allocation</p>
+      </div>
+      <div style="display: flex; gap: var(--space-md);">
+        <button class="btn btn-secondary">Export Data</button>
+        <button class="btn btn-primary">+ Adjust Balance</button>
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Circulation</div>
+        <div class="stat-value">
+          <span class="stat-icon">💰</span>
+          <span>1.2M</span>
+        </div>
+        <div class="stat-trend trend-up">
+          <span>↑ 12.5%</span>
+          <span style="color: var(--text-secondary);">vs last week</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Active Wallets</div>
+        <div class="stat-value">
+          <span class="stat-icon">👛</span>
+          <span>8,432</span>
+        </div>
+        <div class="stat-trend trend-up">
+          <span>↑ 8.1%</span>
+          <span style="color: var(--text-secondary);">vs last week</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Avg Balance</div>
+        <div class="stat-value">
+          <span class="stat-icon">💵</span>
+          <span>142</span>
+        </div>
+        <div class="stat-trend trend-down">
+          <span>↓ 3.2%</span>
+          <span style="color: var(--text-secondary);">vs last week</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Largest Balance</div>
+        <div class="stat-value">
+          <span class="stat-icon">🏆</span>
+          <span>9,847</span>
+        </div>
+        <div class="stat-trend">
+          <span style="color: var(--text-secondary);">user_5123</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Balance Distribution Chart -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Balance Distribution</h2>
+        <button class="btn btn-secondary">View Insights</button>
+      </div>
+      <div class="card-body">
+        <div class="chart-area">
+          Chart.js visualization: Balance distribution histogram
+        </div>
+      </div>
+    </div>
+
+    <!-- User Balances Table -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">User Balances</h2>
+        <div style="display: flex; gap: var(--space-md); align-items: center;">
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" placeholder="Search users...">
+          </div>
+          <button class="btn btn-secondary">Filter</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>User ID</th>
+                <th>Username</th>
+                <th>🪙 Coins</th>
+                <th>💎 Gems</th>
+                <th>Total Value</th>
+                <th>Last Activity</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>29</td>
+                <td>econtest_1758721633464</td>
+                <td class="amount-positive">1,250</td>
+                <td class="amount-positive">35</td>
+                <td>1,285</td>
+                <td>2 mins ago</td>
+                <td>
+                  <button class="btn btn-primary" style="padding: 0.25rem 0.75rem; font-size: 0.75rem;">
+                    👁️ View
+                  </button>
+                </td>
+              </tr>
+              <tr>
+                <td>28</td>
+                <td>econtest_1758720996243</td>
+                <td class="amount-positive">892</td>
+                <td class="amount-positive">12</td>
+                <td>904</td>
+                <td>15 mins ago</td>
+                <td>
+                  <button class="btn btn-primary" style="padding: 0.25rem 0.75rem; font-size: 0.75rem;">
+                    👁️ View
+                  </button>
+                </td>
+              </tr>
+              <tr>
+                <td>27</td>
+                <td>econtest_1758717697836</td>
+                <td class="amount-positive">2,450</td>
+                <td class="amount-positive">58</td>
+                <td>2,508</td>
+                <td>1 hour ago</td>
+                <td>
+                  <button class="btn btn-primary" style="padding: 0.25rem 0.75rem; font-size: 0.75rem;">
+                    👁️ View
+                  </button>
+                </td>
+              </tr>
+              <tr>
+                <td>26</td>
+                <td>econtest_1758716983662</td>
+                <td class="amount-negative">45</td>
+                <td class="amount-positive">3</td>
+                <td>48</td>
+                <td>2 hours ago</td>
+                <td>
+                  <button class="btn btn-primary" style="padding: 0.25rem 0.75rem; font-size: 0.75rem;">
+                    👁️ View
+                  </button>
+                </td>
+              </tr>
+              <tr>
+                <td>25</td>
+                <td>econtest_1758715432891</td>
+                <td class="amount-positive">5,678</td>
+                <td class="amount-positive">92</td>
+                <td>5,770</td>
+                <td>3 hours ago</td>
+                <td>
+                  <button class="btn btn-primary" style="padding: 0.25rem 0.75rem; font-size: 0.75rem;">
+                    👁️ View
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Balance Changes -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Recent Balance Changes</h2>
+        <button class="btn btn-primary">View All</button>
+      </div>
+      <div class="card-body">
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>User</th>
+                <th>Change</th>
+                <th>Currency</th>
+                <th>Reason</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>2 mins ago</td>
+                <td>econtest_1758721633464</td>
+                <td class="amount-negative">-500</td>
+                <td>🪙 Coins</td>
+                <td>Item Purchase</td>
+                <td><span class="badge badge-success">Complete</span></td>
+              </tr>
+              <tr>
+                <td>5 mins ago</td>
+                <td>econtest_1758720996243</td>
+                <td class="amount-positive">+250</td>
+                <td>💎 Gems</td>
+                <td>Achievement Reward</td>
+                <td><span class="badge badge-success">Complete</span></td>
+              </tr>
+              <tr>
+                <td>8 mins ago</td>
+                <td>econtest_1758717697836</td>
+                <td class="amount-negative">-100</td>
+                <td>🪙 Coins</td>
+                <td>Transfer to User</td>
+                <td><span class="badge badge-warning">Pending</span></td>
+              </tr>
+              <tr>
+                <td>12 mins ago</td>
+                <td>econtest_1758716983662</td>
+                <td class="amount-positive">+50</td>
+                <td>🪙 Coins</td>
+                <td>Daily Login Bonus</td>
+                <td><span class="badge badge-success">Complete</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function togglePluginMenu() {
+      const menu = document.getElementById('pluginMenu');
+      menu.classList.toggle('show');
+    }
+
+    // Close menu when clicking outside
+    document.addEventListener('click', function(event) {
+      const dropdown = document.querySelector('.plugins-dropdown');
+      const menu = document.getElementById('pluginMenu');
+      if (!dropdown.contains(event.target)) {
+        menu.classList.remove('show');
+      }
+    });
+  </script>
+</body>
+</html>

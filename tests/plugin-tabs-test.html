@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PluginTabs Component Test</title>
+    <style>
+        /* SSBackend Theme System - CSS Variables
+ * Foundation for consistent theming across all UI components
+ * Based on Economy Dashboard dark theme specifications
+ */
+
+:root {
+  /* =================================================================
+   * COLOR SYSTEM
+   * ================================================================= */
+  
+  /* Primary Colors - Orange accent from Economy Dashboard */
+  --color-primary: #ff6b35;
+  --color-primary-light: #ff8555;
+  --color-primary-dark: #e55a2b;
+  --color-primary-hover: #ff8555;
+  --color-primary-active: #e55a2b;
+  
+  /* Secondary Colors - Teal from Economy Dashboard */
+  --color-secondary: #20a39e;
+  --color-secondary-light: #2bb5b0;
+  --color-secondary-dark: #1a8a85;
+  --color-secondary-hover: #2bb5b0;
+  --color-secondary-active: #1a8a85;
+  
+  /* Background Colors - Dark theme foundation */
+  --color-background: #1a1a1a;
+  --color-background-secondary: #242424;
+  --color-background-tertiary: #2d2d2d;
+  --color-surface: #2d2d2d;
+  --color-surface-hover: #353535;
+  --color-surface-active: #3d3d3d;
+  
+  /* Text Colors - High contrast for dark theme */
+  --color-text: #ffffff;
+  --color-text-secondary: #b0b0b0;
+  --color-text-tertiary: #888888;
+  --color-text-muted: #666666;
+  --color-text-inverse: #1a1a1a;
+  
+  /* Border Colors - Subtle separators */
+  --color-border: #404040;
+  --color-border-light: #505050;
+  --color-border-dark: #303030;
+  
+  /* Status Colors - Semantic colors */
+  --color-success: #4caf50;
+  --color-warning: #ff9800;
+  --color-error: #f44336;
+  --color-info: #2196f3;
+  
+  /* Overlay Colors - Transparency for modals/overlays */
+  --color-overlay: rgba(0, 0, 0, 0.5);
+  --color-overlay-light: rgba(0, 0, 0, 0.3);
+  --color-overlay-dark: rgba(0, 0, 0, 0.7);
+  
+  /* =================================================================
+   * SPACING SYSTEM
+   * ================================================================= */
+  
+  /* Base spacing unit: 0.25rem (4px) */
+  --spacing-xs: 0.25rem;    /* 4px */
+  --spacing-sm: 0.5rem;     /* 8px */
+  --spacing-md: 1rem;       /* 16px */
+  --spacing-lg: 1.5rem;     /* 24px */
+  --spacing-xl: 2rem;       /* 32px */
+  --spacing-2xl: 3rem;      /* 48px */
+  --spacing-3xl: 4rem;      /* 64px */
+  
+  /* Component-specific spacing */
+  --spacing-component-sm: 0.75rem;   /* 12px */
+  --spacing-component-md: 1.25rem;   /* 20px */
+  --spacing-component-lg: 2.5rem;    /* 40px */
+  
+  /* =================================================================
+   * TYPOGRAPHY SYSTEM
+   * ================================================================= */
+  
+  /* Font Families */
+  --font-family-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --font-family-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  
+  /* Font Sizes */
+  --font-size-xs: 0.75rem;     /* 12px */
+  --font-size-sm: 0.875rem;    /* 14px */
+  --font-size-base: 1rem;      /* 16px */
+  --font-size-lg: 1.125rem;    /* 18px */
+  --font-size-xl: 1.25rem;     /* 20px */
+  --font-size-2xl: 1.5rem;     /* 24px */
+  --font-size-3xl: 1.875rem;   /* 30px */
+  --font-size-4xl: 2.25rem;    /* 36px */
+  
+  /* Font Weights */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* Line Heights */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+  
+  /* =================================================================
+   * SHADOW SYSTEM
+   * ================================================================= */
+  
+  /* Box Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+  
+  /* Glow Effects */
+  --glow-primary: 0 0 20px rgba(255, 107, 53, 0.3);
+  --glow-secondary: 0 0 20px rgba(32, 163, 158, 0.3);
+  
+  /* =================================================================
+   * BORDER RADIUS SYSTEM
+   * ================================================================= */
+  
+  --border-radius-none: 0;
+  --border-radius-sm: 0.25rem;    /* 4px */
+  --border-radius-md: 0.5rem;     /* 8px */
+  --border-radius-lg: 1rem;       /* 16px */
+  --border-radius-xl: 1.5rem;     /* 24px */
+  --border-radius-full: 9999px;   /* Fully rounded */
+  
+  /* =================================================================
+   * TRANSITIONS & ANIMATIONS
+   * ================================================================= */
+  
+  /* Transition Durations */
+  --transition-fast: 150ms;
+  --transition-normal: 250ms;
+  --transition-slow: 350ms;
+  
+  /* Transition Timing Functions */
+  --transition-ease: ease;
+  --transition-ease-in: ease-in;
+  --transition-ease-out: ease-out;
+  --transition-ease-in-out: ease-in-out;
+  
+  /* =================================================================
+   * Z-INDEX SYSTEM
+   * ================================================================= */
+  
+  --z-index-dropdown: 1000;
+  --z-index-sticky: 1020;
+  --z-index-fixed: 1030;
+  --z-index-modal-backdrop: 1040;
+  --z-index-modal: 1050;
+  --z-index-popover: 1060;
+  --z-index-tooltip: 1070;
+  --z-index-toast: 1080;
+  
+  /* =================================================================
+   * COMPONENT-SPECIFIC VARIABLES
+   * ================================================================= */
+  
+  /* Navigation */
+  --nav-height: 4rem;
+  --nav-background: var(--color-surface);
+  --nav-border: var(--color-border);
+  
+  /* Buttons */
+  --btn-padding-x: var(--spacing-md);
+  --btn-padding-y: var(--spacing-sm);
+  --btn-border-radius: var(--border-radius-md);
+  --btn-font-weight: var(--font-weight-medium);
+  
+  /* Forms */
+  --input-padding-x: var(--spacing-md);
+  --input-padding-y: var(--spacing-sm);
+  --input-border-radius: var(--border-radius-md);
+  --input-border-color: var(--color-border);
+  --input-focus-border-color: var(--color-primary);
+  
+  /* Cards */
+  --card-padding: var(--spacing-lg);
+  --card-border-radius: var(--border-radius-lg);
+  --card-shadow: var(--shadow-md);
+  --card-background: var(--color-surface);
+}
+
+/* =================================================================
+ * DARK THEME OVERRIDES (for future theme switching)
+ * ================================================================= */
+[data-theme="dark"] {
+  /* All current values are already optimized for dark theme */
+}
+
+/* =================================================================
+ * LIGHT THEME OVERRIDES (for future theme switching)
+ * ================================================================= */
+[data-theme="light"] {
+  /* Background Colors */
+  --color-background: #ffffff;
+  --color-background-secondary: #f8f9fa;
+  --color-background-tertiary: #e9ecef;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f8f9fa;
+  --color-surface-active: #e9ecef;
+  
+  /* Text Colors */
+  --color-text: #212529;
+  --color-text-secondary: #6c757d;
+  --color-text-tertiary: #868e96;
+  --color-text-muted: #adb5bd;
+  --color-text-inverse: #ffffff;
+  
+  /* Border Colors */
+  --color-border: #dee2e6;
+  --color-border-light: #e9ecef;
+  --color-border-dark: #ced4da;
+  
+  /* Shadows - Adjusted for light theme */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* =================================================================
+ * ACCESSIBILITY & REDUCED MOTION
+ * ================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* =================================================================
+ * PRINT STYLES
+ * ================================================================= */
+@media print {
+  :root {
+    --color-background: #ffffff;
+    --color-text: #000000;
+    --color-border: #000000;
+    --shadow-sm: none;
+    --shadow-md: none;
+    --shadow-lg: none;
+    --shadow-xl: none;
+  }
+}
+        /* PluginTabs Component Styles */
+.plugin-tabs {
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  overflow-x: auto;
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: var(--color-border) var(--color-surface); /* Firefox */
+}
+
+/* Webkit scrollbar styling */
+.plugin-tabs::-webkit-scrollbar {
+  height: 8px;
+}
+
+.plugin-tabs::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+
+.plugin-tabs::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 4px;
+  border: 2px solid var(--color-surface);
+}
+
+.plugin-tabs__container {
+  display: flex;
+  min-width: max-content;
+}
+
+.plugin-tab {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-right: 1px solid var(--color-border);
+  cursor: pointer;
+  white-space: nowrap;
+  color: var(--color-text-secondary);
+  transition: all 0.2s ease-in-out;
+}
+
+.plugin-tab:hover {
+  background-color: var(--color-surface-hover);
+}
+
+.plugin-tab--active {
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
+  font-weight: var(--font-weight-bold);
+}
+
+.plugin-tab--active:hover {
+  background: var(--color-primary-dark);
+}
+
+.plugin-tab__icon {
+  font-size: 1.1rem;
+}
+
+.plugin-tab__title {
+  font-size: var(--font-size-sm);
+}
+
+.plugin-tab__close {
+  background: none;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 2px;
+  margin-left: var(--spacing-sm);
+  font-size: 1rem;
+  line-height: 1;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit; /* Inherit color from parent */
+  opacity: 0.7;
+  transition: all 0.2s ease-in-out;
+}
+
+.plugin-tab__close:hover {
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+        body { font-family: sans-serif; margin: 20px; background-color: var(--color-background); color: var(--color-text); }
+        .test-section { margin-bottom: 40px; background: var(--color-surface); padding: 20px; border-radius: 8px; box-shadow: var(--shadow-md); }
+        .output { margin-top: 10px; padding: 10px; background: #2c2c2c; border-radius: 4px; min-height: 20px; font-family: monospace; color: #eee; }
+        .controls button { margin-right: 10px; }
+    </style>
+</head>
+<body>
+    <h1>PluginTabs Component Test Page</h1>
+    <p>Clear localStorage ('ssbackend_open_tabs') and refresh to reset the test.</p>
+
+    <div class="test-section">
+        <div id="tab-bar-container"></div>
+        <div class="controls">
+            <h3>Controls</h3>
+            <button id="btn-activate-economy">Activate Economy Tab</button>
+            <button id="btn-activate-achievements">Activate Achievements Tab</button>
+            <button id="btn-open-leaderboards">Open Leaderboards Tab</button>
+        </div>
+        <div class="output" id="output-log"></div>
+    </div>
+
+    <script>
+        // Inlined code
+        /**
+ * Plugin Navigation Manager
+ * Handles plugin-specific navigation registration and management
+ */
+class PluginNavigationManager {
+  constructor() {
+    this.registeredPlugins = new Map();
+    this.navigationCache = new Map();
+    this.cacheTimeout = 30000; // 30 seconds
+    
+    console.log('🔌 Plugin Navigation Manager initialized');
+  }
+
+  /**
+   * Register navigation for a plugin
+   */
+  registerPlugin(pluginManifest) {
+    try {
+      if (!pluginManifest || !pluginManifest.name) {
+        console.warn('⚠️ Invalid plugin manifest for navigation registration');
+        return false;
+      }
+
+      const pluginId = pluginManifest.name;
+      console.log(`📝 Registering navigation for plugin: ${pluginId}`);
+
+      // Process adminUI section if present
+      if (pluginManifest.adminUI) {
+        const navData = this.processPluginUIManifest(pluginManifest);
+        this.registeredPlugins.set(pluginId, navData);
+        
+        // Clear cache for this plugin
+        this.navigationCache.delete(pluginId);
+        
+        console.log(`✅ Navigation registered for plugin: ${pluginId}`);
+        return true;
+      }
+
+      console.log(`ℹ️ Plugin ${pluginId} does not have adminUI configuration`);
+      return false;
+      
+    } catch (error) {
+      console.error('❌ Error registering plugin navigation:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Process plugin UI manifest into navigation structure
+   */
+  processPluginUIManifest(manifest) {
+    const adminUI = manifest.adminUI;
+    
+    return {
+      pluginId: manifest.name,
+      enabled: adminUI.enabled !== false, // Default to true
+      navigation: {
+        label: adminUI.navigation?.label || manifest.displayName || manifest.name,
+        icon: adminUI.navigation?.icon || '🧩',
+        group: adminUI.navigation?.group || 'plugins',
+        priority: adminUI.navigation?.priority || 100
+      },
+      routes: this.processPluginRoutes(adminUI.routes || []),
+      lastUpdated: Date.now()
+    };
+  }
+
+  /**
+   * Process plugin routes into navigation items
+   */
+  processPluginRoutes(routes) {
+    return routes.map(route => ({
+      id: route.path.replace(/\//g, '-').replace(/^-/, ''),
+      path: route.path,
+      title: route.title || route.label,
+      icon: route.icon || '📄',
+      component: route.component,
+      permissions: route.permissions || ['admin']
+    }));
+  }
+
+  /**
+   * Get navigation data for a specific plugin
+   */
+  getPluginNavigation(pluginId) {
+    const cached = this.navigationCache.get(pluginId);
+    if (cached && (Date.now() - cached.timestamp) < this.cacheTimeout) {
+      return cached.data;
+    }
+
+    const navData = this.registeredPlugins.get(pluginId);
+    if (navData) {
+      this.navigationCache.set(pluginId, {
+        data: navData,
+        timestamp: Date.now()
+      });
+    }
+
+    return navData || null;
+  }
+
+  /**
+   * Get all registered plugin navigation data
+   */
+  getRegisteredPlugins() {
+    const allPlugins = [];
+    
+    for (const [pluginId, navData] of this.registeredPlugins) {
+      if (navData.enabled) {
+        allPlugins.push({
+          id: pluginId,
+          title: navData.navigation.label,
+          icon: navData.navigation.icon,
+          displayOrder: navData.navigation.priority,
+          group: navData.navigation.group,
+          routes: navData.routes
+        });
+      }
+    }
+
+    // Sort by displayOrder (priority)
+    allPlugins.sort((a, b) => a.displayOrder - b.displayOrder);
+
+    return allPlugins;
+  }
+
+  /**
+   * Update plugin status (enabled/disabled)
+   */
+  updatePluginStatus(pluginId, enabled) {
+    const navData = this.registeredPlugins.get(pluginId);
+    if (navData) {
+      navData.enabled = enabled;
+      navData.lastUpdated = Date.now();
+      
+      // Clear cache
+      this.navigationCache.delete(pluginId);
+      
+      console.log(`📊 Updated status for plugin ${pluginId}: ${enabled ? 'enabled' : 'disabled'}`);
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
+   * Remove plugin navigation
+   */
+  unregisterPlugin(pluginId) {
+    const removed = this.registeredPlugins.delete(pluginId);
+    this.navigationCache.delete(pluginId);
+    
+    if (removed) {
+      console.log(`🗑️ Unregistered navigation for plugin: ${pluginId}`);
+    }
+    
+    return removed;
+  }
+
+  /**
+   * Check if plugin has navigation registered
+   */
+  hasPluginNavigation(pluginId) {
+    return this.registeredPlugins.has(pluginId);
+  }
+
+  /**
+   * Get navigation statistics
+   */
+  getNavigationStats() {
+    const total = this.registeredPlugins.size;
+    const enabled = Array.from(this.registeredPlugins.values())
+      .filter(nav => nav.enabled).length;
+    
+    return {
+      totalRegistered: total,
+      enabled: enabled,
+      disabled: total - enabled,
+      cacheSize: this.navigationCache.size
+    };
+  }
+
+  /**
+   * Clear all navigation cache
+   */
+  clearCache() {
+    this.navigationCache.clear();
+    console.log('🗑️ Plugin navigation cache cleared');
+  }
+
+  /**
+   * Validate plugin navigation structure
+   */
+  validatePluginNavigation(pluginManifest) {
+    const validation = {
+      valid: true,
+      errors: [],
+      warnings: []
+    };
+
+    try {
+      if (!pluginManifest.adminUI) {
+        validation.warnings.push('No adminUI section found');
+        return validation;
+      }
+
+      const adminUI = pluginManifest.adminUI;
+
+      // Validate navigation section
+      if (adminUI.navigation) {
+        if (!adminUI.navigation.label) {
+          validation.warnings.push('Navigation label not specified');
+        }
+        if (!adminUI.navigation.icon) {
+          validation.warnings.push('Navigation icon not specified');
+        }
+      }
+
+      // Validate routes
+      if (adminUI.routes) {
+        if (!Array.isArray(adminUI.routes)) {
+          validation.errors.push('Routes must be an array');
+          validation.valid = false;
+        } else {
+          adminUI.routes.forEach((route, index) => {
+            if (!route.path) {
+              validation.errors.push(`Route ${index}: path is required`);
+              validation.valid = false;
+            }
+            if (!route.title && !route.label) {
+              validation.warnings.push(`Route ${index}: title or label recommended`);
+            }
+          });
+        }
+      }
+
+    } catch (error) {
+      validation.errors.push(`Validation error: ${error.message}`);
+      validation.valid = false;
+    }
+
+    return validation;
+  }
+}
+
+// Export for use in other modules
+window.PluginNavigationManager = PluginNavigationManager;
+        /**
+ * PluginTabs - Visual tab navigation for plugin switching
+ * 
+ * @component
+ * @example
+ * const pluginNavManager = new PluginNavigationManager();
+ * // ... register plugins ...
+ * const tabs = new PluginTabs({
+ *   plugins: pluginNavManager.getRegisteredPlugins(),
+ *   activePlugin: 'economy',
+ *   onTabClick: (pluginId) => navigateToPlugin(pluginId),
+ *   onTabClose: (pluginId) => closeTab(pluginId)
+ * });
+ * document.body.appendChild(tabs.render());
+ */
+class PluginTabs {
+  constructor(config) {
+    this.config = {
+      allPlugins: [],
+      activePlugin: null,
+      onTabClick: () => {},
+      ...config,
+    };
+    this.element = null;
+    this.openTabIds = this.loadOpenTabs();
+
+    // Ensure the active plugin always has a tab open
+    if (this.config.activePlugin && !this.openTabIds.includes(this.config.activePlugin)) {
+      this.openTab(this.config.activePlugin, false); // Don't save immediately
+    }
+  }
+
+  loadOpenTabs() {
+    try {
+      const storedTabs = localStorage.getItem('ssbackend_open_tabs');
+      return storedTabs ? JSON.parse(storedTabs) : [];
+    } catch (e) {
+      console.error('Failed to load open tabs from localStorage', e);
+      return [];
+    }
+  }
+
+  saveOpenTabs() {
+    try {
+      localStorage.setItem('ssbackend_open_tabs', JSON.stringify(this.openTabIds));
+    } catch (e) {
+      console.error('Failed to save open tabs to localStorage', e);
+    }
+  }
+
+  openTab(pluginId, shouldSave = true) {
+    if (!this.openTabIds.includes(pluginId)) {
+      this.openTabIds.push(pluginId);
+      if (shouldSave) {
+        this.saveOpenTabs();
+      }
+    }
+  }
+
+  closeTab(pluginId) {
+    this.openTabIds = this.openTabIds.filter(id => id !== pluginId);
+    this.saveOpenTabs();
+    // Here, we would typically navigate away if the active tab is closed.
+    // The parent component will handle this logic.
+    this.render(); // Re-render to show the change
+  }
+
+  render() {
+    const container = document.createElement('div');
+    container.className = 'plugin-tabs';
+
+    const tabsContainer = document.createElement('div');
+    tabsContainer.className = 'plugin-tabs__container';
+
+    const openPlugins = this.config.allPlugins.filter(p => this.openTabIds.includes(p.id));
+    openPlugins.sort((a, b) => this.openTabIds.indexOf(a.id) - this.openTabIds.indexOf(b.id));
+
+    openPlugins.forEach(plugin => {
+      const tab = document.createElement('div');
+      tab.className = 'plugin-tab';
+      tab.dataset.pluginId = plugin.id;
+
+      if (plugin.id === this.config.activePlugin) {
+        tab.classList.add('plugin-tab--active');
+      }
+
+      tab.innerHTML = `
+        <span class="plugin-tab__icon">${plugin.icon}</span>
+        <span class="plugin-tab__title">${plugin.title}</span>
+        <button class="plugin-tab__close" data-plugin-id="${plugin.id}">×</button>
+      `;
+
+      tabsContainer.appendChild(tab);
+    });
+
+    container.innerHTML = ''; // Clear previous content
+    container.appendChild(tabsContainer);
+    
+    // If an element already exists, replace its content.
+    // Otherwise, set this as the new element.
+    if (this.element) {
+        this.element.innerHTML = container.innerHTML;
+    } else {
+        this.element = container;
+    }
+    
+    this.addEventListeners();
+    return this.element;
+  }
+
+  addEventListeners() {
+    this.element.addEventListener('click', (event) => {
+      const tab = event.target.closest('.plugin-tab');
+      if (!tab) return;
+
+      const pluginId = tab.dataset.pluginId;
+
+      if (event.target.classList.contains('plugin-tab__close')) {
+        event.stopPropagation(); // Prevent tab click from firing
+        this.closeTab(pluginId);
+      } else {
+        this.config.onTabClick(pluginId);
+      }
+    });
+  }
+}
+
+export default PluginTabs;
+
+    </script>
+    <script>
+        // Test logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const log = (message) => {
+                const output = document.getElementById('output-log');
+                output.textContent = message;
+                console.log(message);
+            };
+
+            const manager = new window.PluginNavigationManager();
+            const mockPlugins = [
+              { name: 'economy', version: '1.0.0', adminUI: { enabled: true, navigation: { label: 'Economy', icon: '💰', priority: 10 } } },
+              { name: 'achievements', version: '1.0.0', adminUI: { enabled: true, navigation: { label: 'Achievements', icon: '🏆', priority: 20 } } },
+              { name: 'leaderboards', version: '1.0.0', adminUI: { enabled: true, navigation: { label: 'Leaderboards', icon: '📊', priority: 30 } } },
+              { name: 'users', version: '1.0.0', adminUI: { enabled: true, navigation: { label: 'Users', icon: '👥', priority: 1 } } },
+            ];
+            mockPlugins.forEach(p => manager.registerPlugin(p));
+
+            let activePluginId = 'economy';
+            let tabsInstance = null;
+
+            function renderTabs() {
+                const container = document.getElementById('tab-bar-container');
+                container.innerHTML = '';
+
+                tabsInstance = new PluginTabs({
+                    allPlugins: manager.getRegisteredPlugins(),
+                    activePlugin: activePluginId,
+                    onTabClick: (pluginId) => {
+                        log("Tab clicked: " + pluginId);
+                        activePluginId = pluginId;
+                        renderTabs();
+                    },
+                });
+
+                const renderedTabs = tabsInstance.render();
+                container.appendChild(renderedTabs);
+                
+                // Override the close button listener to re-render
+                renderedTabs.querySelectorAll('.plugin-tab__close').forEach(btn => {
+                    const originalListener = btn.onclick;
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const pluginIdToClose = e.target.closest('.plugin-tab').dataset.pluginId;
+                        log("Closing tab: " + pluginIdToClose);
+                        tabsInstance.closeTab(pluginIdToClose);
+                        // In a real app, we'd navigate if the active tab is closed
+                        if (activePluginId === pluginIdToClose) {
+                            activePluginId = tabsInstance.openTabIds[0] || null;
+                        }
+                        renderTabs();
+                    });
+                });
+            }
+
+            document.getElementById('btn-activate-economy').addEventListener('click', () => {
+                log('Activating Economy');
+                activePluginId = 'economy';
+                renderTabs();
+            });
+
+            document.getElementById('btn-activate-achievements').addEventListener('click', () => {
+                log('Activating Achievements');
+                activePluginId = 'achievements';
+                renderTabs();
+            });
+
+            document.getElementById('btn-open-leaderboards').addEventListener('click', () => {
+                log('Opening Leaderboards');
+                tabsInstance.openTab('leaderboards');
+                renderTabs();
+            });
+
+            renderTabs(); // Initial render
+        });
+    </script>
+</body>
+</html>

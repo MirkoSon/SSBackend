@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PluginDropdown Component Test</title>
+    <style>
+        /* SSBackend Theme System - CSS Variables
+ * Foundation for consistent theming across all UI components
+ * Based on Economy Dashboard dark theme specifications
+ */
+
+:root {
+  /* =================================================================
+   * COLOR SYSTEM
+   * ================================================================= */
+  
+  /* Primary Colors - Orange accent from Economy Dashboard */
+  --color-primary: #ff6b35;
+  --color-primary-light: #ff8555;
+  --color-primary-dark: #e55a2b;
+  --color-primary-hover: #ff8555;
+  --color-primary-active: #e55a2b;
+  
+  /* Secondary Colors - Teal from Economy Dashboard */
+  --color-secondary: #20a39e;
+  --color-secondary-light: #2bb5b0;
+  --color-secondary-dark: #1a8a85;
+  --color-secondary-hover: #2bb5b0;
+  --color-secondary-active: #1a8a85;
+  
+  /* Background Colors - Dark theme foundation */
+  --color-background: #1a1a1a;
+  --color-background-secondary: #242424;
+  --color-background-tertiary: #2d2d2d;
+  --color-surface: #2d2d2d;
+  --color-surface-hover: #353535;
+  --color-surface-active: #3d3d3d;
+  
+  /* Text Colors - High contrast for dark theme */
+  --color-text: #ffffff;
+  --color-text-secondary: #b0b0b0;
+  --color-text-tertiary: #888888;
+  --color-text-muted: #666666;
+  --color-text-inverse: #1a1a1a;
+  
+  /* Border Colors - Subtle separators */
+  --color-border: #404040;
+  --color-border-light: #505050;
+  --color-border-dark: #303030;
+  
+  /* Status Colors - Semantic colors */
+  --color-success: #4caf50;
+  --color-warning: #ff9800;
+  --color-error: #f44336;
+  --color-info: #2196f3;
+  
+  /* Overlay Colors - Transparency for modals/overlays */
+  --color-overlay: rgba(0, 0, 0, 0.5);
+  --color-overlay-light: rgba(0, 0, 0, 0.3);
+  --color-overlay-dark: rgba(0, 0, 0, 0.7);
+  
+  /* =================================================================
+   * SPACING SYSTEM
+   * ================================================================= */
+  
+  /* Base spacing unit: 0.25rem (4px) */
+  --spacing-xs: 0.25rem;    /* 4px */
+  --spacing-sm: 0.5rem;     /* 8px */
+  --spacing-md: 1rem;       /* 16px */
+  --spacing-lg: 1.5rem;     /* 24px */
+  --spacing-xl: 2rem;       /* 32px */
+  --spacing-2xl: 3rem;      /* 48px */
+  --spacing-3xl: 4rem;      /* 64px */
+  
+  /* Component-specific spacing */
+  --spacing-component-sm: 0.75rem;   /* 12px */
+  --spacing-component-md: 1.25rem;   /* 20px */
+  --spacing-component-lg: 2.5rem;    /* 40px */
+  
+  /* =================================================================
+   * TYPOGRAPHY SYSTEM
+   * ================================================================= */
+  
+  /* Font Families */
+  --font-family-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --font-family-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  
+  /* Font Sizes */
+  --font-size-xs: 0.75rem;     /* 12px */
+  --font-size-sm: 0.875rem;    /* 14px */
+  --font-size-base: 1rem;      /* 16px */
+  --font-size-lg: 1.125rem;    /* 18px */
+  --font-size-xl: 1.25rem;     /* 20px */
+  --font-size-2xl: 1.5rem;     /* 24px */
+  --font-size-3xl: 1.875rem;   /* 30px */
+  --font-size-4xl: 2.25rem;    /* 36px */
+  
+  /* Font Weights */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* Line Heights */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+  
+  /* =================================================================
+   * SHADOW SYSTEM
+   * ================================================================= */
+  
+  /* Box Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+  
+  /* Glow Effects */
+  --glow-primary: 0 0 20px rgba(255, 107, 53, 0.3);
+  --glow-secondary: 0 0 20px rgba(32, 163, 158, 0.3);
+  
+  /* =================================================================
+   * BORDER RADIUS SYSTEM
+   * ================================================================= */
+  
+  --border-radius-none: 0;
+  --border-radius-sm: 0.25rem;    /* 4px */
+  --border-radius-md: 0.5rem;     /* 8px */
+  --border-radius-lg: 1rem;       /* 16px */
+  --border-radius-xl: 1.5rem;     /* 24px */
+  --border-radius-full: 9999px;   /* Fully rounded */
+  
+  /* =================================================================
+   * TRANSITIONS & ANIMATIONS
+   * ================================================================= */
+  
+  /* Transition Durations */
+  --transition-fast: 150ms;
+  --transition-normal: 250ms;
+  --transition-slow: 350ms;
+  
+  /* Transition Timing Functions */
+  --transition-ease: ease;
+  --transition-ease-in: ease-in;
+  --transition-ease-out: ease-out;
+  --transition-ease-in-out: ease-in-out;
+  
+  /* =================================================================
+   * Z-INDEX SYSTEM
+   * ================================================================= */
+  
+  --z-index-dropdown: 1000;
+  --z-index-sticky: 1020;
+  --z-index-fixed: 1030;
+  --z-index-modal-backdrop: 1040;
+  --z-index-modal: 1050;
+  --z-index-popover: 1060;
+  --z-index-tooltip: 1070;
+  --z-index-toast: 1080;
+  
+  /* =================================================================
+   * COMPONENT-SPECIFIC VARIABLES
+   * ================================================================= */
+  
+  /* Navigation */
+  --nav-height: 4rem;
+  --nav-background: var(--color-surface);
+  --nav-border: var(--color-border);
+  
+  /* Buttons */
+  --btn-padding-x: var(--spacing-md);
+  --btn-padding-y: var(--spacing-sm);
+  --btn-border-radius: var(--border-radius-md);
+  --btn-font-weight: var(--font-weight-medium);
+  
+  /* Forms */
+  --input-padding-x: var(--spacing-md);
+  --input-padding-y: var(--spacing-sm);
+  --input-border-radius: var(--border-radius-md);
+  --input-border-color: var(--color-border);
+  --input-focus-border-color: var(--color-primary);
+  
+  /* Cards */
+  --card-padding: var(--spacing-lg);
+  --card-border-radius: var(--border-radius-lg);
+  --card-shadow: var(--shadow-md);
+  --card-background: var(--color-surface);
+}
+
+/* =================================================================
+ * DARK THEME OVERRIDES (for future theme switching)
+ * ================================================================= */
+[data-theme="dark"] {
+  /* All current values are already optimized for dark theme */
+}
+
+/* =================================================================
+ * LIGHT THEME OVERRIDES (for future theme switching)
+ * ================================================================= */
+[data-theme="light"] {
+  /* Background Colors */
+  --color-background: #ffffff;
+  --color-background-secondary: #f8f9fa;
+  --color-background-tertiary: #e9ecef;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f8f9fa;
+  --color-surface-active: #e9ecef;
+  
+  /* Text Colors */
+  --color-text: #212529;
+  --color-text-secondary: #6c757d;
+  --color-text-tertiary: #868e96;
+  --color-text-muted: #adb5bd;
+  --color-text-inverse: #ffffff;
+  
+  /* Border Colors */
+  --color-border: #dee2e6;
+  --color-border-light: #e9ecef;
+  --color-border-dark: #ced4da;
+  
+  /* Shadows - Adjusted for light theme */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* =================================================================
+ * ACCESSIBILITY & REDUCED MOTION
+ * ================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* =================================================================
+ * PRINT STYLES
+ * ================================================================= */
+@media print {
+  :root {
+    --color-background: #ffffff;
+    --color-text: #000000;
+    --color-border: #000000;
+    --shadow-sm: none;
+    --shadow-md: none;
+    --shadow-lg: none;
+    --shadow-xl: none;
+  }
+}
+        /* PluginDropdown Component Styles */
+.plugin-dropdown {
+  position: relative;
+}
+
+.plugin-dropdown__trigger {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-sm);
+  cursor: pointer;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.plugin-dropdown__menu {
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-lg);
+  width: 300px;
+  z-index: 1001;
+  display: none; /* Hidden by default */
+}
+
+.plugin-dropdown__menu.open {
+  display: block;
+}
+
+.plugin-dropdown__header {
+  padding: var(--spacing-md);
+  font-weight: var(--font-weight-bold);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.plugin-dropdown__list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.plugin-dropdown__item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.plugin-dropdown__item:last-child {
+  border-bottom: none;
+}
+
+.plugin-dropdown__icon {
+  font-size: 1.2rem;
+}
+
+.plugin-dropdown__name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Toggle Switch Styles */
+.plugin-dropdown__toggle {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 24px;
+}
+
+.plugin-dropdown__toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.plugin-dropdown__slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.plugin-dropdown__slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .plugin-dropdown__slider {
+  background-color: var(--color-primary);
+}
+
+input:focus + .plugin-dropdown__slider {
+  box-shadow: 0 0 1px var(--color-primary);
+}
+
+input:checked + .plugin-dropdown__slider:before {
+  transform: translateX(16px);
+}
+
+        body { font-family: sans-serif; margin: 20px; background-color: var(--color-background); color: var(--color-text); }
+        .test-section { display: flex; justify-content: flex-end; padding: 20px; background: var(--color-surface); border-radius: 8px; box-shadow: var(--shadow-md); }
+        .output { margin-top: 10px; padding: 10px; background: #2c2c2c; border-radius: 4px; min-height: 20px; font-family: monospace; color: #eee; }
+    </style>
+</head>
+<body>
+    <h1>PluginDropdown Component Test Page</h1>
+    <p>Tests opening, closing, click-outside, and placeholder toggle functionality.</p>
+
+    <div class="test-section">
+        <div id="dropdown-container"></div>
+    </div>
+    <div class="output" id="output-log"></div>
+
+    <script>
+        // Inlined code
+        /**
+ * Plugin Navigation Manager
+ * Handles plugin-specific navigation registration and management
+ */
+class PluginNavigationManager {
+  constructor() {
+    this.registeredPlugins = new Map();
+    this.navigationCache = new Map();
+    this.cacheTimeout = 30000; // 30 seconds
+    
+    console.log('🔌 Plugin Navigation Manager initialized');
+  }
+
+  /**
+   * Register navigation for a plugin
+   */
+  registerPlugin(pluginManifest) {
+    try {
+      if (!pluginManifest || !pluginManifest.name) {
+        console.warn('⚠️ Invalid plugin manifest for navigation registration');
+        return false;
+      }
+
+      const pluginId = pluginManifest.name;
+      console.log(`📝 Registering navigation for plugin: ${pluginId}`);
+
+      // Process adminUI section if present
+      if (pluginManifest.adminUI) {
+        const navData = this.processPluginUIManifest(pluginManifest);
+        this.registeredPlugins.set(pluginId, navData);
+        
+        // Clear cache for this plugin
+        this.navigationCache.delete(pluginId);
+        
+        console.log(`✅ Navigation registered for plugin: ${pluginId}`);
+        return true;
+      }
+
+      console.log(`ℹ️ Plugin ${pluginId} does not have adminUI configuration`);
+      return false;
+      
+    } catch (error) {
+      console.error('❌ Error registering plugin navigation:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Process plugin UI manifest into navigation structure
+   */
+  processPluginUIManifest(manifest) {
+    const adminUI = manifest.adminUI;
+    
+    return {
+      pluginId: manifest.name,
+      enabled: adminUI.enabled !== false, // Default to true
+      navigation: {
+        label: adminUI.navigation?.label || manifest.displayName || manifest.name,
+        icon: adminUI.navigation?.icon || '🧩',
+        group: adminUI.navigation?.group || 'plugins',
+        priority: adminUI.navigation?.priority || 100
+      },
+      routes: this.processPluginRoutes(adminUI.routes || []),
+      lastUpdated: Date.now()
+    };
+  }
+
+  /**
+   * Process plugin routes into navigation items
+   */
+  processPluginRoutes(routes) {
+    return routes.map(route => ({
+      id: route.path.replace(/\//g, '-').replace(/^-/, ''),
+      path: route.path,
+      title: route.title || route.label,
+      icon: route.icon || '📄',
+      component: route.component,
+      permissions: route.permissions || ['admin']
+    }));
+  }
+
+  /**
+   * Get navigation data for a specific plugin
+   */
+  getPluginNavigation(pluginId) {
+    const cached = this.navigationCache.get(pluginId);
+    if (cached && (Date.now() - cached.timestamp) < this.cacheTimeout) {
+      return cached.data;
+    }
+
+    const navData = this.registeredPlugins.get(pluginId);
+    if (navData) {
+      this.navigationCache.set(pluginId, {
+        data: navData,
+        timestamp: Date.now()
+      });
+    }
+
+    return navData || null;
+  }
+
+  /**
+   * Get all registered plugin navigation data
+   */
+  getRegisteredPlugins() {
+    const allPlugins = [];
+    
+    for (const [pluginId, navData] of this.registeredPlugins) {
+      if (navData.enabled) {
+        allPlugins.push({
+          id: pluginId,
+          title: navData.navigation.label,
+          icon: navData.navigation.icon,
+          displayOrder: navData.navigation.priority,
+          group: navData.navigation.group,
+          routes: navData.routes
+        });
+      }
+    }
+
+    // Sort by displayOrder (priority)
+    allPlugins.sort((a, b) => a.displayOrder - b.displayOrder);
+
+    return allPlugins;
+  }
+
+  /**
+   * Update plugin status (enabled/disabled)
+   */
+  updatePluginStatus(pluginId, enabled) {
+    const navData = this.registeredPlugins.get(pluginId);
+    if (navData) {
+      navData.enabled = enabled;
+      navData.lastUpdated = Date.now();
+      
+      // Clear cache
+      this.navigationCache.delete(pluginId);
+      
+      console.log(`📊 Updated status for plugin ${pluginId}: ${enabled ? 'enabled' : 'disabled'}`);
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
+   * Remove plugin navigation
+   */
+  unregisterPlugin(pluginId) {
+    const removed = this.registeredPlugins.delete(pluginId);
+    this.navigationCache.delete(pluginId);
+    
+    if (removed) {
+      console.log(`🗑️ Unregistered navigation for plugin: ${pluginId}`);
+    }
+    
+    return removed;
+  }
+
+  /**
+   * Check if plugin has navigation registered
+   */
+  hasPluginNavigation(pluginId) {
+    return this.registeredPlugins.has(pluginId);
+  }
+
+  /**
+   * Get navigation statistics
+   */
+  getNavigationStats() {
+    const total = this.registeredPlugins.size;
+    const enabled = Array.from(this.registeredPlugins.values())
+      .filter(nav => nav.enabled).length;
+    
+    return {
+      totalRegistered: total,
+      enabled: enabled,
+      disabled: total - enabled,
+      cacheSize: this.navigationCache.size
+    };
+  }
+
+  /**
+   * Clear all navigation cache
+   */
+  clearCache() {
+    this.navigationCache.clear();
+    console.log('🗑️ Plugin navigation cache cleared');
+  }
+
+  /**
+   * Validate plugin navigation structure
+   */
+  validatePluginNavigation(pluginManifest) {
+    const validation = {
+      valid: true,
+      errors: [],
+      warnings: []
+    };
+
+    try {
+      if (!pluginManifest.adminUI) {
+        validation.warnings.push('No adminUI section found');
+        return validation;
+      }
+
+      const adminUI = pluginManifest.adminUI;
+
+      // Validate navigation section
+      if (adminUI.navigation) {
+        if (!adminUI.navigation.label) {
+          validation.warnings.push('Navigation label not specified');
+        }
+        if (!adminUI.navigation.icon) {
+          validation.warnings.push('Navigation icon not specified');
+        }
+      }
+
+      // Validate routes
+      if (adminUI.routes) {
+        if (!Array.isArray(adminUI.routes)) {
+          validation.errors.push('Routes must be an array');
+          validation.valid = false;
+        } else {
+          adminUI.routes.forEach((route, index) => {
+            if (!route.path) {
+              validation.errors.push(`Route ${index}: path is required`);
+              validation.valid = false;
+            }
+            if (!route.title && !route.label) {
+              validation.warnings.push(`Route ${index}: title or label recommended`);
+            }
+          });
+        }
+      }
+
+    } catch (error) {
+      validation.errors.push(`Validation error: ${error.message}`);
+      validation.valid = false;
+    }
+
+    return validation;
+  }
+}
+
+// Export for use in other modules
+window.PluginNavigationManager = PluginNavigationManager;
+        /**
+ * PluginDropdown - Dropdown menu for plugin management
+ * 
+ * @component
+ * @example
+ * const pluginNavManager = new PluginNavigationManager();
+ * // ... register plugins ...
+ * const dropdown = new PluginDropdown({
+ *   plugins: pluginNavManager.getRegisteredPlugins(),
+ *   onToggle: (pluginId, enabled) => handlePluginToggle(pluginId, enabled)
+ * });
+ * document.body.appendChild(dropdown.render());
+ */
+class PluginDropdown {
+  constructor(config) {
+    this.config = {
+      plugins: [],
+      onToggle: () => {},
+      ...config,
+    };
+    this.element = null;
+    this.isOpen = false;
+    this.handleOutsideClick = this.handleOutsideClick.bind(this);
+  }
+
+  toggle() {
+    this.isOpen = !this.isOpen;
+    const menu = this.element.querySelector('.plugin-dropdown__menu');
+    if (this.isOpen) {
+      menu.classList.add('open');
+      document.addEventListener('click', this.handleOutsideClick);
+    } else {
+      menu.classList.remove('open');
+      document.removeEventListener('click', this.handleOutsideClick);
+    }
+  }
+
+  handleOutsideClick(event) {
+    if (!this.element.contains(event.target)) {
+      this.toggle();
+    }
+  }
+
+  render() {
+    const container = document.createElement('div');
+    container.className = 'plugin-dropdown';
+
+    const trigger = document.createElement('button');
+    trigger.className = 'plugin-dropdown__trigger';
+    trigger.innerHTML = '🧩';
+
+    const menu = document.createElement('div');
+    menu.className = 'plugin-dropdown__menu';
+
+    const header = document.createElement('div');
+    header.className = 'plugin-dropdown__header';
+    header.textContent = 'Available Plugins';
+
+    const list = document.createElement('div');
+    list.className = 'plugin-dropdown__list';
+
+    this.config.plugins.forEach(plugin => {
+      const item = document.createElement('div');
+      item.className = 'plugin-dropdown__item';
+      item.innerHTML = `
+        <span class="plugin-dropdown__icon">${plugin.icon}</span>
+        <span class="plugin-dropdown__name">${plugin.title}</span>
+        <label class="plugin-dropdown__toggle">
+          <input type="checkbox" class="plugin-toggle-checkbox" data-plugin-id="${plugin.id}" ${plugin.enabled ? 'checked' : ''}>
+          <span class="plugin-dropdown__slider"></span>
+        </label>
+      `;
+      list.appendChild(item);
+    });
+
+    menu.appendChild(header);
+    menu.appendChild(list);
+    container.appendChild(trigger);
+    container.appendChild(menu);
+
+    this.element = container;
+    this.addEventListeners();
+    return this.element;
+  }
+
+  addEventListeners() {
+    const trigger = this.element.querySelector('.plugin-dropdown__trigger');
+    trigger.addEventListener('click', (event) => {
+        event.stopPropagation();
+        this.toggle();
+    });
+
+    const toggles = this.element.querySelectorAll('.plugin-toggle-checkbox');
+    toggles.forEach(toggle => {
+      toggle.addEventListener('change', (event) => {
+        const pluginId = event.target.dataset.pluginId;
+        const isEnabled = event.target.checked;
+        this.config.onToggle(pluginId, isEnabled);
+        alert('Plugin enable/disable functionality will be implemented in a future release.');
+        // Since this is a visual placeholder, we prevent the state from actually changing
+        event.target.checked = !isEnabled;
+      });
+    });
+  }
+}
+
+export default PluginDropdown;
+
+    </script>
+    <script>
+        // Test logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const log = (message) => {
+                const output = document.getElementById('output-log');
+                output.textContent = message;
+                console.log(message);
+            };
+
+            const manager = new window.PluginNavigationManager();
+            const mockPlugins = [
+              { name: 'economy', version: '1.0.0', adminUI: { enabled: true, navigation: { label: 'Economy', icon: '💰', priority: 10 } } },
+              { name: 'achievements', version: '1.0.0', adminUI: { enabled: false, navigation: { label: 'Achievements', icon: '🏆', priority: 20 } } },
+              { name: 'leaderboards', version: '1.0.0', adminUI: { enabled: true, navigation: { label: 'Leaderboards', icon: '📊', priority: 30 } } },
+            ];
+            mockPlugins.forEach(p => manager.registerPlugin(p));
+
+            const allPlugins = manager.getRegisteredPlugins().map(p => {
+                const manifest = mockPlugins.find(m => m.name === p.id);
+                return { ...p, enabled: manifest.adminUI.enabled };
+            });
+
+            const dropdown = new PluginDropdown({
+                plugins: allPlugins,
+                onToggle: (pluginId, isEnabled) => {
+                    log("Toggled plugin: " + pluginId + ", new state: " + isEnabled);
+                }
+            });
+
+            const container = document.getElementById('dropdown-container');
+            container.appendChild(dropdown.render());
+        });
+    </script>
+</body>
+</html>

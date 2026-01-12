@@ -14,7 +14,7 @@ class PluginNavigationManager {
   /**
    * Register navigation for a plugin
    */
-  registerPluginNavigation(pluginManifest) {
+  registerPlugin(pluginManifest) {
     try {
       if (!pluginManifest || !pluginManifest.name) {
         console.warn('⚠️ Invalid plugin manifest for navigation registration');
@@ -102,24 +102,26 @@ class PluginNavigationManager {
   /**
    * Get all registered plugin navigation data
    */
-  getAllPluginNavigation() {
-    const allNavigation = [];
+  getRegisteredPlugins() {
+    const allPlugins = [];
     
     for (const [pluginId, navData] of this.registeredPlugins) {
       if (navData.enabled) {
-        allNavigation.push({
-          pluginId,
-          ...navData
+        allPlugins.push({
+          id: pluginId,
+          title: navData.navigation.label,
+          icon: navData.navigation.icon,
+          displayOrder: navData.navigation.priority,
+          group: navData.navigation.group,
+          routes: navData.routes
         });
       }
     }
 
-    // Sort by priority
-    allNavigation.sort((a, b) => 
-      (a.navigation.priority || 100) - (b.navigation.priority || 100)
-    );
+    // Sort by displayOrder (priority)
+    allPlugins.sort((a, b) => a.displayOrder - b.displayOrder);
 
-    return allNavigation;
+    return allPlugins;
   }
 
   /**

@@ -99,6 +99,7 @@ const adminRoutes = require('./routes/admin');
 // Import database initialization
 const { initializeDatabase } = require('./db/database');
 const { initializeEpic4Database } = require('./db/migrations/epic4-tables');
+const { initializeEpic4EconomyDatabase } = require('./db/migrations/epic4-economy-tables.js');
 
 // Import plugin system
 const PluginManager = require('./plugins/PluginManager');
@@ -133,6 +134,12 @@ app.use(session({
 // Serve static files for admin dashboard
 app.use('/admin', express.static(path.join(__dirname, '..', 'public', 'admin')));
 
+// Serve static files for plugins (including internal plugin UI components)
+app.use('/plugins', express.static(path.join(__dirname, 'plugins')));
+
+// Serve UI components from src/ui for admin interface
+app.use('/ui', express.static(path.join(__dirname, 'ui')));
+
 // Admin dashboard route - serve index.html for /admin path
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'admin', 'index.html'));
@@ -158,6 +165,7 @@ app.use('/progress', progressRoutes);
 app.use('/admin', adminRoutes);
 app.use('/admin/api', require('./routes/admin/plugins')); // NEW: Plugin management API routes
 
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
@@ -172,6 +180,7 @@ async function startServer() {
     
     // Initialize Epic 4 database features
     await initializeEpic4Database();
+    await initializeEpic4EconomyDatabase();
     
     // Get database instance
     const { getDatabase } = require('./db/database');

@@ -1,0 +1,650 @@
+/**
+ * Economy Plugin Component Styles - Part 2
+ * Continuation of component-specific styles
+ */
+
+/* ========================================
+   REPORTING HUB (CONTINUED)
+   ======================================== */
+
+.section-header p {
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+  margin: 0;
+}
+
+.section-controls {
+  display: flex;
+  gap: var(--space-md);
+  align-items: center;
+}
+
+/* Report Templates Grid */
+.report-templates-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.template-category {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+}
+
+.category-title {
+  font-size: var(--font-lg);
+  margin-bottom: var(--space-lg);
+  color: var(--text-primary);
+}
+
+.template-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-md);
+}
+
+.template-card {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  transition: all var(--transition-base);
+  display: flex;
+  flex-direction: column;
+}
+
+.template-card:hover {
+  border-color: var(--accent-primary);
+  box-shadow: 0 4px 12px var(--accent-glow);
+  transform: translateY(-2px);
+}
+
+.template-icon {
+  font-size: var(--font-3xl);
+  margin-bottom: var(--space-md);
+}
+
+.template-content {
+  flex: 1;
+}
+
+.template-name {
+  font-size: var(--font-base);
+  font-weight: 600;
+  margin-bottom: var(--space-sm);
+  color: var(--text-primary);
+}
+
+.template-description {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--space-md);
+}
+
+.template-formats {
+  display: flex;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-md);
+}
+
+.format-badge {
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-xs);
+  font-weight: 600;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+}
+
+.template-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border-color);
+}
+
+/* Report Filters */
+.report-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.report-filters .filter-group {
+  flex: 1;
+  min-width: 150px;
+}
+
+/* Reports Table */
+.reports-table-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: var(--space-lg);
+}
+
+.reports-table {
+  width: 100%;
+}
+
+.report-row {
+  transition: all var(--transition-fast);
+}
+
+.report-row:hover {
+  background: var(--bg-hover);
+}
+
+.report-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.report-icon {
+  font-size: var(--font-xl);
+  flex-shrink: 0;
+}
+
+.name-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.primary-name {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.secondary-info {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+}
+
+.timestamp {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.primary-time {
+  color: var(--text-primary);
+}
+
+.secondary-time {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+}
+
+.row-count {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.table-actions {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+/* Export Queue */
+.export-queue {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+}
+
+.queue-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.queue-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+}
+
+.queue-icon {
+  font-size: var(--font-2xl);
+  flex-shrink: 0;
+}
+
+.queue-info {
+  flex: 1;
+}
+
+.queue-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+.queue-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-primary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent-primary);
+  border-radius: var(--radius-full);
+  transition: width var(--transition-base);
+}
+
+.progress-text {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+}
+
+.queue-actions {
+  flex-shrink: 0;
+}
+
+.queue-empty {
+  text-align: center;
+  padding: var(--space-xl);
+  color: var(--text-secondary);
+}
+
+/* Pagination Container */
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+}
+
+.pagination-controls {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+/* Report Config Sections */
+.report-config-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.config-section {
+  padding: var(--space-lg);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+}
+
+.config-section h4 {
+  margin-bottom: var(--space-md);
+  font-size: var(--font-base);
+  color: var(--text-primary);
+}
+
+.report-type-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: var(--space-md);
+}
+
+.radio-card {
+  position: relative;
+  padding: var(--space-lg);
+  background: var(--bg-primary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.radio-card:hover {
+  border-color: var(--border-accent);
+  background: var(--bg-hover);
+}
+
+.radio-card input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+}
+
+.radio-card input[type="radio"]:checked + .radio-content {
+  border-color: var(--accent-primary);
+}
+
+.radio-card input[type="radio"]:checked ~ .radio-card {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+.radio-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.radio-icon {
+  font-size: var(--font-2xl);
+}
+
+.radio-text {
+  flex: 1;
+}
+
+.radio-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-xs);
+  display: block;
+}
+
+.radio-description {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+}
+
+.output-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.limits-section {
+  margin-top: var(--space-lg);
+}
+
+/* Template Config Modal */
+.template-config-modal .modal {
+  max-width: 800px;
+}
+
+.template-description {
+  padding: var(--space-lg);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+}
+
+.template-description p {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.template-config-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+/* Report Details Modal */
+.report-details-modal .modal {
+  max-width: 900px;
+}
+
+.report-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+@media (max-width: 1200px) {
+  .economy-content-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Reduce spacing on mobile */
+  .economy-dashboard,
+  .balance-manager,
+  .transaction-monitor,
+  .economy-analytics,
+  .currency-config,
+  .alert-config,
+  .reporting-hub {
+    padding: var(--space-md);
+  }
+  
+  /* Stack headers vertically */
+  .economy-header,
+  .monitor-header,
+  .analytics-header,
+  .config-header,
+  .alert-config-header,
+  .reporting-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+  
+  /* Full width buttons on mobile */
+  .monitor-controls,
+  .analytics-controls,
+  .header-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+  
+  .monitor-controls .btn,
+  .analytics-controls .btn,
+  .header-actions .btn {
+    width: 100%;
+  }
+  
+  /* Single column grids */
+  .economy-overview-cards,
+  .balance-stats-grid,
+  .analytics-grid,
+  .currencies-grid,
+  .alert-overview-cards,
+  .report-templates-grid,
+  .template-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  /* Simplify filters on mobile */
+  .filters-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .report-filters {
+    flex-direction: column;
+  }
+  
+  /* Stack date range controls */
+  .date-range-controls {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .date-range-controls input {
+    width: 100%;
+  }
+  
+  /* Scrollable tables */
+  .transaction-table-container,
+  .reports-table-container {
+    overflow-x: auto;
+  }
+  
+  /* Smaller modals on mobile */
+  .modal {
+    max-width: 100%;
+    max-height: 95vh;
+    margin: var(--space-sm);
+  }
+  
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: var(--space-md);
+  }
+  
+  /* Pagination adjustments */
+  .transaction-pagination,
+  .pagination-container {
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+  
+  .pagination-info {
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Further reduce spacing on very small screens */
+  :root {
+    --space-xl: 1.5rem;
+    --space-2xl: 2rem;
+  }
+  
+  /* Smaller font sizes */
+  h1 { font-size: var(--font-2xl); }
+  h2 { font-size: var(--font-xl); }
+  h3 { font-size: var(--font-lg); }
+  
+  /* Smaller metric cards */
+  .metric-value {
+    font-size: var(--font-2xl);
+  }
+  
+  /* Compact buttons */
+  .btn {
+    padding: var(--space-xs) var(--space-md);
+    font-size: var(--font-xs);
+  }
+  
+  .btn-lg {
+    padding: var(--space-sm) var(--space-lg);
+  }
+  
+  /* Hide less critical columns in tables */
+  .transaction-table .source,
+  .transaction-table .balance-change {
+    display: none;
+  }
+  
+  .reports-table .secondary-info,
+  .reports-table .secondary-time {
+    display: none;
+  }
+}
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+
+@media print {
+  .economy-header,
+  .monitor-header,
+  .analytics-header,
+  .config-header,
+  .alert-config-header,
+  .reporting-header {
+    margin-bottom: var(--space-lg);
+  }
+  
+  .monitor-controls,
+  .analytics-controls,
+  .header-actions,
+  .quick-actions,
+  .filter-actions,
+  .template-actions,
+  .table-actions,
+  .currency-actions,
+  .alert-item-actions,
+  .queue-actions {
+    display: none !important;
+  }
+  
+  .card,
+  .metric-card,
+  .template-card,
+  .alert-item,
+  .queue-item {
+    break-inside: avoid;
+    box-shadow: none;
+  }
+  
+  .modal-backdrop {
+    display: none !important;
+  }
+  
+  body {
+    background: white;
+    color: black;
+  }
+}
+
+/* ========================================
+   DARK MODE OVERRIDES (for future use)
+   ======================================== */
+
+@media (prefers-color-scheme: light) {
+  /* Light mode styles would go here if needed */
+  /* Currently the design is dark-mode only */
+}
+
+/* ========================================
+   HIGH CONTRAST MODE
+   ======================================== */
+
+@media (prefers-contrast: high) {
+  :root {
+    --border-color: #ffffff;
+    --text-secondary: #ffffff;
+  }
+  
+  .card,
+  .metric-card,
+  .btn,
+  .form-control {
+    border-width: 2px;
+  }
+}
+
+/* ========================================
+   REDUCED MOTION
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .loading-spinner {
+    animation: none;
+    border-top-color: transparent;
+  }
+}

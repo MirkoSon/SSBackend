@@ -1,0 +1,130 @@
+{
+  "summary": {
+    "totalTests": 15,
+    "passed": 15,
+    "failed": 0,
+    "warnings": 0,
+    "successRate": 100
+  },
+  "results": [
+    {
+      "test": "Admin Authentication",
+      "status": "PASS",
+      "message": "Successfully authenticated as admin",
+      "timestamp": "2025-09-24T13:47:13.464Z",
+      "details": null
+    },
+    {
+      "test": "Test User Creation",
+      "status": "PASS",
+      "message": "Created test user with ID: 29",
+      "timestamp": "2025-09-24T13:47:13.529Z",
+      "details": null
+    },
+    {
+      "test": "Economy Metrics API",
+      "status": "PASS",
+      "message": "Metrics endpoint returned all required fields",
+      "timestamp": "2025-09-24T13:47:13.534Z",
+      "details": {
+        "totalCurrencies": 2,
+        "activeUsers": 2,
+        "dailyTransactions": 1,
+        "totalVolume": 100
+      }
+    },
+    {
+      "test": "System Health API",
+      "status": "PASS",
+      "message": "Health check passed - DB: healthy, Response: 0ms",
+      "timestamp": "2025-09-24T13:47:13.537Z",
+      "details": null
+    },
+    {
+      "test": "Get All Balances API",
+      "status": "PASS",
+      "message": "Retrieved 29 user balances",
+      "timestamp": "2025-09-24T13:47:13.540Z",
+      "details": null
+    },
+    {
+      "test": "Balance Adjustment API",
+      "status": "PASS",
+      "message": "Successfully adjusted balance for user 29",
+      "timestamp": "2025-09-24T13:47:13.550Z",
+      "details": {
+        "success": true,
+        "username": "econtest_1758721633464",
+        "currency": "coins",
+        "previousBalance": 0,
+        "newBalance": 100,
+        "adjustment": 100,
+        "transactionId": "5840d08e-a57a-4d33-b32b-444aa5e512e3"
+      }
+    },
+    {
+      "test": "Transaction Monitoring API",
+      "status": "PASS",
+      "message": "Retrieved 6 transactions (Page 1/1)",
+      "timestamp": "2025-09-24T13:47:13.554Z",
+      "details": null
+    },
+    {
+      "test": "Transaction Export API",
+      "status": "PASS",
+      "message": "Successfully exported transaction data",
+      "timestamp": "2025-09-24T13:47:13.558Z",
+      "details": null
+    },
+    {
+      "test": "Currency Flow Analytics",
+      "status": "PASS",
+      "message": "Retrieved 3 flow data points",
+      "timestamp": "2025-09-24T13:47:13.560Z",
+      "details": null
+    },
+    {
+      "test": "User Behavior Analytics",
+      "status": "PASS",
+      "message": "Retrieved 1 behavior categories",
+      "timestamp": "2025-09-24T13:47:13.562Z",
+      "details": null
+    },
+    {
+      "test": "Get Currencies API",
+      "status": "PASS",
+      "message": "Retrieved 2 currencies",
+      "timestamp": "2025-09-24T13:47:13.565Z",
+      "details": null
+    },
+    {
+      "test": "Create Currency API",
+      "status": "PASS",
+      "message": "Successfully created test currency",
+      "timestamp": "2025-09-24T13:47:13.570Z",
+      "details": null
+    },
+    {
+      "test": "Delete Currency API",
+      "status": "PASS",
+      "message": "Successfully cleaned up test currency",
+      "timestamp": "2025-09-24T13:47:13.574Z",
+      "details": null
+    },
+    {
+      "test": "UI Components Check",
+      "status": "PASS",
+      "message": "All 5 economy UI components exist",
+      "timestamp": "2025-09-24T13:47:13.575Z",
+      "details": null
+    },
+    {
+      "test": "Plugin Manifest Check",
+      "status": "PASS",
+      "message": "Economy plugin manifest includes adminUI configuration",
+      "timestamp": "2025-09-24T13:47:13.575Z",
+      "details": null
+    }
+  ],
+  "generatedAt": "2025-09-24T13:47:13.576Z"
+}

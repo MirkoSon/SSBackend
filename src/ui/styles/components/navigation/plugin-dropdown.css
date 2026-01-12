@@ -1,0 +1,117 @@
+/* PluginDropdown Component Styles */
+.plugin-dropdown {
+  position: relative;
+}
+
+.plugin-dropdown__trigger {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-sm);
+  cursor: pointer;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.plugin-dropdown__menu {
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-lg);
+  width: 300px;
+  z-index: 1001;
+  display: none; /* Hidden by default */
+}
+
+.plugin-dropdown__menu.open {
+  display: block;
+}
+
+.plugin-dropdown__header {
+  padding: var(--spacing-md);
+  font-weight: var(--font-weight-bold);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.plugin-dropdown__list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.plugin-dropdown__item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.plugin-dropdown__item:last-child {
+  border-bottom: none;
+}
+
+.plugin-dropdown__icon {
+  font-size: 1.2rem;
+}
+
+.plugin-dropdown__name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Toggle Switch Styles */
+.plugin-dropdown__toggle {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 24px;
+}
+
+.plugin-dropdown__toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.plugin-dropdown__slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.plugin-dropdown__slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .plugin-dropdown__slider {
+  background-color: var(--color-primary);
+}
+
+input:focus + .plugin-dropdown__slider {
+  box-shadow: 0 0 1px var(--color-primary);
+}
+
+input:checked + .plugin-dropdown__slider:before {
+  transform: translateX(16px);
+}

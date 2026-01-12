@@ -1,0 +1,107 @@
+/* StatCard Component Styles
+ * Follows Economy Dashboard mockup design with dark theme
+ * Uses BEM methodology for clear component structure
+ */
+
+/* Main card container */
+.stat-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-lg);
+  transition: all 0.2s ease;
+  min-width: 200px;
+}
+
+.stat-card:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Icon area */
+.stat-card__icon {
+  font-size: var(--font-size-3xl);
+  margin-bottom: var(--spacing-sm);
+  opacity: 0.8;
+  line-height: 1;
+}
+
+/* Content container */
+.stat-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+/* Label/title */
+.stat-card__label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+/* Value display */
+.stat-card__value {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  line-height: 1.2;
+}
+
+/* Trend indicator container */
+.stat-card__trend {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  margin-top: var(--spacing-sm);
+}
+
+/* Trend arrow icon */
+.stat-card__trend-icon {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+}
+
+/* Trend percentage value */
+.stat-card__trend-value {
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Trend label text */
+.stat-card__trend-label {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal);
+}
+
+/* Positive trend styling (green) */
+.stat-card__trend--up {
+  color: var(--color-success);
+}
+
+/* Negative trend styling (red) */
+.stat-card__trend--down {
+  color: var(--color-error);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .stat-card {
+    padding: var(--spacing-md);
+    min-width: 160px;
+  }
+
+  .stat-card__icon {
+    font-size: var(--font-size-2xl);
+  }
+
+  .stat-card__value {
+    font-size: var(--font-size-2xl);
+  }
+}

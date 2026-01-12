@@ -1,0 +1,436 @@
+/**
+ * Economy UI Integration - Registers economy components with Plugin UI Framework
+ * Part of Story 4.5: Economy Plugin Dashboard Integration
+ */
+
+// Register economy components with the Plugin UI Framework
+document.addEventListener('DOMContentLoaded', function() {
+  // Wait for Plugin Framework to be available
+  if (window.PluginFramework) {
+    registerEconomyComponents();
+  } else {
+    // Listen for Plugin Framework initialization
+    document.addEventListener('PluginFrameworkReady', registerEconomyComponents);
+  }
+});
+
+function registerEconomyComponents() {
+  console.log('🔄 Registering Economy Plugin UI components...');
+  
+  try {
+    const pluginFramework = window.PluginFramework;
+    
+    if (!pluginFramework) {
+      console.error('❌ Plugin Framework not available');
+      return;
+    }
+
+    // Register economy plugin manifest
+    const economyManifest = {
+      name: 'economy',
+      version: '1.0.0',
+      adminUI: {
+        enabled: true,
+        navigation: {
+          label: 'Economy',
+          icon: '💰',
+          group: 'plugins',
+          priority: 1
+        },
+        routes: [
+          {
+            path: '/admin/economy',
+            component: 'EconomyDashboard',
+            title: 'Economy Overview',
+            icon: '📊',
+            permissions: ['admin']
+          },
+          {
+            path: '/admin/economy/balances',
+            component: 'BalanceManager',
+            title: 'Balance Management',
+            icon: '💳',
+            permissions: ['admin']
+          },
+          {
+            path: '/admin/economy/transactions',
+            component: 'TransactionMonitor',
+            title: 'Transaction Monitor',
+            icon: '📈',
+            permissions: ['admin']
+          },
+          {
+            path: '/admin/economy/analytics',
+            component: 'EconomyAnalytics',
+            title: 'Economic Analytics',
+            icon: '📊',
+            permissions: ['admin']
+          },
+          {
+            path: '/admin/economy/currencies',
+            component: 'CurrencyConfig',
+            title: 'Currency Configuration',
+            icon: '⚙️',
+            permissions: ['admin']
+          },
+          {
+            path: '/admin/economy/alerts',
+            component: 'AlertConfig',
+            title: 'Alert Configuration',
+            icon: '🚨',
+            permissions: ['admin']
+          },
+          {
+            path: '/admin/economy/reports',
+            component: 'ReportingHub',
+            title: 'Report Center',
+            icon: '📋',
+            permissions: ['admin']
+          }
+        ]
+      }
+    };
+
+    // Register the economy plugin with the framework
+    pluginFramework.registerPlugin(economyManifest);
+
+    // Register component factory functions
+    pluginFramework.registerComponentFactory('EconomyDashboard', () => {
+      return new Promise((resolve) => {
+        // Ensure component is loaded
+        if (window.EconomyDashboard) {
+          resolve(() => new window.EconomyDashboard());
+        } else {
+          // Load component dynamically if needed
+          loadEconomyComponent('EconomyDashboard').then(() => {
+            resolve(() => new window.EconomyDashboard());
+          });
+        }
+      });
+    });
+
+    pluginFramework.registerComponentFactory('BalanceManager', () => {
+      return new Promise((resolve) => {
+        if (window.BalanceManager) {
+          resolve(() => new window.BalanceManager());
+        } else {
+          loadEconomyComponent('BalanceManager').then(() => {
+            resolve(() => new window.BalanceManager());
+          });
+        }
+      });
+    });
+
+    pluginFramework.registerComponentFactory('TransactionMonitor', () => {
+      return new Promise((resolve) => {
+        if (window.TransactionMonitor) {
+          resolve(() => new window.TransactionMonitor());
+        } else {
+          loadEconomyComponent('TransactionMonitor').then(() => {
+            resolve(() => new window.TransactionMonitor());
+          });
+        }
+      });
+    });
+
+    pluginFramework.registerComponentFactory('EconomyAnalytics', () => {
+      return new Promise((resolve) => {
+        if (window.EconomyAnalytics) {
+          resolve(() => new window.EconomyAnalytics());
+        } else {
+          loadEconomyComponent('EconomyAnalytics').then(() => {
+            resolve(() => new window.EconomyAnalytics());
+          });
+        }
+      });
+    });
+
+    pluginFramework.registerComponentFactory('CurrencyConfig', () => {
+      return new Promise((resolve) => {
+        if (window.CurrencyConfig) {
+          resolve(() => new window.CurrencyConfig());
+        } else {
+          loadEconomyComponent('CurrencyConfig').then(() => {
+            resolve(() => new window.CurrencyConfig());
+          });
+        }
+      });
+    });
+
+    pluginFramework.registerComponentFactory('AlertConfig', () => {
+      return new Promise((resolve) => {
+        if (window.AlertConfig) {
+          resolve(() => new window.AlertConfig());
+        } else {
+          loadEconomyComponent('AlertConfig').then(() => {
+            resolve(() => new window.AlertConfig());
+          });
+        }
+      });
+    });
+
+    pluginFramework.registerComponentFactory('ReportingHub', () => {
+      return new Promise((resolve) => {
+        if (window.ReportingHub) {
+          resolve(() => new window.ReportingHub());
+        } else {
+          loadEconomyComponent('ReportingHub').then(() => {
+            resolve(() => new window.ReportingHub());
+          });
+        }
+      });
+    });
+
+    // Register route handlers
+    pluginFramework.registerRouteHandler('/admin/economy', async (params) => {
+      console.log('🔄 Loading Economy Dashboard...');
+      
+      // Create container if it doesn't exist
+      let container = document.getElementById('economy-dashboard');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'economy-dashboard';
+        document.getElementById('main-content').appendChild(container);
+      }
+      
+      // Clear any existing content
+      container.innerHTML = '';
+      
+      // Load and initialize Economy Dashboard
+      const componentFactory = await pluginFramework.getComponentFactory('EconomyDashboard');
+      const dashboard = componentFactory();
+      
+      console.log('✅ Economy Dashboard loaded');
+    });
+
+    pluginFramework.registerRouteHandler('/admin/economy/balances', async (params) => {
+      console.log('🔄 Loading Balance Manager...');
+      
+      let container = document.getElementById('balance-manager');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'balance-manager';
+        document.getElementById('main-content').appendChild(container);
+      }
+      
+      container.innerHTML = '';
+      
+      const componentFactory = await pluginFramework.getComponentFactory('BalanceManager');
+      const balanceManager = componentFactory();
+      
+      console.log('✅ Balance Manager loaded');
+    });
+
+    pluginFramework.registerRouteHandler('/admin/economy/transactions', async (params) => {
+      console.log('🔄 Loading Transaction Monitor...');
+      
+      let container = document.getElementById('transaction-monitor');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'transaction-monitor';
+        document.getElementById('main-content').appendChild(container);
+      }
+      
+      container.innerHTML = '';
+      
+      const componentFactory = await pluginFramework.getComponentFactory('TransactionMonitor');
+      const transactionMonitor = componentFactory();
+      
+      console.log('✅ Transaction Monitor loaded');
+    });
+
+    pluginFramework.registerRouteHandler('/admin/economy/analytics', async (params) => {
+      console.log('🔄 Loading Economy Analytics...');
+      
+      let container = document.getElementById('economy-analytics');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'economy-analytics';
+        document.getElementById('main-content').appendChild(container);
+      }
+      
+      container.innerHTML = '';
+      
+      const componentFactory = await pluginFramework.getComponentFactory('EconomyAnalytics');
+      const economyAnalytics = componentFactory();
+      
+      console.log('✅ Economy Analytics loaded');
+    });
+
+    pluginFramework.registerRouteHandler('/admin/economy/currencies', async (params) => {
+      console.log('🔄 Loading Currency Config...');
+      
+      let container = document.getElementById('currency-config');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'currency-config';
+        document.getElementById('main-content').appendChild(container);
+      }
+      
+      container.innerHTML = '';
+      
+      const componentFactory = await pluginFramework.getComponentFactory('CurrencyConfig');
+      const currencyConfig = componentFactory();
+      
+      console.log('✅ Currency Config loaded');
+    });
+
+    pluginFramework.registerRouteHandler('/admin/economy/alerts', async (params) => {
+      console.log('🔄 Loading Alert Configuration...');
+      
+      let container = document.getElementById('alert-config');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'alert-config';
+        document.getElementById('main-content').appendChild(container);
+      }
+      
+      container.innerHTML = '';
+      
+      const componentFactory = await pluginFramework.getComponentFactory('AlertConfig');
+      const alertConfig = componentFactory();
+      
+      console.log('✅ Alert Configuration loaded');
+    });
+
+    pluginFramework.registerRouteHandler('/admin/economy/reports', async (params) => {
+      console.log('🔄 Loading Reporting Hub...');
+      
+      let container = document.getElementById('reporting-hub');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'reporting-hub';
+        document.getElementById('main-content').appendChild(container);
+      }
+      
+      container.innerHTML = '';
+      
+      const componentFactory = await pluginFramework.getComponentFactory('ReportingHub');
+      const reportingHub = componentFactory();
+      
+      console.log('✅ Reporting Hub loaded');
+    });
+
+    // Load economy styles
+    loadEconomyStyles();
+
+    console.log('✅ Economy Plugin UI components registered successfully');
+    
+    // Trigger navigation update if dynamic navigation is available
+    if (window.adminDashboard && window.adminDashboard.dynamicNav) {
+      window.adminDashboard.dynamicNav.updatePluginNavigation([economyManifest]);
+    }
+
+  } catch (error) {
+    console.error('❌ Failed to register Economy Plugin UI components:', error);
+  }
+}
+
+/**
+ * Load economy component dynamically
+ */
+async function loadEconomyComponent(componentName) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = `/plugins/internal/economy/ui/components/${componentName}.js`;
+    script.onload = () => {
+      console.log(`✅ Economy component ${componentName} loaded`);
+      resolve();
+    };
+    script.onerror = () => {
+      console.error(`❌ Failed to load Economy component ${componentName}`);
+      reject(new Error(`Failed to load component ${componentName}`));
+    };
+    document.head.appendChild(script);
+  });
+}
+
+/**
+ * Load economy-specific styles
+ */
+function loadEconomyStyles() {
+  // Check if styles already loaded
+  if (document.querySelector('link[href*="economy-admin.css"]')) {
+    return;
+  }
+
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.type = 'text/css';
+  link.href = '/plugins/internal/economy/ui/styles/economy-admin.css';
+  document.head.appendChild(link);
+  
+  console.log('✅ Economy admin styles loaded');
+}
+
+/**
+ * Economy Plugin UI utilities
+ */
+window.EconomyPluginUI = {
+  // Utility functions for economy UI components
+  formatCurrency: (amount, currencySymbol = '') => {
+    return `${currencySymbol}${amount.toLocaleString()}`;
+  },
+  
+  formatDate: (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  },
+  
+  showNotification: (message, type = 'info') => {
+    // Integration with existing notification system
+    if (window.showNotification) {
+      window.showNotification(message, type);
+    } else {
+      console.log(`[${type.toUpperCase()}] ${message}`);
+    }
+  },
+  
+  // Economy-specific API helpers
+  api: {
+    async get(endpoint) {
+      const response = await fetch(`/admin/api/plugins/economy${endpoint}`, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
+      }
+      
+      return response.json();
+    },
+    
+    async post(endpoint, data) {
+      const response = await fetch(`/admin/api/plugins/economy${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
+      }
+      
+      return response.json();
+    },
+    
+    async put(endpoint, data) {
+      const response = await fetch(`/admin/api/plugins/economy${endpoint}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
+      }
+      
+      return response.json();
+    }
+  }
+};

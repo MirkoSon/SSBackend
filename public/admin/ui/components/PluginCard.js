@@ -1,3 +1,11 @@
+class PluginCard {
+  // Add your constructor and any needed properties here
+  constructor(config, element) {
+    this.config = config;
+    this.element = element;
+  }
+
+  renderCollapseButton(label, icon) {
     return `
       <button 
         class="plugin-card-collapse-btn btn btn-sm btn-outline-secondary"
@@ -276,6 +284,8 @@
     }
     this.element = null;
   }
+
+  // You may want to add buildCardClasses and render methods if used elsewhere
 }
 
 // Make available globally

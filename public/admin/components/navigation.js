@@ -107,8 +107,8 @@ class DynamicNavigation {
     const navItems = [];
     
     plugins.forEach(plugin => {
-      if (plugin.enabled && plugin.manifest && plugin.manifest.adminUI) {
-        const adminUI = plugin.manifest.adminUI;
+      if (plugin.enabled && plugin.adminUI) {
+        const adminUI = plugin.adminUI;
         
         // Create plugin navigation group
         const pluginNav = {

@@ -4,109 +4,125 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stupid Simple Backend - Admin Dashboard</title>
+    
+    <!-- Import Maps for Component Aliases -->
+    <script type="importmap">
+    {
+      "imports": {
+        "@ui/CardContainer": "/ui/components/layout/CardContainer.js",
+        "@ui/DataTable": "/ui/components/data-display/DataTable.js",
+        "@ui/SearchBar": "/ui/components/inputs/SearchBar.js",
+        "@ui/Button": "/ui/components/inputs/Button.js",
+        "@ui/Pagination": "/ui/components/navigation/Pagination.js",
+        "@ui/StatCard": "/ui/components/data-display/StatCard.js",
+        "@economy/": "/plugins/internal/economy/ui/"
+      }
+
+    }
+    </script>
+    
+    <!-- Legacy styles (load first, will be overridden) -->
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="styles/plugin-navigation.css">
+    
+    <!-- Theme System (Epic 6) -->
+    <link rel="stylesheet" href="/ui/styles/theme.css">
+    
+    <!-- Modern Dashboard Styles (Story 4.2) - LOADS LAST TO OVERRIDE -->
+    <link rel="stylesheet" href="modern-dashboard.css">
 </head>
-<body>
-    <nav class="admin-nav">
-        <div class="nav-brand">
-            <h1>🎮 Stupid Simple Backend</h1>
-            <span class="nav-subtitle">Data Browser & Management</span>
+<body class="admin-dashboard">
+    <!-- Top Navigation Bar -->
+    <nav class="top-nav">
+        <div class="top-nav__brand">
+            <span class="top-nav__icon">🎮</span>
+            <span class="top-nav__title">Stupid Simple Backend</span>
         </div>
-        <ul class="nav-menu">
-            <li><a href="#users" class="nav-link active" data-view="users">👥 Users</a></li>
-            <li><a href="#saves" class="nav-link" data-view="saves">💾 Saves</a></li>
-            <li><a href="#inventories" class="nav-link" data-view="inventories">🎒 Inventories</a></li>
-            <li><a href="#progress" class="nav-link" data-view="progress">⭐ Progress</a></li>
-            <li><a href="#exports" class="nav-link" data-view="exports">📥 Export</a></li>
-        </ul>
-        <div class="nav-actions">
-            <button id="refreshButton" class="btn btn-secondary">🔄 Refresh</button>
-            <button id="logoutButton" class="btn btn-danger">🚪 Logout</button>
+        
+        <div class="top-nav__links">
+            <a href="#users" class="top-nav__link top-nav__link--active" data-view="users">
+                <span>👥</span> Users
+            </a>
+            <a href="#saves" class="top-nav__link" data-view="saves">
+                <span>💾</span> Saves
+            </a>
+            <a href="#progress" class="top-nav__link" data-view="progress">
+                <span>⭐</span> Progress  
+            </a>
+            <a href="#exports" class="top-nav__link" data-view="exports">
+                <span>📥</span> Export
+            </a>
+        </div>
+        
+        <div class="top-nav__actions">
+            <button id="refreshButton" class="btn btn-secondary">
+                <span>🔄</span> Refresh
+            </button>
+            <button id="logoutButton" class="btn btn-danger">
+                <span>🚪</span> Logout
+            </button>
         </div>
     </nav>
 
-    <main class="dashboard-main">
-        <div class="dashboard-header">
-            <h2 id="viewTitle">Users Management</h2>
-            <div class="dashboard-stats" id="dashboardStats">
-                <div class="stat-card">
-                    <span class="stat-number" id="statNumber">-</span>
-                    <span class="stat-label" id="statLabel">Loading...</span>
+    <!-- Plugin Tab Bar -->
+    <div class="plugin-tabs-wrapper">
+        <div id="plugin-dropdown-container" class="plugins-dropdown">
+            <button class="plugins-dropdown-trigger" id="pluginMenuTrigger">🧩</button>
+            <div class="plugins-dropdown-menu" id="pluginMenu" style="display: none;">
+                <div class="plugins-dropdown-header">Available Plugins</div>
+            </div>
+        </div>
+        <div id="plugin-tabs-container" class="plugin-tabs-container"></div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="content-container">
+        <div id="core-dashboard-content" class="dashboard-view">
+            <div class="dashboard-header">
+                <h2 id="viewTitle">Users Management</h2>
+                <div class="dashboard-stats" id="dashboardStats">
+                    <div class="stat-card">
+                        <span class="stat-number" id="statNumber">-</span>
+                        <span class="stat-label" id="statLabel">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="dashboard-controls">
+                <div class="search-container">
+                    <input type="text" id="searchInput" placeholder="Search..." class="search-input">
+                    <button id="searchButton" class="btn btn-primary">🔍 Search</button>
+                </div>
+                <div class="view-controls">
+                    <button id="exportCurrentButton" class="btn btn-success">📥 Export Current</button>
+                    <button id="autoRefreshToggle" class="btn btn-secondary">⏰ Auto-refresh: OFF</button>
+                </div>
+            </div>
+            <div class="dashboard-content" id="dashboardContent">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>Loading data...</p>
                 </div>
             </div>
         </div>
-
-        <div class="dashboard-controls">
-            <div class="search-container">
-                <input 
-                    type="text" 
-                    id="searchInput" 
-                    placeholder="Search..." 
-                    class="search-input"
-                >
-                <button id="searchButton" class="btn btn-primary">🔍 Search</button>
-            </div>
-            <div class="view-controls">
-                <button id="exportCurrentButton" class="btn btn-success">📥 Export Current</button>
-                <button id="autoRefreshToggle" class="btn btn-secondary">⏰ Auto-refresh: OFF</button>
-            </div>
-        </div>
-
-        <div class="dashboard-content" id="dashboardContent">
-            <div class="loading-spinner">
-                <div class="spinner"></div>
-                <p>Loading data...</p>
+        <div id="plugin-content-area" style="display: none;">
+            <div id="economy-plugin-container" class="plugin-view" style="display: none;">
+                <div class="loading-spinner"><div class="spinner"></div><p>Loading Economy Plugin...</p></div>
             </div>
         </div>
     </main>
 
-    <!-- Modal for detailed views -->
     <div id="detailModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="modalTitle">Details</h3>
                 <span class="modal-close">&times;</span>
             </div>
-            <div class="modal-body" id="modalBody">
-                <!-- Dynamic content -->
-            </div>
+            <div class="modal-body" id="modalBody"></div>
         </div>
     </div>
+    <div id="toast" class="toast"><div class="toast-content"><span id="toastMessage"></span></div></div>
 
-    <!-- Toast notifications -->
-    <div id="toast" class="toast">
-        <div class="toast-content">
-            <span id="toastMessage"></span>
-        </div>
-    </div>
-
-    <!-- Plugin UI Framework -->
-    <link rel="stylesheet" href="ui/styles/plugin-framework.css">
-    <link rel="stylesheet" href="ui/styles/plugin-components.css">
-    <link rel="stylesheet" href="ui/styles/plugin-demo.css">
-    
-    <script src="ui/framework/PluginErrorBoundary.js"></script>
-    <script src="ui/framework/PluginEventBus.js"></script>
-    <script src="ui/framework/PluginRouter.js"></script>
-    <script src="ui/framework/PluginUILoader.js"></script>
-    
-    <!-- Plugin UI Components -->
-    <script src="ui/components/PluginTable.js"></script>
-    <script src="ui/components/PluginForm.js"></script>
-    <script src="ui/components/PluginChart.js"></script>
-    <script src="ui/components/PluginCard.js"></script>
-    <script src="ui/components/PluginModal.js"></script>
-    <script src="ui/components/PluginButton.js"></script>
-    <script src="ui/components/PluginInput.js"></script>
-    
-    <!-- Plugin Examples -->
-    <script src="ui/examples/plugin-examples.js"></script>
-    
-    <!-- Navigation and Dashboard -->
-    <script src="components/navigationRenderer.js"></script>
-    <script src="components/pluginNavigation.js"></script>
-    <script src="components/navigation.js"></script>
+    <script type="module" src="/plugins/internal/economy/ui/economyUI.module.js"></script>
     <script src="script.js"></script>
+    <script src="admin-dashboard-integration.js"></script>
 </body>
 </html>

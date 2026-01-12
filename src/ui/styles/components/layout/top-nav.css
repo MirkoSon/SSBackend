@@ -1,0 +1,21 @@
+/* TopNav Component Styles */
+.top-nav {
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.top-nav-brand {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+}
+
+.top-nav-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}

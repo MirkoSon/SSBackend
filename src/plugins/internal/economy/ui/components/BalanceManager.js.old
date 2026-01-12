@@ -1,0 +1,822 @@
+  async handleBulkAction(action) {
+    const selectedUserIds = Array.from(this.selectedUsers);
+    
+    if (selectedUserIds.length === 0) {
+      this.showErrorMessage('No users selected');
+      return;
+    }
+
+    switch (action) {
+      case 'export':
+        await this.exportSelectedUsers(selectedUserIds);
+        break;
+      case 'bulk-adjust':
+        this.showBulkAdjustModal(selectedUserIds);
+        break;
+      case 'freeze':
+        await this.bulkFreezeBalances(selectedUserIds);
+        break;
+      case 'unfreeze':
+        await this.bulkUnfreezeBalances(selectedUserIds);
+        break;
+      default:
+        console.log('Unknown bulk action:', action);
+    }
+  }
+
+  async showBalanceModal(userId) {
+    const user = this.users.find(u => u.id === userId);
+    if (!user) return;
+
+    const modalHtml = `
+      <div class="modal-backdrop">
+        <div class="modal balance-modal">
+          <div class="modal-header">
+            <h3>Modify Balance: ${user.username}</h3>
+            <button class="modal-close">&times;</button>
+          </div>
+          
+          <div class="modal-body">
+            <div class="current-balances">
+              <h4>Current Balances:</h4>
+              ${this.renderUserBalances(user.balances)}
+            </div>
+
+            <form class="balance-adjustment-form">
+              <div class="form-group">
+                <label for="currency-select">Currency:</label>
+                <select id="currency-select" class="form-control" required>
+                  ${this.currencies.map(currency => 
+                    `<option value="${currency.id}">${currency.symbol} ${currency.name}</option>`
+                  ).join('')}
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="adjustment-type">Adjustment Type:</label>
+                <select id="adjustment-type" class="form-control" required>
+                  <option value="add">Add Amount</option>
+                  <option value="subtract">Subtract Amount</option>
+                  <option value="set">Set Exact Amount</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="adjustment-amount">Amount:</label>
+                <input type="number" id="adjustment-amount" class="form-control" 
+                       min="0" step="1" required>
+              </div>
+
+              <div class="form-group">
+                <label for="adjustment-reason">Reason (required):</label>
+                <textarea id="adjustment-reason" class="form-control" rows="3" 
+                         placeholder="Explain the reason for this balance adjustment..." required></textarea>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+                <button type="button" class="btn btn-primary confirm-balance-change"
+                        data-user-id="${userId}">
+                  Apply Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+  }
+
+  async confirmBalanceChange() {
+    const userId = parseInt(document.querySelector('.confirm-balance-change').dataset.userId);
+    const currency = document.getElementById('currency-select').value;
+    const adjustmentType = document.getElementById('adjustment-type').value;
+    const amount = parseInt(document.getElementById('adjustment-amount').value);
+    const reason = document.getElementById('adjustment-reason').value.trim();
+
+    if (!currency || !amount || !reason) {
+      this.showErrorMessage('All fields are required');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/admin/api/plugins/economy/balances/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currency,
+          adjustmentType,
+          amount,
+          reason
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Balance adjustment failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      this.closeModal();
+      await this.loadInitialData(); // Refresh data
+      this.showSuccessMessage(`Balance adjusted successfully for ${result.username}`);
+      
+    } catch (error) {
+      console.error('Error adjusting balance:', error);
+      this.showErrorMessage('Failed to adjust balance');
+    }
+  }
+
+  async showTransactionHistory(userId) {
+    const user = this.users.find(u => u.id === userId);
+    if (!user) return;
+
+    try {
+      const response = await fetch(`/admin/api/plugins/economy/transactions/${userId}/history`, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to load transaction history: ${response.status}`);
+      }
+
+      const transactions = await response.json();
+
+      const modalHtml = `
+        <div class="modal-backdrop">
+          <div class="modal transaction-history-modal">
+            <div class="modal-header">
+              <h3>Transaction History: ${user.username}</h3>
+              <button class="modal-close">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+              <div class="transaction-history">
+                ${transactions.length > 0 
+                  ? this.renderTransactionHistory(transactions)
+                  : '<div class="no-transactions">No transaction history found</div>'
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    } catch (error) {
+      console.error('Error loading transaction history:', error);
+      this.showErrorMessage('Failed to load transaction history');
+    }
+  }
+
+  renderTransactionHistory(transactions) {
+    return `
+      <div class="transaction-list">
+        ${transactions.map(tx => `
+          <div class="transaction-item">
+            <div class="transaction-header">
+              <span class="transaction-type ${tx.amount >= 0 ? 'credit' : 'debit'}">
+                ${tx.amount >= 0 ? '📈' : '📉'} ${tx.transaction_type}
+              </span>
+              <span class="transaction-date">${this.formatDate(tx.created_at)}</span>
+            </div>
+            <div class="transaction-details">
+              <div class="transaction-amount ${tx.amount >= 0 ? 'positive' : 'negative'}">
+                ${tx.amount >= 0 ? '+' : ''}${tx.amount} ${this.getCurrencySymbol(tx.currency_id)}
+              </div>
+              <div class="transaction-balance">
+                Balance: ${tx.balance_before} → ${tx.balance_after}
+              </div>
+              ${tx.description ? `<div class="transaction-description">${tx.description}</div>` : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  getPaginatedUsers() {
+    const start = (this.currentPage - 1) * this.itemsPerPage;
+    const end = start + this.itemsPerPage;
+    return this.filteredUsers.slice(start, end);
+  }
+
+  goToPage(page) {
+    this.currentPage = page;
+    this.updateDisplay();
+  }
+
+  getTotalPages() {
+    return Math.ceil(this.filteredUsers.length / this.itemsPerPage);
+  }
+
+  render() {
+    const container = document.getElementById('balance-manager');
+    if (!container) {
+      console.error('Balance manager container not found');
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="balance-manager">
+        <div class="balance-header">
+          <h2>
+            <span class="balance-icon">💳</span>
+            Balance Management
+          </h2>
+          
+          <div class="balance-controls">
+            <div class="search-box">
+              <input type="text" class="balance-search-input" 
+                     placeholder="Search by username or ID..." 
+                     value="${this.searchQuery}">
+            </div>
+            
+            <select class="currency-filter">
+              <option value="all">All Currencies</option>
+              ${this.currencies.map(currency => 
+                `<option value="${currency.id}" ${currency.id === this.selectedCurrency ? 'selected' : ''}>
+                  ${currency.symbol} ${currency.name}
+                </option>`
+              ).join('')}
+            </select>
+            
+            <select class="sort-select">
+              <option value="total_value:desc">Total Value (High to Low)</option>
+              <option value="total_value:asc">Total Value (Low to High)</option>
+              <option value="username:asc">Username (A-Z)</option>
+              <option value="username:desc">Username (Z-A)</option>
+              <option value="last_active:desc">Recently Active</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="bulk-actions">
+          <span class="selected-info">
+            <span class="selected-count">0</span> users selected
+          </span>
+          <div class="bulk-buttons">
+            <button class="btn btn-secondary bulk-action-btn" data-action="export">
+              📊 Export Selected
+            </button>
+            <button class="btn btn-warning bulk-action-btn" data-action="bulk-adjust">
+              💰 Bulk Adjust
+            </button>
+            <button class="btn btn-danger bulk-action-btn" data-action="freeze">
+              🔒 Freeze Balances
+            </button>
+            <button class="btn btn-success bulk-action-btn" data-action="unfreeze">
+              🔓 Unfreeze Balances
+            </button>
+          </div>
+        </div>
+
+        <div class="balance-table-container">
+          ${this.renderBalanceTable()}
+        </div>
+
+        <div class="balance-pagination">
+          ${this.renderPagination()}
+        </div>
+      </div>
+    `;
+  }
+
+  renderBalanceTable() {
+    const users = this.getPaginatedUsers();
+    
+    if (users.length === 0) {
+      return `
+        <div class="no-users">
+          <div class="no-users-icon">🔍</div>
+          <div class="no-users-message">No users found matching your criteria</div>
+        </div>
+      `;
+    }
+
+    return `
+      <table class="balance-table">
+        <thead>
+          <tr>
+            <th>
+              <input type="checkbox" class="select-all-checkbox">
+            </th>
+            <th>User</th>
+            ${this.currencies.map(currency => 
+              `<th>${currency.symbol} ${currency.name}</th>`
+            ).join('')}
+            <th>Total Value</th>
+            <th>Last Active</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${users.map(user => this.renderUserRow(user)).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  renderUserRow(user) {
+    const isSelected = this.selectedUsers.has(user.id);
+    const totalValue = this.calculateTotalValue(user.balances);
+    const lastActive = user.last_active ? this.formatDate(user.last_active) : 'Never';
+
+    return `
+      <tr class="user-row ${isSelected ? 'selected' : ''}">
+        <td>
+          <input type="checkbox" class="user-checkbox" 
+                 data-user-id="${user.id}" ${isSelected ? 'checked' : ''}>
+        </td>
+        <td class="user-info">
+          <div class="user-details">
+            <div class="username">${user.username || 'Unknown'}</div>
+            <div class="user-id">ID: ${user.id}</div>
+          </div>
+        </td>
+        ${this.currencies.map(currency => {
+          const balance = user.balances?.[currency.id] || 0;
+          return `<td class="balance-cell">
+            <span class="balance-amount">${balance.toLocaleString()}</span>
+          </td>`;
+        }).join('')}
+        <td class="total-value">
+          <strong>${totalValue.toLocaleString()}</strong>
+        </td>
+        <td class="last-active">${lastActive}</td>
+        <td class="actions">
+          <button class="btn btn-sm btn-primary modify-balance-btn" 
+                  data-user-id="${user.id}" title="Modify Balance">
+            ✏️
+          </button>
+          <button class="btn btn-sm btn-secondary view-history-btn" 
+                  data-user-id="${user.id}" title="View Transaction History">
+            📊
+          </button>
+        </td>
+      </tr>
+    `;
+  }
+
+  renderUserBalances(balances) {
+    if (!balances) return '<div class="no-balances">No balances found</div>';
+
+    return `
+      <div class="balance-list">
+        ${this.currencies.map(currency => {
+          const balance = balances[currency.id] || 0;
+          return `
+            <div class="balance-item">
+              <span class="currency-info">
+                ${currency.symbol} ${currency.name}
+              </span>
+              <span class="balance-amount">${balance.toLocaleString()}</span>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  renderPagination() {
+    const totalPages = this.getTotalPages();
+    
+    if (totalPages <= 1) return '';
+
+    const pages = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    // Previous button
+    if (this.currentPage > 1) {
+      pages.push(`
+        <button class="page-btn" data-page="${this.currentPage - 1}">
+          ← Previous
+        </button>
+      `);
+    }
+
+    // Page numbers
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(`
+        <button class="page-btn ${i === this.currentPage ? 'active' : ''}" 
+                data-page="${i}">
+          ${i}
+        </button>
+      `);
+    }
+
+    // Next button
+    if (this.currentPage < totalPages) {
+      pages.push(`
+        <button class="page-btn" data-page="${this.currentPage + 1}">
+          Next →
+        </button>
+      `);
+    }
+
+    return `
+      <div class="pagination-info">
+        Showing ${(this.currentPage - 1) * this.itemsPerPage + 1} to 
+        ${Math.min(this.currentPage * this.itemsPerPage, this.filteredUsers.length)} 
+        of ${this.filteredUsers.length} users
+      </div>
+      <div class="pagination-buttons">
+        ${pages.join('')}
+      </div>
+    `;
+  }
+
+  updateDisplay() {
+    const tableContainer = document.querySelector('.balance-table-container');
+    const paginationContainer = document.querySelector('.balance-pagination');
+    
+    if (tableContainer) {
+      tableContainer.innerHTML = this.renderBalanceTable();
+    }
+    
+    if (paginationContainer) {
+      paginationContainer.innerHTML = this.renderPagination();
+    }
+
+    this.updateBulkActionButtons();
+  }
+
+  handleBalanceUpdate(data) {
+    // Update user data when balance is modified
+    const userIndex = this.users.findIndex(user => user.id === data.userId);
+    if (userIndex !== -1) {
+      this.users[userIndex] = { ...this.users[userIndex], ...data };
+      this.applyFilters();
+    }
+  }
+
+  closeModal() {
+    const modals = document.querySelectorAll('.modal-backdrop');
+    modals.forEach(modal => modal.remove());
+  }
+
+  renderError(message) {
+    const container = document.getElementById('balance-manager');
+    if (container) {
+      container.innerHTML = `
+        <div class="error-state">
+          <div class="error-icon">⚠️</div>
+          <div class="error-message">${message}</div>
+          <button class="btn btn-primary" onclick="location.reload()">
+            Retry
+          </button>
+        </div>
+      `;
+    }
+  }
+
+  // Utility methods
+  formatDate(dateString) {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  getCurrencySymbol(currencyId) {
+    const currency = this.currencies.find(c => c.id === currencyId);
+    return currency ? currency.symbol : '?';
+  }
+
+  showSuccessMessage(message) {
+    console.log('Success:', message);
+    // Implement toast notification
+  }
+
+  showErrorMessage(message) {
+    console.error('Error:', message);
+    // Implement toast notification
+  }
+
+  async exportSelectedUsers(userIds) {
+    try {
+      const response = await fetch('/admin/api/plugins/economy/export/balances', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userIds })
+      });
+
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `balance-export-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      this.showSuccessMessage('Balance data exported successfully');
+    } catch (error) {
+      console.error('Export error:', error);
+      this.showErrorMessage('Failed to export balance data');
+    }
+  }
+
+  destroy() {
+    if (this.eventBus) {
+      this.eventBus.off('economy:balance:updated');
+    }
+  }
+}
+
+// Export for use by Plugin UI Framework
+window.BalanceManager = BalanceManager;}">
+          ← Previous
+        </button>
+      `);
+    }
+
+    // Page numbers
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(`
+        <button class="page-btn ${i === this.currentPage ? 'active' : ''}" 
+                data-page="${i}">
+          ${i}
+        </button>
+      `);
+    }
+
+    // Next button
+    if (this.currentPage < totalPages) {
+      pages.push(`
+        <button class="page-btn" data-page="${this.currentPage + 1}">
+          Next →
+        </button>
+      `);
+    }
+
+    return `
+      <div class="pagination-info">
+        Showing ${(this.currentPage - 1) * this.itemsPerPage + 1} to 
+        ${Math.min(this.currentPage * this.itemsPerPage, this.filteredUsers.length)} 
+        of ${this.filteredUsers.length} users
+      </div>
+      <div class="pagination-buttons">
+        ${pages.join('')}
+      </div>
+    `;
+  }
+
+  updateDisplay() {
+    const tableContainer = document.querySelector('.balance-table-container');
+    const paginationContainer = document.querySelector('.balance-pagination');
+    
+    if (tableContainer) {
+      tableContainer.innerHTML = this.renderBalanceTable();
+    }
+    
+    if (paginationContainer) {
+      paginationContainer.innerHTML = this.renderPagination();
+    }
+
+    this.updateBulkActionButtons();
+  }
+
+  handleBalanceUpdate(data) {
+    // Update user data when balance is modified
+    const userIndex = this.users.findIndex(user => user.id === data.userId);
+    if (userIndex !== -1) {
+      this.users[userIndex] = { ...this.users[userIndex], ...data };
+      this.applyFilters();
+    }
+  }
+
+  closeModal() {
+    const modals = document.querySelectorAll('.modal-backdrop');
+    modals.forEach(modal => modal.remove());
+  }
+
+  renderError(message) {
+    const container = document.getElementById('balance-manager');
+    if (container) {
+      container.innerHTML = `
+        <div class="error-state">
+          <div class="error-icon">⚠️</div>
+          <div class="error-message">${message}</div>
+          <button class="btn btn-primary" onclick="location.reload()">
+            Retry
+          </button>
+        </div>
+      `;
+    }
+  }
+
+  // Utility methods
+  formatDate(dateString) {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  getCurrencySymbol(currencyId) {
+    const currency = this.currencies.find(c => c.id === currencyId);
+    return currency ? currency.symbol : '?';
+  }
+
+  showSuccessMessage(message) {
+    console.log('Success:', message);
+    // Implement toast notification
+  }
+
+  showErrorMessage(message) {
+    console.error('Error:', message);
+    // Implement toast notification
+  }
+
+  async exportSelectedUsers(userIds) {
+    try {
+      const response = await fetch('/admin/api/plugins/economy/export/balances', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userIds })
+      });
+
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `balance-export-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      this.showSuccessMessage('Balance data exported successfully');
+    } catch (error) {
+      console.error('Export error:', error);
+      this.showErrorMessage('Failed to export balance data');
+    }
+  }
+
+  async showBulkAdjustModal(selectedUserIds) {
+    const modalHtml = `
+      <div class="modal-backdrop">
+        <div class="modal bulk-adjust-modal">
+          <div class="modal-header">
+            <h3>Bulk Balance Adjustment (${selectedUserIds.length} users)</h3>
+            <button class="modal-close">&times;</button>
+          </div>
+          
+          <div class="modal-body">
+            <div class="warning-notice">
+              <span class="warning-icon">⚠️</span>
+              <span>This action will affect ${selectedUserIds.length} users. Proceed with caution.</span>
+            </div>
+
+            <form class="bulk-adjustment-form">
+              <div class="form-group">
+                <label for="bulk-currency-select">Currency:</label>
+                <select id="bulk-currency-select" class="form-control" required>
+                  ${this.currencies.map(currency => 
+                    `<option value="${currency.id}">${currency.symbol} ${currency.name}</option>`
+                  ).join('')}
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="bulk-adjustment-type">Adjustment Type:</label>
+                <select id="bulk-adjustment-type" class="form-control" required>
+                  <option value="add">Add Amount to Each User</option>
+                  <option value="subtract">Subtract Amount from Each User</option>
+                  <option value="set">Set Exact Amount for Each User</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="bulk-adjustment-amount">Amount:</label>
+                <input type="number" id="bulk-adjustment-amount" class="form-control" 
+                       min="0" step="1" required>
+              </div>
+
+              <div class="form-group">
+                <label for="bulk-adjustment-reason">Reason (required):</label>
+                <textarea id="bulk-adjustment-reason" class="form-control" rows="3" 
+                         placeholder="Explain the reason for this bulk balance adjustment..." required></textarea>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+                <button type="button" class="btn btn-warning confirm-bulk-adjustment"
+                        data-user-ids="${selectedUserIds.join(',')}">
+                  Apply Bulk Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    // Add bulk adjustment confirmation handler
+    document.querySelector('.confirm-bulk-adjustment').addEventListener('click', () => {
+      this.confirmBulkAdjustment(selectedUserIds);
+    });
+  }
+
+  async confirmBulkAdjustment(userIds) {
+    const currency = document.getElementById('bulk-currency-select').value;
+    const adjustmentType = document.getElementById('bulk-adjustment-type').value;
+    const amount = parseInt(document.getElementById('bulk-adjustment-amount').value);
+    const reason = document.getElementById('bulk-adjustment-reason').value.trim();
+
+    if (!currency || !amount || !reason) {
+      this.showErrorMessage('All fields are required');
+      return;
+    }
+
+    try {
+      // Process bulk adjustments in batches to avoid overwhelming the server
+      const batchSize = 10;
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (let i = 0; i < userIds.length; i += batchSize) {
+        const batch = userIds.slice(i, i + batchSize);
+        
+        const promises = batch.map(userId => 
+          fetch(`/admin/api/plugins/economy/balances/${userId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              currency,
+              adjustmentType,
+              amount,
+              reason: `Bulk adjustment: ${reason}`
+            })
+          }).then(response => response.ok ? 'success' : 'error')
+            .catch(() => 'error')
+        );
+
+        const results = await Promise.all(promises);
+        successCount += results.filter(r => r === 'success').length;
+        errorCount += results.filter(r => r === 'error').length;
+      }
+      
+      this.closeModal();
+      await this.loadInitialData(); // Refresh data
+      
+      if (errorCount === 0) {
+        this.showSuccessMessage(`Bulk adjustment completed successfully for ${successCount} users`);
+      } else {
+        this.showErrorMessage(`Bulk adjustment completed with ${successCount} successes and ${errorCount} errors`);
+      }
+      
+    } catch (error) {
+      console.error('Error with bulk adjustment:', error);
+      this.showErrorMessage('Failed to complete bulk adjustment');
+    }
+  }
+
+  async bulkFreezeBalances(userIds) {
+    // Placeholder for bulk freeze functionality
+    console.log('Bulk freeze balances:', userIds);
+    this.showSuccessMessage(`Balance freeze initiated for ${userIds.length} users`);
+  }
+
+  async bulkUnfreezeBalances(userIds) {
+    // Placeholder for bulk unfreeze functionality
+    console.log('Bulk unfreeze balances:', userIds);
+    this.showSuccessMessage(`Balance unfreeze initiated for ${userIds.length} users`);
+  }
+
+  destroy() {
+    if (this.eventBus) {
+      this.eventBus.off('economy:balance:updated');
+    }
+  }
+}
+
+// Export for use by Plugin UI Framework
+window.BalanceManager = BalanceManager;

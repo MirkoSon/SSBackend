@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test for Story 6.11 - Economy Dashboard Refactor</title>
+    <link rel="stylesheet" href="../src/ui/styles/theme.css">
+    <link rel="stylesheet" href="../src/ui/styles/components/card-container.css">
+    <link rel="stylesheet" href="../src/ui/styles/components/stat-card.css">
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        #test-results { margin-top: 20px; border-top: 1px solid #ccc; padding-top: 20px; }
+        .pass { color: green; }
+        .fail { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Test for Story 6.11 - Economy Dashboard Refactor</h1>
+    <p>This page tests the refactoring of the Economy Dashboard to use the new CardContainer and StatCard components.</p>
+    
+    <div id="economy-dashboard"></div>
+    
+    <div id="test-results"></div>
+
+    <!-- Mock PluginFramework -->
+    <script>
+        window.PluginFramework = {
+            eventBus: { on: () => {}, off: () => {} },
+            components: {}
+        };
+    </script>
+
+    <!-- Load Components -->
+    <script type="module">
+        import CardContainer from '../src/ui/components/layout/CardContainer.js';
+        import StatCard from '../src/ui/components/data-display/StatCard.js';
+        
+        window.PluginFramework.components.CardContainer = CardContainer;
+        window.PluginFramework.components.StatCard = StatCard;
+
+        // Load the dashboard component after its dependencies are ready
+        const script = document.createElement('script');
+        script.src = '../src/plugins/internal/economy/ui/components/EconomyDashboard.js';
+        script.onload = () => {
+            // Delay to allow dashboard to fetch data and render
+            setTimeout(runTests, 1000); 
+        };
+        document.head.appendChild(script);
+    </script>
+
+    <script>
+        async function runTests() {
+            const resultsContainer = document.getElementById('test-results');
+            resultsContainer.innerHTML = '<h2>Test Results</h2>';
+            let passCount = 0;
+            let failCount = 0;
+
+            function assert(condition, message) {
+                const resultEl = document.createElement('div');
+                if (condition) {
+                    resultEl.className = 'pass';
+                    resultEl.textContent = `✅ PASS: ${message}`;
+                    passCount++;
+                } else {
+                    resultEl.className = 'fail';
+                    resultEl.textContent = `❌ FAIL: ${message}`;
+                    failCount++;
+                }
+                resultsContainer.appendChild(resultEl);
+            }
+
+            const dashboardContainer = document.getElementById('economy-dashboard');
+
+            // AC4: Dashboard layout uses CardContainer component
+            const cardContainer = dashboardContainer.querySelector('.card-container');
+            assert(cardContainer, "The dashboard is wrapped in a .card-container element.");
+
+            // AC1: Refactored to use StatCard components
+            const statCards = dashboardContainer.querySelectorAll('.stat-card');
+            assert(statCards.length === 4, `Found 4 .stat-card elements as expected.`);
+
+            // AC6: Legacy dashboard HTML string code removed
+            const legacyMetricCard = dashboardContainer.querySelector('.metric-card');
+            assert(!legacyMetricCard, "Legacy .metric-card class is no longer present.");
+
+            // AC2: Displays correct metrics
+            const labels = ['Total Users', 'Total Balance', 'Active Transactions', 'Daily Volume'];
+            labels.forEach(label => {
+                const labelEl = Array.from(dashboardContainer.querySelectorAll('.stat-card__label')).find(el => el.textContent.includes(label));
+                assert(labelEl, `Metric label "${label}" is displayed.`);
+            });
+
+            // IV1 & IV5: Dashboard loads correctly with all metrics displayed
+            assert(dashboardContainer.innerHTML.trim() !== '', "Dashboard container is not empty.");
+            const valueElements = dashboardContainer.querySelectorAll('.stat-card__value');
+            assert(valueElements.length === 4, "All 4 stat cards have value elements.");
+
+            // Final Summary
+            const summaryEl = document.createElement('h3');
+            if (failCount === 0) {
+                summaryEl.className = 'pass';
+                summaryEl.textContent = `All ${passCount} tests passed! Story 6.11 is verified.`;
+            } else {
+                summaryEl.className = 'fail';
+                summaryEl.textContent = `${failCount} out of ${passCount + failCount} tests failed.`;
+            }
+            resultsContainer.appendChild(summaryEl);
+        }
+    </script>
+</body>
+</html>

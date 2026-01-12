@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple PluginChart Test</title>
+</head>
+<body>
+    <h1>Simple PluginChart Loading Test</h1>
+    <div id="status"></div>
+    <div id="test-chart" style="width: 400px; height: 300px; border: 1px solid #ccc; margin: 20px 0;"></div>
+    <button onclick="testChart()">Test Chart Creation</button>
+
+    <!-- Load PluginChart -->
+    <script src="components/PluginChart.js"></script>
+    
+    <script>
+        function updateStatus(message, isError = false) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<p style="color: ${isError ? 'red' : 'green'}">${message}</p>`;
+            console.log(message);
+        }
+
+        // Check if PluginChart loaded
+        window.addEventListener('load', () => {
+            if (typeof PluginChart !== 'undefined') {
+                updateStatus('✅ PluginChart loaded successfully!');
+                console.log('PluginChart constructor:', PluginChart);
+            } else {
+                updateStatus('❌ PluginChart failed to load', true);
+                console.error('Available window objects:', Object.keys(window).filter(k => k.toLowerCase().includes('plugin')));
+            }
+        });
+
+        function testChart() {
+            if (typeof PluginChart === 'undefined') {
+                updateStatus('❌ PluginChart is not available', true);
+                return;
+            }
+
+            try {
+                const testData = {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+                    datasets: [{
+                        label: 'Test Data',
+                        data: [10, 20, 30, 25, 35],
+                        backgroundColor: '#007bff'
+                    }]
+                };
+
+                // Get the container element
+                const containerElement = document.getElementById('test-chart');
+                if (!containerElement) {
+                    updateStatus('❌ Test chart container not found', true);
+                    return;
+                }
+
+                updateStatus('🔄 Creating chart...');
+                console.log('Container element:', containerElement);
+                console.log('Chart data:', testData);
+
+                const chart = new PluginChart({
+                    type: 'bar',
+                    container: containerElement,  // Pass DOM element, not selector
+                    data: testData,
+                    title: 'Simple Test Chart',
+                    height: '250px'
+                });
+
+                updateStatus('✅ Chart created successfully!');
+                console.log('Chart instance:', chart);
+
+            } catch (error) {
+                updateStatus(`❌ Chart creation failed: ${error.message}`, true);
+                console.error('Full error:', error);
+                console.error('Error stack:', error.stack);
+            }
+        }
+    </script>
+</body>
+</html>

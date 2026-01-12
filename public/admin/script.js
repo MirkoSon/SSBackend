@@ -10,7 +10,9 @@ class AdminDashboard {
     this.autoRefreshEnabled = false;
     this.searchTimeout = null;
     this.currentData = [];
-    this.dynamicNav = null; // Dynamic navigation instance
+    this.pluginNavManager = null;
+    this.pluginTabs = null;
+    this.pluginDropdown = null;
     
     this.init();
   }
@@ -19,11 +21,59 @@ class AdminDashboard {
     await this.checkAuthStatus();
     this.setupEventListeners();
     this.setupNavigation();
+    this.initializeTabNavigation();
     
     // Initialize dynamic navigation if components are available
     await this.initializePluginNavigation();
     
     await this.loadView(this.currentView);
+  }
+
+  initializeTabNavigation() {
+    console.log('Initializing Tab Navigation...');
+    const container = document.getElementById('plugin-nav-container');
+    if (!container) return;
+
+    this.pluginNavManager = new window.PluginNavigationManager();
+    
+    // Mock plugins for demonstration
+    const mockPlugins = [
+      { name: 'economy', version: '1.0.0', adminUI: { enabled: true, navigation: { label: 'Economy', icon: '💰', priority: 10 } } },
+      { name: 'achievements', version: '1.0.0', adminUI: { enabled: true, navigation: { label: 'Achievements', icon: '🏆', priority: 20 } } },
+      { name: 'leaderboards', version: '1.0.0', adminUI: { enabled: false, navigation: { label: 'Leaderboards', icon: '📊', priority: 30 } } },
+    ];
+    mockPlugins.forEach(p => this.pluginNavManager.registerPlugin(p));
+
+    const allPlugins = this.pluginNavManager.getRegisteredPlugins().map(p => {
+        const manifest = mockPlugins.find(m => m.name === p.id);
+        return { ...p, enabled: manifest.adminUI.enabled };
+    });
+
+    this.pluginTabs = new PluginTabs({
+        allPlugins: allPlugins,
+        activePlugin: 'economy',
+        onTabClick: (pluginId) => {
+            console.log('Tab clicked:', pluginId);
+            // This would navigate to the plugin's view.
+            // For now, we just update the active tab visually.
+            this.pluginTabs.config.activePlugin = pluginId;
+            this.pluginTabs.render();
+        },
+    });
+
+    this.pluginDropdown = new PluginDropdown({
+        plugins: allPlugins,
+        onToggle: (pluginId, isEnabled) => {
+            console.log('Toggle clicked:', pluginId, isEnabled);
+        }
+    });
+
+    const navWrapper = document.createElement('div');
+    navWrapper.className = 'plugin-nav-wrapper';
+    navWrapper.appendChild(this.pluginTabs.render());
+    navWrapper.appendChild(this.pluginDropdown.render());
+
+    container.appendChild(navWrapper);
   }
 
   async checkAuthStatus() {

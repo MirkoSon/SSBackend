@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataTable Component Test Page</title>
+    <link rel="stylesheet" href="../src/ui/styles/theme.css">
+    <link rel="stylesheet" href="../src/ui/styles/components/data-table.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            margin-bottom: 40px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 16px;
+            color: #333;
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status-in-stock {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-out-of-stock {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>DataTable Component Test Page</h1>
+    
+    <div class="test-section">
+        <div class="test-title">User Management Table</div>
+        <div id="user-table"></div>
+    </div>
+    
+    <div class="test-section">
+        <div class="test-title">Product Inventory Table</div>
+        <div id="product-table"></div>
+    </div>
+    
+    <div class="test-section">
+        <div class="test-title">Empty State</div>
+        <div id="empty-table"></div>
+    </div>
+
+    <script>
+        // Mock DataTable for testing
+        class TestDataTable {
+            constructor(options) {
+                this.columns = options.columns || [];
+                this.data = options.data || [];
+                this.actions = options.actions || [];
+                this.formatters = options.formatters || {};
+                this.emptyMessage = options.emptyMessage || 'No data available';
+            }
+
+            render() {
+                if (this.data.length === 0) {
+                    return `
+                        <div class="data-table">
+                            <div class="data-table__empty">
+                                <p class="data-table__empty-message">${this.emptyMessage}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                let html = '<div class="data-table"><table class="data-table__table">';
+                
+                // Header
+                html += '<thead class="data-table__header"><tr>';
+                this.columns.forEach(col => {
+                    html += `<th class="data-table__header-cell">${col.label}</th>`;
+                });
+                if (this.actions.length > 0) {
+                    html += '<th class="data-table__header-cell data-table__actions-header">Actions</th>';
+                }
+                html += '</tr></thead>';
+                
+                // Body
+                html += '<tbody class="data-table__body">';
+                this.data.forEach(row => {
+                    html += '<tr class="data-table__row">';
+                    this.columns.forEach(col => {
+                        let value = row[col.key];
+                        if (this.formatters[col.type]) {
+                            value = this.formatters[col.type](value);
+                        }
+                        html += `<td class="data-table__cell">${value}</td>`;
+                    });
+                    
+                    if (this.actions.length > 0) {
+                        html += '<td class="data-table__cell data-table__actions">';
+                        this.actions.forEach(action => {
+                            html += `<button class="data-table__action-btn ${action.className}" data-action="${action.action}" data-id="${row.id}">${action.label}</button>`;
+                        });
+                        html += '</td>';
+                    }
+                    html += '</tr>';
+                });
+                html += '</tbody></table></div>';
+                
+                return html;
+            }
+        }
+
+        // Test data
+        const users = [
+            { id: 1, name: 'Alice Johnson', email: 'alice@example.com', role: 'Admin', status: 'Active', createdAt: '2024-01-15' },
+            { id: 2, name: 'Bob Smith', email: 'bob@example.com', role: 'User', status: 'Active', createdAt: '2024-01-20' },
+            { id: 3, name: 'Carol Davis', email: 'carol@example.com', role: 'Moderator', status: 'Inactive', createdAt: '2024-01-25' }
+        ];
+
+        const products = [
+            { id: 101, name: 'Laptop Pro', price: 1299.99, stock: 25, category: 'Electronics', status: 'In Stock' },
+            { id: 102, name: 'Wireless Mouse', price: 29.99, stock: 150, category: 'Accessories', status: 'In Stock' },
+            { id: 103, name: 'USB-C Cable', price: 19.99, stock: 0, category: 'Accessories', status: 'Out of Stock' }
+        ];
+
+        const formatters = {
+            currency: (value) => '$' + parseFloat(value).toFixed(2),
+            status: (value) => {
+                const statusClass = value.toLowerCase().replace(' ', '-');
+                return '<span class="status-badge status-' + statusClass + '">' + value + '</span>';
+            }
+        };
+
+        // Initialize tables
+        document.addEventListener('DOMContentLoaded', function() {
+            // User table
+            const userTable = new TestDataTable({
+                columns: [
+                    { key: 'id', label: 'ID' },
+                    { key: 'name', label: 'Name' },
+                    { key: 'email', label: 'Email' },
+                    { key: 'role', label: 'Role' },
+                    { key: 'status', label: 'Status', type: 'status' },
+                    { key: 'createdAt', label: 'Created' }
+                ],
+                data: users,
+                actions: [
+                    { label: 'Edit', action: 'edit', className: 'btn-edit' },
+                    { label: 'Delete', action: 'delete', className: 'btn-delete' }
+                ],
+                formatters: formatters
+            });
+            document.getElementById('user-table').innerHTML = userTable.render();
+
+            // Product table
+            const productTable = new TestDataTable({
+                columns: [
+                    { key: 'id', label: 'ID' },
+                    { key: 'name', label: 'Product Name' },
+                    { key: 'price', label: 'Price', type: 'currency' },
+                    { key: 'stock', label: 'Stock' },
+                    { key: 'category', label: 'Category' },
+                    { key: 'status', label: 'Status', type: 'status' }
+                ],
+                data: products,
+                actions: [
+                    { label: 'View', action: 'view', className: 'btn-view' },
+                    { label: 'Edit', action: 'edit', className: 'btn-edit' }
+                ],
+                formatters: formatters
+            });
+            document.getElementById('product-table').innerHTML = productTable.render();
+
+            // Empty table
+            const emptyTable = new TestDataTable({
+                columns: [
+                    { key: 'id', label: 'ID' },
+                    { key: 'name', label: 'Name' }
+                ],
+                data: [],
+                emptyMessage: 'No users found'
+            });
+            document.getElementById('empty-table').innerHTML = emptyTable.render();
+        });
+    </script>
+</body>
+</html>

@@ -147,3 +147,6 @@ access.log
 # Demo files
 # ===================================
 demo/
+# BMAD (local only)
+.bmad-core/
+.bmad-*/

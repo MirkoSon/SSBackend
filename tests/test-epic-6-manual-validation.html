@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Epic 6 - Final Manual Validation</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; padding: 20px; max-width: 900px; margin: auto; }
+        h1, h2 { border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .test-case { border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+        .test-case h3 { margin-top: 0; }
+        .pass-fail { float: right; }
+        label { font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h1>Epic 6: Final Integration & Validation Test Plan</h1>
+    <p><strong>Tester:</strong> ___________________</p>
+    <p><strong>Date:</strong> ___________________</p>
+
+    <h2>Instructions</h2>
+    <p>Go through each test case below. Perform the described action and check "Pass" if the actual result matches the expected result. If not, check "Fail" and add notes.</p>
+
+    <!-- Story 6.11: Economy Dashboard -->
+    <div class="test-case">
+        <h3>Story 6.11: Refactor Economy Dashboard</h3>
+        <p><strong>Goal:</strong> Verify the Economy Dashboard uses the new StatCard and CardContainer components.</p>
+        <p><label>Test: Load the Economy Dashboard</label><span class="pass-fail"><input type="checkbox"> Pass <input type="checkbox"> Fail</span></p>
+        <p><em>Expected Result:</em> The page displays a "Economy Dashboard" title within a card. Four StatCards are visible for "Total Users", "Total Balance", "Active Transactions", and "Daily Volume".</p>
+        <textarea placeholder="Notes..."></textarea>
+    </div>
+
+    <!-- Story 6.12: Balance Manager -->
+    <div class="test-case">
+        <h3>Story 6.12: Refactor Balance Manager</h3>
+        <p><strong>Goal:</strong> Verify the Balance Manager uses the DataTable and SearchBar components.</p>
+        <p><label>Test: Load the Balance Manager</label><span class="pass-fail"><input type="checkbox"> Pass <input type="checkbox"> Fail</span></p>
+        <p><em>Expected Result:</em> The page displays a "Balance Management" card. Inside is a search bar and a data table with columns: "User ID", "Username", "Balances", "Last Updated", "Actions".</p>
+        <textarea placeholder="Notes..."></textarea>
+    </div>
+
+    <!-- Story 6.13: Transaction Monitor -->
+    <div class="test-case">
+        <h3>Story 6.13: Refactor Transaction Monitor</h3>
+        <p><strong>Goal:</strong> Verify the Transaction Monitor uses the DataTable component.</p>
+        <p><label>Test: Load the Transaction Monitor</label><span class="pass-fail"><input type="checkbox"> Pass <input type="checkbox"> Fail</span></p>
+        <p><em>Expected Result:</em> The page displays a "Transaction Monitor" card containing a search bar and a data table with transaction data.</p>
+        <textarea placeholder="Notes..."></textarea>
+    </div>
+
+    <!-- Story 6.14: Economy Analytics -->
+    <div class="test-case">
+        <h3>Story 6.14: Refactor Economy Analytics</h3>
+        <p><strong>Goal:</strong> Verify the Analytics page uses Chart.js and the new components.</p>
+        <p><label>Test: Load the Economy Analytics Page</label><span class="pass-fail"><input type="checkbox"> Pass <input type="checkbox"> Fail</span></p>
+        <p><em>Expected Result:</em> The page displays three charts within cards: "Balance Distribution" (Pie), "Transaction Volume" (Bar), and "User Growth" (Line). The charts should be interactive (show tooltips on hover).</p>
+        <textarea placeholder="Notes..."></textarea>
+    </div>
+
+    <!-- Story 6.15: Currency Config -->
+    <div class="test-case">
+        <h3>Story 6.15: Refactor Currency Config</h3>
+        <p><strong>Goal:</strong> Verify the Currency Config page uses the DataTable and styled forms.</p>
+        <p><label>Test: Load the Currency Config Page</label><span class="pass-fail"><input type="checkbox"> Pass <input type="checkbox"> Fail</span></p>
+        <p><em>Expected Result:</em> A data table lists the existing currencies. Clicking "Add New Currency" or "Edit" opens a modal with a consistently styled form.</p>
+        <textarea placeholder="Notes..."></textarea>
+    </div>
+
+    <!-- Story 6.8 & 6.9: Navigation -->
+    <div class="test-case">
+        <h3>Stories 6.8 & 6.9: Plugin Navigation</h3>
+        <p><strong>Goal:</strong> Verify the tab-based navigation system works.</p>
+        <p><label>Test: Navigate between plugin pages</label><span class="pass-fail"><input type="checkbox"> Pass <input type="checkbox"> Fail</span></p>
+        <p><em>Expected Result:</em> Plugin tabs should be visible at the top of the page. Clicking a tab should switch to that plugin's view. The dropdown menu should show a list of plugins.</p>
+        <textarea placeholder="Notes..."></textarea>
+    </div>
+
+    <!-- Cross-Cutting Concerns -->
+    <div class="test-case">
+        <h3>Cross-Cutting Concerns</h3>
+        <p><strong>Goal:</strong> Verify overall quality and consistency.</p>
+        <p><label>Test: Theme & Styling</label><span class="pass-fail"><input type="checkbox"> Pass <input type="checkbox"> Fail</span></p>
+        <p><em>Expected Result:</em> All refactored pages and components share a consistent dark theme, with correct fonts, colors, and spacing as defined in `theme.css`.</p>
+        <hr>
+        <p><label>Test: No Console Errors</label><span class="pass-fail"><input type="checkbox"> Pass <input type="checkbox"> Fail</span></p>
+        <p><em>Expected Result:</em> As you navigate through the refactored pages, the browser's developer console shows no new errors.</p>
+        <hr>
+        <p><label>Test: Responsiveness</label><span class="pass-fail"><input type="checkbox"> Pass <input type="checkbox"> Fail</span></p>
+        <p><em>Expected Result:</em> View the application on different screen widths (e.g., 1920px, 1440px, 1280px). The layout should adapt gracefully without breaking.</p>
+        <hr>
+        <p><label>Test: Cross-Browser Compatibility</label><span class="pass-fail"><input type="checkbox"> Pass <input type="checkbox"> Fail</span></p>
+        <p><em>Expected Result:</em> Repeat all tests on the latest versions of Chrome, Firefox, and Edge. All functionality should work consistently across all three browsers.</p>
+        <textarea placeholder="Notes for cross-cutting concerns..."></textarea>
+    </div>
+
+</body>
+</html>

@@ -11,7 +11,10 @@
     "build:bin": "npx pkg package.json --targets node18-linux-x64,node18-macos-x64 --output dist/ssbackend",
     "build:all": "npm run build:exe && npm run build:bin",
     "test:exe": "cd dist && .\\ssbackend.exe --help",
-    "test:bin": "cd dist && ./ssbackend --help"
+    "test:bin": "cd dist && ./ssbackend --help",
+    "bmad:refresh": "bmad-method install -f -i codex",
+    "bmad:list": "bmad-method list:agents",
+    "bmad:validate": "bmad-method validate"
   },
   "keywords": [
     "game",
@@ -29,10 +32,12 @@
     "express-session": "^1.18.2",
     "js-yaml": "^4.1.0",
     "jsonwebtoken": "^9.0.2",
+    "pdfkit": "^0.17.2",
     "sqlite3": "^5.1.6",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
+    "axios": "^1.12.2",
     "nodemon": "^3.0.1",
     "pkg": "^5.8.1"
   },

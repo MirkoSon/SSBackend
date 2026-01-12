@@ -1,27 +1,57 @@
+class PluginButton {
+  constructor(config) {
+    this.config = Object.assign({
+      size: 'medium',
+      block: false,
+      toggle: false,
+      active: false,
+      loading: false,
+      className: '',
+      container: null,
+      icon: '',
+      iconPosition: 'left',
+      label: '',
+      disabled: false,
+      onClick: () => {}
+    }, config);
+
+    this.element = document.createElement('button');
+    this.element.type = 'button';
+    this.element.className = this.buildButtonClasses();
+    this.element.disabled = this.config.disabled || this.config.loading;
+    this.element.setAttribute('aria-pressed', this.config.active ? 'true' : 'false');
+    this.setupEventListeners();
+    this.render();
+  }
+
+  buildButtonClasses() {
+    const classes = ['plugin-button'];
+    if (this.config.size === 'small') {
+      classes.push('btn-sm');
     } else if (this.config.size === 'large') {
       classes.push('btn-lg');
     }
-    
+
     // Block button
     if (this.config.block) {
       classes.push('btn-block');
     }
-    
+
     // Toggle state
     if (this.config.toggle && this.config.active) {
       classes.push('active');
     }
-    
+
     // Loading state
     if (this.config.loading) {
       classes.push('plugin-button-loading');
     }
-    
+
     // Custom classes
     if (this.config.className) {
       classes.push(this.config.className);
     }
-    
+
     return classes.join(' ');
   }
 
@@ -30,7 +60,7 @@
    */
   render() {
     this.element.innerHTML = this.renderButtonContent();
-    
+
     // Add to container if specified
     if (this.config.container) {
       if (typeof this.config.container === 'string') {
@@ -52,28 +82,28 @@
     if (this.config.loading) {
       return this.renderLoadingContent();
     }
-    
+
     const hasIcon = this.config.icon && this.config.iconPosition !== 'none';
     const hasLabel = this.config.label && this.config.iconPosition !== 'only';
-    
+
     if (!hasIcon && !hasLabel) {
       return 'Button';
     }
-    
+
     if (hasIcon && !hasLabel) {
       // Icon only
       return `<span class="button-icon" aria-hidden="true">${this.config.icon}</span>`;
     }
-    
+
     if (!hasIcon && hasLabel) {
       // Label only
       return this.config.label;
     }
-    
+
     // Icon and label
     const icon = `<span class="button-icon" aria-hidden="true">${this.config.icon}</span>`;
     const label = `<span class="button-label">${this.config.label}</span>`;
-    
+
     if (this.config.iconPosition === 'right') {
       return `${label} ${icon}`;
     } else {
@@ -88,11 +118,11 @@
   renderLoadingContent() {
     const spinner = '<span class="plugin-button-spinner" aria-hidden="true"></span>';
     const loadingText = '<span class="sr-only">Loading...</span>';
-    
+
     if (this.config.iconPosition === 'only') {
       return `${spinner}${loadingText}`;
     }
-    
+
     return `${spinner} <span class="button-label">Loading...</span>${loadingText}`;
   }
 
@@ -105,14 +135,16 @@
         e.preventDefault();
         return;
       }
-      
+
       // Handle toggle behavior
       if (this.config.toggle) {
         this.toggle();
       }
-      
+
       // Call onClick handler
-      this.config.onClick(e, this);
+      if (typeof this.config.onClick === 'function') {
+        this.config.onClick(e, this);
+      }
     });
   }
 
@@ -122,7 +154,7 @@
   toggle() {
     this.config.active = !this.config.active;
     this.element.setAttribute('aria-pressed', this.config.active.toString());
-    
+
     if (this.config.active) {
       this.element.classList.add('active');
     } else {
@@ -136,7 +168,7 @@
    */
   setLoading(loading) {
     this.config.loading = loading;
-    
+
     if (loading) {
       this.element.classList.add('plugin-button-loading');
       this.element.disabled = true;
@@ -144,7 +176,7 @@
       this.element.classList.remove('plugin-button-loading');
       this.element.disabled = this.config.disabled;
     }
-    
+
     this.render();
   }
 
@@ -155,7 +187,7 @@
   setDisabled(disabled) {
     this.config.disabled = disabled;
     this.element.disabled = disabled || this.config.loading;
-    
+
     if (disabled) {
       this.element.classList.add('disabled');
     } else {
@@ -171,7 +203,7 @@
     if (this.config.toggle) {
       this.config.active = active;
       this.element.setAttribute('aria-pressed', active.toString());
-      
+
       if (active) {
         this.element.classList.add('active');
       } else {

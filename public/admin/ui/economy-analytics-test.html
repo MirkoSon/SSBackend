@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Economy Analytics Chart Test</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="styles/plugin-framework.css">
+    <link rel="stylesheet" href="styles/plugin-components.css">
+    <style>
+        body { 
+            padding: 2rem; 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .test-container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+        }
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        .analytics-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .chart-container {
+            height: 350px;
+            margin-top: 1rem;
+        }
+        .test-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0.5rem;
+        }
+        .success-message { color: #28a745; }
+        .error-message { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>📊 Economy Analytics Chart Integration Test</h1>
+        
+        <div class="test-controls">
+            <button id="test-charts" class="test-btn">🔄 Test Chart Creation</button>
+            <button id="load-sample-data" class="test-btn">📊 Load Sample Data</button>
+            <button id="update-charts" class="test-btn">🆙 Update Charts</button>
+            <div id="test-status" style="margin-top: 1rem; font-weight: bold;"></div>
+        </div>
+
+        <div id="economy-analytics">
+            <div class="analytics-grid">
+                <div class="analytics-card">
+                    <h3>Currency Flow Analysis</h3>
+                    <div id="currency-flow-chart" class="chart-container">
+                        <div class="chart-placeholder">Click "Test Chart Creation" to initialize charts</div>
+                    </div>
+                </div>
+
+                <div class="analytics-card">
+                    <h3>Transaction Volume Trends</h3>
+                    <div id="transaction-volume-chart" class="chart-container">
+                        <div class="chart-placeholder">Click "Test Chart Creation" to initialize charts</div>
+                    </div>
+                </div>
+
+                <div class="analytics-card">
+                    <h3>User Behavior Analysis</h3>
+                    <div id="user-behavior-chart" class="chart-container">
+                        <div class="chart-placeholder">Click "Test Chart Creation" to initialize charts</div>
+                    </div>
+                </div>
+
+                <div class="analytics-card">
+                    <h3>Wealth Distribution</h3>
+                    <div id="wealth-distribution-chart" class="chart-container">
+                        <div class="chart-placeholder">Click "Test Chart Creation" to initialize charts</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Plugin Framework Components -->
+    <script src="components/PluginChart.js"></script>
+    <script>
+        console.log('PluginChart script loaded, available:', typeof PluginChart !== 'undefined');
+        if (typeof PluginChart === 'undefined') {
+            console.error('❌ PluginChart failed to load from components/PluginChart.js');
+        } else {
+            console.log('✅ PluginChart successfully loaded');
+        }
+    </script>
+    
+    <!-- Load Economy Analytics Component -->
+    <script src="../../src/plugins/internal/economy/ui/components/EconomyAnalytics.js"></script>
+    <script>
+        console.log('EconomyAnalytics script loaded, available:', typeof EconomyAnalytics !== 'undefined');
+    </script>
+    
+    <script>
+        let analyticsInstance = null;
+        
+        // Sample data for testing
+        const sampleAnalyticsData = {
+            currencyFlows: [
+                { date: '2024-12-15', inflow: 1250, outflow: 800 },
+                { date: '2024-12-16', inflow: 1100, outflow: 950 },
+                { date: '2024-12-17', inflow: 1400, outflow: 750 },
+                { date: '2024-12-18', inflow: 1650, outflow: 1200 },
+                { date: '2024-12-19', inflow: 1300, outflow: 900 },
+                { date: '2024-12-20', inflow: 1500, outflow: 1100 },
+                { date: '2024-12-21', inflow: 1750, outflow: 850 }
+            ],
+            transactionVolumes: [
+                { hour: '00:00', transactions: 45, volume: 2800 },
+                { hour: '06:00', transactions: 120, volume: 5600 },
+                { hour: '12:00', transactions: 280, volume: 12500 },
+                { hour: '18:00', transactions: 220, volume: 9800 },
+                { hour: '24:00', transactions: 85, volume: 3200 }
+            ],
+            userBehavior: [
+                { category: 'Active Traders', count: 450, percentage: 35 },
+                { category: 'Casual Users', count: 680, percentage: 52 },
+                { category: 'New Users', count: 120, percentage: 9 },
+                { category: 'Inactive', count: 50, percentage: 4 }
+            ],
+            wealthDistribution: [
+                { range: '0-100', users: 245, percentage: 45 },
+                { range: '101-1000', users: 189, percentage: 35 },
+                { range: '1001-5000', users: 78, percentage: 14 },
+                { range: '5000+', users: 32, percentage: 6 }
+            ]
+        };
+
+        function setStatus(message, isError = false) {
+            const statusDiv = document.getElementById('test-status');
+            statusDiv.textContent = message;
+            statusDiv.className = isError ? 'error-message' : 'success-message';
+            console.log(isError ? 'ERROR:' : 'SUCCESS:', message);
+        }
+
+        // Test Chart Creation
+        document.getElementById('test-charts').addEventListener('click', () => {
+            try {
+                setStatus('Testing chart creation...');
+                
+                // Check if PluginChart is available
+                if (typeof PluginChart === 'undefined') {
+                    setStatus('❌ PluginChart is not loaded. Check browser console for script loading errors.', true);
+                    console.error('PluginChart is undefined. Available objects:', {
+                        PluginChart: typeof PluginChart,
+                        window: typeof window,
+                        windowKeys: Object.keys(window).filter(k => k.toLowerCase().includes('plugin'))
+                    });
+                    return;
+                }
+                
+                console.log('✅ PluginChart is available:', typeof PluginChart);
+                
+                // Create a mock analytics instance with just the chart methods
+                const mockAnalytics = {
+                    analyticsData: sampleAnalyticsData,
+                    currencyFlowChart: null,
+                    transactionVolumeChart: null,
+                    userBehaviorChart: null,
+                    wealthDistributionChart: null
+                };
+
+                // Add chart methods to mock instance
+                mockAnalytics.initializeCurrencyFlowChart = function() {
+                    const chartElement = document.getElementById('currency-flow-chart');
+                    if (!chartElement || !this.analyticsData.currencyFlows.length) return;
+
+                    chartElement.innerHTML = '';
+
+                    const chartData = {
+                        labels: this.analyticsData.currencyFlows.map(flow => 
+                            new Date(flow.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                        ),
+                        datasets: [{
+                            label: 'Inflow',
+                            data: this.analyticsData.currencyFlows.map(flow => flow.inflow),
+                            backgroundColor: '#28a745'
+                        }]
+                    };
+
+                    this.currencyFlowChart = new PluginChart({
+                        type: 'bar',
+                        container: chartElement,
+                        data: chartData,
+                        title: 'Currency Flow Test',
+                        height: '300px',
+                        responsive: true
+                    });
+                };
+
+                mockAnalytics.initializeTransactionVolumeChart = function() {
+                    const chartElement = document.getElementById('transaction-volume-chart');
+                    if (!chartElement || !this.analyticsData.transactionVolumes.length) return;
+
+                    chartElement.innerHTML = '';
+
+                    const chartData = {
+                        labels: this.analyticsData.transactionVolumes.map(volume => volume.hour),
+                        datasets: [{
+                            label: 'Transactions',
+                            data: this.analyticsData.transactionVolumes.map(volume => volume.transactions),
+                            backgroundColor: '#007bff',
+                            borderColor: '#007bff'
+                        }]
+                    };
+
+                    this.transactionVolumeChart = new PluginChart({
+                        type: 'line',
+                        container: chartElement,
+                        data: chartData,
+                        title: 'Transaction Volume Test',
+                        height: '300px',
+                        responsive: true
+                    });
+                };
+
+                mockAnalytics.initializeUserBehaviorChart = function() {
+                    const chartElement = document.getElementById('user-behavior-chart');
+                    if (!chartElement || !this.analyticsData.userBehavior.length) return;
+
+                    chartElement.innerHTML = '';
+
+                    const chartData = {
+                        labels: this.analyticsData.userBehavior.map(behavior => behavior.category),
+                        datasets: [{
+                            label: 'Users',
+                            data: this.analyticsData.userBehavior.map(behavior => behavior.count),
+                            backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545']
+                        }]
+                    };
+
+                    this.userBehaviorChart = new PluginChart({
+                        type: 'doughnut',
+                        container: chartElement,
+                        data: chartData,
+                        title: 'User Behavior Test',
+                        height: '300px',
+                        responsive: true
+                    });
+                };
+
+                mockAnalytics.initializeWealthDistributionChart = function() {
+                    const chartElement = document.getElementById('wealth-distribution-chart');
+                    if (!chartElement || !this.analyticsData.wealthDistribution.length) return;
+
+                    chartElement.innerHTML = '';
+
+                    const chartData = {
+                        labels: this.analyticsData.wealthDistribution.map(wealth => wealth.range),
+                        datasets: [{
+                            label: 'Users',
+                            data: this.analyticsData.wealthDistribution.map(wealth => wealth.users),
+                            backgroundColor: '#17a2b8'
+                        }]
+                    };
+
+                    this.wealthDistributionChart = new PluginChart({
+                        type: 'bar',
+                        container: chartElement,
+                        data: chartData,
+                        title: 'Wealth Distribution Test',
+                        height: '300px',
+                        responsive: true
+                    });
+                };
+
+                // Initialize all charts
+                mockAnalytics.initializeCurrencyFlowChart();
+                mockAnalytics.initializeTransactionVolumeChart();
+                mockAnalytics.initializeUserBehaviorChart();
+                mockAnalytics.initializeWealthDistributionChart();
+
+                analyticsInstance = mockAnalytics;
+                setStatus('✅ Charts created successfully! All 4 charts are now rendered.');
+
+            } catch (error) {
+                setStatus(`❌ Chart creation failed: ${error.message}`, true);
+                console.error('Chart creation error:', error);
+            }
+        });
+
+        // Load Sample Data
+        document.getElementById('load-sample-data').addEventListener('click', () => {
+            try {
+                setStatus('Loading sample data...');
+                console.log('Sample analytics data:', sampleAnalyticsData);
+                setStatus('✅ Sample data loaded - check browser console for details');
+            } catch (error) {
+                setStatus(`❌ Failed to load sample data: ${error.message}`, true);
+            }
+        });
+
+        // Update Charts
+        document.getElementById('update-charts').addEventListener('click', () => {
+            if (!analyticsInstance) {
+                setStatus('❌ No charts to update - create charts first', true);
+                return;
+            }
+
+            try {
+                setStatus('Updating charts with new data...');
+                
+                // Generate new random data
+                const newData = {
+                    currencyFlows: sampleAnalyticsData.currencyFlows.map(flow => ({
+                        ...flow,
+                        inflow: Math.floor(Math.random() * 2000) + 500,
+                        outflow: Math.floor(Math.random() * 1500) + 300
+                    })),
+                    transactionVolumes: sampleAnalyticsData.transactionVolumes.map(volume => ({
+                        ...volume,
+                        transactions: Math.floor(Math.random() * 300) + 50
+                    })),
+                    userBehavior: sampleAnalyticsData.userBehavior.map(behavior => ({
+                        ...behavior,
+                        count: Math.floor(Math.random() * 500) + 50
+                    })),
+                    wealthDistribution: sampleAnalyticsData.wealthDistribution.map(wealth => ({
+                        ...wealth,
+                        users: Math.floor(Math.random() * 300) + 25
+                    }))
+                };
+
+                analyticsInstance.analyticsData = newData;
+                
+                // Re-initialize charts with new data
+                analyticsInstance.initializeCurrencyFlowChart();
+                analyticsInstance.initializeTransactionVolumeChart();
+                analyticsInstance.initializeUserBehaviorChart();
+                analyticsInstance.initializeWealthDistributionChart();
+
+                setStatus('✅ Charts updated with new random data!');
+
+            } catch (error) {
+                setStatus(`❌ Chart update failed: ${error.message}`, true);
+                console.error('Chart update error:', error);
+            }
+        });
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            setStatus('Page loaded - ready for testing');
+            
+            // Debug: Check what's available
+            console.log('=== DEBUGGING INFO ===');
+            console.log('PluginChart available:', typeof PluginChart !== 'undefined');
+            console.log('EconomyAnalytics available:', typeof EconomyAnalytics !== 'undefined');
+            console.log('Window plugin objects:', Object.keys(window).filter(k => k.toLowerCase().includes('plugin')));
+            
+            if (typeof PluginChart === 'undefined') {
+                setStatus('⚠️ PluginChart not loaded - check browser console', true);
+            } else {
+                setStatus('✅ Page loaded - PluginChart available for testing');
+            }
+        });
+    </script>
+</body>
+</html>

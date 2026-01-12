@@ -1,9 +1,13 @@
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const bcrypt = require('bcrypt');
 const { getDatabase } = require('../db/database');
 const { generateToken, refreshToken, invalidateToken, getUserSessions, getTokenStoreStats } = require('../utils/jwt');
 const { authenticateToken } = require('../middleware/auth');
 const { validatePassword } = require('../utils/passwordValidator');
+
+const logStream = fs.createWriteStream(path.join(__dirname, '..', 'auth.log'), { flags: 'a' });
 
 const router = express.Router();
 
@@ -15,6 +19,7 @@ const SALT_ROUNDS = 10; // For bcrypt password hashing
  * Body: { username: string, password: string }
  */
 router.post('/register', (req, res) => {
+  logStream.write('REGISTER_ROUTE_HIT: ' + JSON.stringify(req.body) + '\n');
   const { username, password } = req.body;
 
   // Validate input
@@ -58,6 +63,7 @@ router.post('/register', (req, res) => {
 
       // Hash password before storing (Production Security Enhancement)
       bcrypt.hash(password, SALT_ROUNDS, (hashErr, hashedPassword) => {
+
         if (hashErr) {
           console.error('Error hashing password:', hashErr.message);
           return res.status(500).json({ error: 'Failed to process password' });
