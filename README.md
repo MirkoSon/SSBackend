@@ -23,11 +23,31 @@ Designed to be **stupid simple**: built for designers/prototypers to iterate fas
 ## 🚀 Features
 
 * ✅ Save & load JSON game state
-* ✅ Basic authentication (register/login with JWT)
+* ✅ Basic authentication (register/login)
 * ✅ Simple inventory endpoints (add/get/delete)
+* ✅ **Extensible Plugin System**
+  * 💰 Economy Plugin (Currencies, Balances, Transactions)
+  * 📊 Admin Dashboard (User Management, Analytics)
 * ✅ SQLite persistence in `game.db`
 * ✅ One-click reset (delete `game.db`)
 * ✅ Executables for Windows & macOS/Linux
+
+---
+
+## 📊 Admin Dashboard
+
+The backend now includes a built-in **Admin Dashboard** for managing users and game data.
+
+**Access:** `http://localhost:3000/admin`
+**Default Credentials:** `admin` / `admin` (Change these in production!)
+
+### Capabilities:
+- **User Management**: View, edit, and manage players.
+- **Economy Management**:
+  - View balances (Coins, Gems, etc.)
+  - Adjust funds manually (Add/Subtract/Set)
+  - View full Transaction History
+- **plugin Architecture**: Easily extensible for new game modules.
 
 ---
 
