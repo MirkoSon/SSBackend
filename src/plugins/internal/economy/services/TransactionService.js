@@ -38,7 +38,7 @@ class TransactionService {
     return new Promise((resolve, reject) => {
       this.db.serialize(() => {
         this.db.run('BEGIN TRANSACTION');
-        
+
         this._executeTransaction(transaction)
           .then(result => {
             this.db.run('COMMIT', (err) => {
@@ -74,21 +74,21 @@ class TransactionService {
       FROM plugin_user_balances 
       WHERE user_id = ? AND currency_id = ?
     `;
-    
+
     let currentBalance = await new Promise((resolve, reject) => {
       this.db.get(balanceQuery, [userId, currencyId], (err, row) => {
         if (err) reject(err);
         else resolve(row);
       });
     });
-    
+
     // Initialize balance if it doesn't exist
     if (!currentBalance) {
       await new Promise((resolve, reject) => {
         this.db.run(
           'INSERT INTO plugin_user_balances (user_id, currency_id, balance) VALUES (?, ?, 0)',
           [userId, currencyId],
-          function(err) {
+          function (err) {
             if (err) reject(err);
             else resolve(this);
           }
@@ -99,7 +99,7 @@ class TransactionService {
 
     // Calculate new balance
     const newBalance = currentBalance.balance + amount;
-    
+
     // Prevent negative balances
     if (newBalance < 0) {
       throw new Error('Insufficient balance for transaction');
@@ -111,7 +111,7 @@ class TransactionService {
          SET balance = ?, updated_at = CURRENT_TIMESTAMP, version = version + 1
          WHERE user_id = ? AND currency_id = ? AND version = ?`,
         [newBalance, userId, currencyId, currentBalance.version],
-        function(err) {
+        function (err) {
           if (err) reject(err);
           else resolve(this);
         }
@@ -144,7 +144,7 @@ class TransactionService {
           JSON.stringify(transaction.metadata),
           transaction.createdBy
         ],
-        function(err) {
+        function (err) {
           if (err) reject(err);
           else resolve(this);
         }
@@ -176,84 +176,136 @@ class TransactionService {
       JOIN users u ON t.user_id = u.id
       WHERE t.id = ?
     `;
-    
+
     const row = await new Promise((resolve, reject) => {
       this.db.get(query, [transactionId], (err, row) => {
         if (err) reject(err);
         else resolve(row);
       });
     });
-    
+
     if (row && row.metadata) {
       row.metadata = JSON.parse(row.metadata);
     }
-    
+
     return row;
   }
 
   /**
-   * Get user transaction history
-   * @param {number} userId - User ID
-   * @param {Object} options - Query options (limit, offset, currency, type)
-   * @returns {Promise<Object>} Transaction history with pagination
+   * Get transactions with filtering and pagination
+   * @param {Object} options - Query options
+   * @returns {Promise<Object>} Transactions and total count
    */
-  async getUserTransactions(userId, options = {}) {
+  async getTransactions(options = {}) {
     const {
+      page = 1,
       limit = 50,
-      offset = 0,
-      currencyId = null,
-      transactionType = null,
-      sortOrder = 'DESC'
+      sortBy = 'created_at',
+      sortOrder = 'DESC',
+      search = '',
+      currency = 'all',
+      type = 'all',
+      dateFrom = '',
+      dateTo = '',
+      minAmount = '',
+      maxAmount = '',
+      userId = ''
     } = options;
 
-    let whereClause = 'WHERE t.user_id = ?';
-    const params = [userId];
+    const offset = (page - 1) * limit;
+    const params = [];
+    let whereConditions = [];
 
-    if (currencyId) {
-      whereClause += ' AND t.currency_id = ?';
-      params.push(currencyId);
+    // Filter by User ID
+    if (userId) {
+      whereConditions.push('t.user_id = ?');
+      params.push(userId);
     }
 
-    if (transactionType) {
-      whereClause += ' AND t.transaction_type = ?';
-      params.push(transactionType);
+    // Filter by Currency
+    if (currency && currency !== 'all') {
+      whereConditions.push('t.currency_id = ?');
+      params.push(currency);
     }
 
+    // Filter by Type
+    if (type && type !== 'all') {
+      whereConditions.push('t.transaction_type = ?');
+      params.push(type);
+    }
+
+    // Filter by Date Range
+    if (dateFrom) {
+      whereConditions.push('t.created_at >= ?');
+      params.push(dateFrom);
+    }
+    if (dateTo) {
+      whereConditions.push('t.created_at <= ?');
+      params.push(dateTo);
+    }
+
+    // Filter by Amount Range
+    if (minAmount !== '') {
+      whereConditions.push('ABS(t.amount) >= ?');
+      params.push(parseInt(minAmount));
+    }
+    if (maxAmount !== '') {
+      whereConditions.push('ABS(t.amount) <= ?');
+      params.push(parseInt(maxAmount));
+    }
+
+    // Search (Username or Description)
+    if (search) {
+      whereConditions.push('(u.username LIKE ? OR t.description LIKE ?)');
+      params.push(`%${search}%`, `%${search}%`);
+    }
+
+    const whereClause = whereConditions.length > 0 ? 'WHERE ' + whereConditions.join(' AND ') : '';
+
+    // Main Query
     const query = `
       SELECT 
         t.*,
         c.name as currency_name,
-        c.symbol as currency_symbol
+        c.symbol as currency_symbol,
+        u.username
       FROM plugin_transactions t
       JOIN plugin_currencies c ON t.currency_id = c.id
+      JOIN users u ON t.user_id = u.id
       ${whereClause}
-      ORDER BY t.created_at ${sortOrder}
+      ORDER BY t.${sortBy} ${sortOrder}
       LIMIT ? OFFSET ?
     `;
 
-    params.push(limit, offset);
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM plugin_transactions t
+      JOIN users u ON t.user_id = u.id
+      ${whereClause}
+    `;
+
+    // Execute Main Query
     const transactions = await new Promise((resolve, reject) => {
-      this.db.all(query, params, (err, rows) => {
+      this.db.all(query, [...params, limit, offset], (err, rows) => {
         if (err) reject(err);
         else resolve(rows || []);
       });
     });
 
-    // Parse metadata for each transaction
-    transactions.forEach(transaction => {
-      if (transaction.metadata) {
-        transaction.metadata = JSON.parse(transaction.metadata);
+    // Parse Metadata
+    transactions.forEach(tx => {
+      if (tx.metadata) {
+        try {
+          tx.metadata = JSON.parse(tx.metadata);
+        } catch (e) {
+          tx.metadata = {};
+        }
       }
     });
 
-    // Get total count
-    const countQuery = `
-      SELECT COUNT(*) as total
-      FROM plugin_transactions t
-      ${whereClause}
-    `;
+    // Execute Count Query
     const countResult = await new Promise((resolve, reject) => {
-      this.db.get(countQuery, params.slice(0, -2), (err, row) => {
+      this.db.get(countQuery, params, (err, row) => {
         if (err) reject(err);
         else resolve(row);
       });
@@ -261,11 +313,25 @@ class TransactionService {
 
     return {
       transactions,
+      total: countResult ? countResult.total : 0
+    };
+  }
+
+  /**
+   * Get user transaction history (Legacy wrapper)
+   * @param {number} userId - User ID
+   * @param {Object} options - Query options
+   */
+  async getUserTransactions(userId, options = {}) {
+    // Forward to the new generic method
+    const result = await this.getTransactions({ ...options, userId });
+    return {
+      transactions: result.transactions,
       pagination: {
-        total: countResult.total,
-        limit,
-        offset,
-        hasNext: offset + limit < countResult.total
+        total: result.total,
+        limit: options.limit || 50,
+        offset: options.offset || 0, // Note: getTransactions uses page/limit, so we might need conversion if strictly needed, but let's assume standard usage
+        hasNext: (options.offset || 0) + (options.limit || 50) < result.total
       }
     };
   }
@@ -294,7 +360,7 @@ class TransactionService {
         }
       );
     });
-    
+
     if (existingRollback) {
       throw new Error('Transaction has already been rolled back');
     }
@@ -324,7 +390,7 @@ class TransactionService {
       this.db.run(
         'UPDATE plugin_transactions SET rollback_of = ? WHERE id = ?',
         [transactionId, result.transactionId],
-        function(err) {
+        function (err) {
           if (err) reject(err);
           else resolve(this);
         }

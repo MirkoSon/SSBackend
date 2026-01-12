@@ -308,37 +308,57 @@ class BalanceService {
    * @returns {Promise<Object>} Result with new balance and transaction ID placeholder
    */
   async adjustUserBalance(userId, { currency, adjustmentType, amount, reason, adminUser }) {
-    const { balance: currentBalance, version } = await this.getBalanceWithVersion(userId, currency);
+    const { balance: currentBalance } = await this.getBalanceWithVersion(userId, currency);
+    const TransactionService = require('./TransactionService');
+    const transactionService = new TransactionService(this.db);
 
-    let newBalance = currentBalance;
+    let diff = 0;
     const value = parseInt(amount);
 
     switch (adjustmentType) {
       case 'add':
-        newBalance += value;
+        diff = value;
         break;
       case 'subtract':
-        newBalance -= value;
+        diff = -value;
         break;
       case 'set':
-        newBalance = value;
+        diff = value - currentBalance;
         break;
       default:
         throw new Error(`Invalid adjustment type: ${adjustmentType}`);
     }
 
-    if (newBalance < 0) {
-      throw new Error('Balance cannot be negative');
+    if (diff === 0) {
+      // No change needed, but maybe we should log it? 
+      // For now just return success to avoid erroring if admin sets same value.
+      return {
+        transactionId: null,
+        newBalance: currentBalance,
+        success: true
+      };
     }
 
-    const result = await this.updateBalance(userId, currency, newBalance, version);
+    const transaction = {
+      userId,
+      currencyId: currency,
+      amount: diff,
+      type: 'admin',
+      source: 'admin_panel',
+      description: reason || `Admin adjustment (${adjustmentType})`,
+      createdBy: adminUser,
+      metadata: {
+        originalOperation: adjustmentType,
+        originalAmount: value,
+        adminUser: adminUser
+      }
+    };
 
-    // In a real implementation, we would create a transaction record here
-    // using TransactionService.createTransaction(...)
+    const result = await transactionService.processTransaction(transaction);
 
     return {
-      transactionId: `tx_${Date.now()}`, // Placeholder until TransactionService is integrated
-      newBalance: newBalance,
+      transactionId: result.transactionId,
+      newBalance: result.balanceAfter,
       success: true
     };
   }

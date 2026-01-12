@@ -394,9 +394,77 @@ async function loadEconomyPlugin(container) {
         console.log('Row selected:', row);
       },
 
-      showTransactionHistory: (userId) => {
-        console.log('Show transaction history for user:', userId);
-        alert('Transaction history feature coming soon!');
+      showTransactionHistory: async (userId) => {
+        try {
+          const user = simpleController.users.find(u => u.id == userId);
+          const username = user ? user.username : 'Unknown User';
+
+          // Create Modal Container
+          const overlay = document.createElement('div');
+          overlay.className = 'modal-overlay';
+
+          // Fetch Data
+          const res = await fetch(`/admin/api/plugins/economy/transactions?userId=${userId}&limit=50&_t=${Date.now()}`);
+          if (!res.ok) throw new Error('Failed to fetch transactions');
+          const data = await res.json();
+          const transactions = data.transactions || [];
+
+          // Build Content
+          const tableRows = transactions.length > 0
+            ? transactions.map(tx => `
+                <tr>
+                  <td class="data-table__cell">${new Date(tx.created_at).toLocaleString()}</td>
+                  <td class="data-table__cell"><span class="status-badge status-active">${tx.transaction_type}</span></td>
+                  <td class="data-table__cell ${tx.amount >= 0 ? 'positive-text' : 'negative-text'}">
+                    ${tx.amount > 0 ? '+' : ''}${tx.amount}
+                  </td>
+                  <td class="data-table__cell">${tx.currency_symbol || tx.currency_id}</td>
+                  <td class="data-table__cell">${tx.description || '-'}</td>
+                  <td class="data-table__cell small-text">${tx.source}</td>
+                </tr>
+              `).join('')
+            : `<tr><td colspan="6" class="data-table__cell text-center" style="text-align:center; padding: 2rem;">No transaction history found.</td></tr>`;
+
+          overlay.innerHTML = `
+            <div class="modal-container" style="max-width: 900px; width: 90%;">
+              <div class="modal-header">
+                <h3>History: ${username}</h3>
+                <button class="btn-close">&times;</button>
+              </div>
+              <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+                <table class="data-table__table">
+                  <thead>
+                    <tr>
+                      <th class="data-table__header-cell">Date</th>
+                      <th class="data-table__header-cell">Type</th>
+                      <th class="data-table__header-cell">Amount</th>
+                      <th class="data-table__header-cell">Currency</th>
+                      <th class="data-table__header-cell">Description</th>
+                      <th class="data-table__header-cell">Source</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${tableRows}
+                  </tbody>
+                </table>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-secondary btn-close-modal">Close</button>
+              </div>
+            </div>
+          `;
+
+          document.body.appendChild(overlay);
+
+          // Bind Events
+          const close = () => document.body.removeChild(overlay);
+          overlay.querySelectorAll('.btn-close, .btn-close-modal').forEach(btn => btn.onclick = close);
+          overlay.onclick = (e) => { if (e.target === overlay) close(); };
+
+        } catch (error) {
+          console.error('Error fetching history:', error);
+          alert('Failed to load transaction history: ' + error.message);
+        }
       },
 
       showBalanceModal: (userId) => {
@@ -516,7 +584,6 @@ async function loadEconomyPlugin(container) {
             }
 
             const result = await res.json();
-            alert('Balance updated successfully!');
             close();
 
             // Reload the plugin to refresh data
