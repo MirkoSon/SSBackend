@@ -395,22 +395,172 @@ async function loadEconomyPlugin(container) {
       },
 
       showTransactionHistory: (userId) => {
-        alert(`Transaction history for user ${userId} coming soon`);
+        console.log('Show transaction history for user:', userId);
+        alert('Transaction history feature coming soon!');
       },
 
       showBalanceModal: (userId) => {
-        alert(`Balance management for user ${userId} coming soon`);
+        const user = simpleController.users.find(u => u.id === userId);
+        if (!user) return;
+
+        // Ensure user has balances object
+        const balances = user.balances || {};
+
+        // Create modal overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+
+        // Modal HTML - constructing the form
+        // We use innerHTML for simplicity in this integration script
+        overlay.innerHTML = `
+          <div class="modal-container">
+            <div class="modal-header">
+              <h3 class="modal-title">Adjust Balance: <span style="color: var(--color-primary)">${user.username}</span></h3>
+              <button class="modal-close" type="button">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div style="margin-bottom: 1.5rem; padding: 1rem; background: var(--color-background-tertiary); border-radius: var(--border-radius);">
+                <h4 style="margin: 0 0 0.5rem 0; font-size: 0.9rem; color: var(--color-text-secondary);">Current Balances</h4>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                  ${Object.entries(balances).length ?
+            Object.entries(balances).map(([curr, amt]) =>
+              `<span class="status-badge status-active">${curr}: ${amt}</span>`
+            ).join('') :
+            '<span style="font-style: italic; color: var(--color-text-secondary)">No active balances</span>'
+          }
+                </div>
+              </div>
+
+              <form id="balance-form">
+                <div class="form-group">
+                  <label class="form-label">Currency</label>
+                  <select name="currency" class="form-control form-select" required>
+                    ${simpleController.currencies.map(c =>
+            `<option value="${c.id}">${c.name} (${c.symbol || c.code})</option>`
+          ).join('')}
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Action</label>
+                  <select name="adjustmentType" class="form-control form-select" required>
+                    <option value="add">Add (+)</option>
+                    <option value="subtract">Subtract (-)</option>
+                    <option value="set">Set (=)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Amount</label>
+                  <input type="number" name="amount" class="form-control" min="0" step="1" required placeholder="Enter amount">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Reason</label>
+                  <input type="text" name="reason" class="form-control" required placeholder="e.g. Admin adjustment, Bonus">
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary modal-cancel">Cancel</button>
+              <button type="submit" form="balance-form" class="btn btn-primary">Save Changes</button>
+            </div>
+          </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        // Event Handlers
+        const close = () => {
+          if (overlay.parentNode) {
+            document.body.removeChild(overlay);
+          }
+        };
+
+        const closeBtn = overlay.querySelector('.modal-close');
+        const cancelBtn = overlay.querySelector('.modal-cancel');
+
+        closeBtn.onclick = close;
+        cancelBtn.onclick = close;
+
+        // Close on outside click
+        overlay.onclick = (e) => {
+          if (e.target === overlay) close();
+        };
+
+        // Form Submission
+        const form = overlay.querySelector('#balance-form');
+        form.onsubmit = async (e) => {
+          e.preventDefault();
+          const formData = new FormData(form);
+          const data = {
+            currency: formData.get('currency'),
+            adjustmentType: formData.get('adjustmentType'),
+            amount: parseInt(formData.get('amount')),
+            reason: formData.get('reason')
+          };
+
+          try {
+            const submitBtn = overlay.querySelector('button[type="submit"]');
+            if (submitBtn) {
+              submitBtn.disabled = true;
+              submitBtn.textContent = 'Saving...';
+            }
+
+            const res = await fetch(`/admin/api/plugins/economy/balances/${userId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(data)
+            });
+
+            if (!res.ok) {
+              const err = await res.json();
+              throw new Error(err.error || 'Failed to update balance');
+            }
+
+            const result = await res.json();
+            alert('Balance updated successfully!');
+            close();
+
+            // Reload the plugin to refresh data
+            loadEconomyPlugin(container);
+
+          } catch (error) {
+            console.error('Error updating balance:', error);
+            alert('Error: ' + error.message);
+            const submitBtn = overlay.querySelector('button[type="submit"]');
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Save Changes';
+            }
+          }
+        };
       }
     };
 
-    // Fetch data using existing admin API
-    const [usersResponse, currenciesResponse] = await Promise.all([
-      fetch('/admin/api/users').then(r => r.json()),
+    // Fetch data using the fixed Economy API endpoint that includes balances for ALL users
+    const [balancesResponse, currenciesResponse] = await Promise.all([
+      fetch(`/admin/api/plugins/economy/balances?limit=1000&_t=${Date.now()}`).then(r => r.json()),
       fetch('/admin/api/plugins/economy/currencies').then(r => r.json())
     ]);
 
-    simpleController.users = usersResponse.users || usersResponse;
-    simpleController.filteredUsers = [...simpleController.users]; // Initialize filtered list
+    // Map the response to the expected structure
+    // The API now returns { balances: [users...] } because 'balanceRoutes.js' maps 'users' from service to 'balances' in response
+    // Wait, let's verify what balanceRoutes.js returns.
+    // In Step 123 (balanceRoutes.js), it returns: { balances: balances.users, ... }
+    // So 'balancesResponse.balances' IS the array of users.
+    const mappedUsers = (balancesResponse.balances || []).map(u => ({
+      ...u,
+      // Ensure keys match what View expects
+      id: u.user_id || u.id,
+      // Calculate status from last_login (Active if < 30 days)
+      status: u.status || (u.last_login && (Date.now() - new Date(u.last_login).getTime() < 30 * 24 * 60 * 60 * 1000) ? 'active' : 'inactive') || 'inactive',
+      // Ensure balances object exists
+      balances: u.balances || {},
+      // Ensure dates exist
+      last_updated: u.updated_at || u.last_login || new Date().toISOString(),
+      email: u.email || 'N/A'
+    }));
+
+    simpleController.users = mappedUsers;
+    simpleController.filteredUsers = [...mappedUsers];
     simpleController.currencies = currenciesResponse.currencies || currenciesResponse;
 
     // Render the view
@@ -418,7 +568,7 @@ async function loadEconomyPlugin(container) {
     simpleController.view = view; // Link view to controller
     view.render();
 
-    console.log('✅ Economy Plugin UI loaded successfully');
+    console.log('✅ Economy Plugin UI loaded successfully with User data');
   } catch (error) {
     console.error('❌ Failed to load Economy plugin:', error);
     container.innerHTML = `

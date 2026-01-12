@@ -20,7 +20,7 @@ export class BalanceManagerView {
 
     render() {
         this.container.innerHTML = '';
-        
+
         const card = new CardContainer({
             title: 'Balance Management',
             subtitle: 'Manage user balances and currency allocations',
@@ -34,7 +34,7 @@ export class BalanceManagerView {
     renderHeaderActions() {
         const actions = document.createElement('div');
         actions.className = 'balance-manager-actions';
-        
+
         const refreshBtn = new Button({
             label: 'Refresh',
             icon: 'refresh',
@@ -53,66 +53,66 @@ export class BalanceManagerView {
 
         actions.appendChild(refreshBtn.render());
         actions.appendChild(exportBtn.render());
-        
+
         return actions;
     }
 
     renderContent() {
         const content = document.createElement('div');
         content.className = 'balance-manager-content';
-        
+
         // Search and filters section
         const controlsSection = this.renderControls();
         content.appendChild(controlsSection);
-        
+
         // Data table section
         const tableSection = this.renderTable();
         content.appendChild(tableSection);
-        
+
         // Pagination section
         const paginationSection = this.renderPagination();
         content.appendChild(paginationSection);
-        
+
         return content;
     }
 
     renderControls() {
         const controls = document.createElement('div');
         controls.className = 'balance-manager-controls';
-        
+
         // Search bar
         const searchBar = new SearchBar({
             placeholder: 'Search users by ID, username, or email...',
             onSearch: (query) => this.controller.handleSearch(query),
             debounce: 300
         });
-        
+
         // Filter controls
         const filterControls = this.renderFilterControls();
-        
+
         controls.appendChild(searchBar.render());
         controls.appendChild(filterControls);
-        
+
         return controls;
     }
 
     renderFilterControls() {
         const filters = document.createElement('div');
         filters.className = 'balance-filters';
-        
+
         // Currency filter
         const currencySelect = document.createElement('select');
         currencySelect.className = 'filter-select';
         currencySelect.innerHTML = `
             <option value="">All Currencies</option>
-            ${this.controller.getCurrencies().map(currency => 
-                `<option value="${currency.code}">${currency.name}</option>`
-            ).join('')}
+            ${this.controller.getCurrencies().map(currency =>
+            `<option value="${currency.code}">${currency.name}</option>`
+        ).join('')}
         `;
-        currencySelect.addEventListener('change', (e) => 
+        currencySelect.addEventListener('change', (e) =>
             this.controller.handleCurrencyFilter(e.target.value)
         );
-        
+
         // Status filter
         const statusSelect = document.createElement('select');
         statusSelect.className = 'filter-select';
@@ -121,66 +121,66 @@ export class BalanceManagerView {
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
         `;
-        statusSelect.addEventListener('change', (e) => 
+        statusSelect.addEventListener('change', (e) =>
             this.controller.handleStatusFilter(e.target.value)
         );
-        
+
         filters.appendChild(this.createFilterGroup('Currency', currencySelect));
         filters.appendChild(this.createFilterGroup('Status', statusSelect));
-        
+
         return filters;
     }
 
     createFilterGroup(label, control) {
         const group = document.createElement('div');
         group.className = 'filter-group';
-        
+
         const labelEl = document.createElement('label');
         labelEl.textContent = label;
         labelEl.className = 'filter-label';
-        
+
         group.appendChild(labelEl);
         group.appendChild(control);
-        
+
         return group;
     }
 
     renderTable() {
         const tableContainer = document.createElement('div');
         tableContainer.className = 'balance-table-container';
-        
+
         const columns = [
-            { 
-                field: 'id', 
+            {
+                field: 'id',
                 label: 'User ID',
                 width: '120px',
                 sortable: true
             },
-            { 
-                field: 'username', 
+            {
+                field: 'username',
                 label: 'Username',
                 width: '150px',
                 sortable: true
             },
-            { 
-                field: 'email', 
+            {
+                field: 'email',
                 label: 'Email',
                 width: '200px',
                 sortable: true
             },
-            { 
-                field: 'status', 
+            {
+                field: 'status',
                 label: 'Status',
                 width: '100px',
                 formatter: (status) => this.formatStatus(status)
             },
-            { 
-                field: 'balances', 
+            {
+                field: 'balances',
                 label: 'Balances',
                 formatter: (balances) => this.renderBalances(balances)
             },
-            { 
-                field: 'last_updated', 
+            {
+                field: 'last_updated',
                 label: 'Last Updated',
                 width: '150px',
                 formatter: (date) => this.formatDate(date)
@@ -194,7 +194,7 @@ export class BalanceManagerView {
         ];
 
         const users = this.controller.getPaginatedUsers(this.currentPage, this.pageSize);
-        
+
         this.dataTable = new DataTable({
             columns,
             data: users,
@@ -212,7 +212,7 @@ export class BalanceManagerView {
     renderPagination() {
         const totalUsers = this.controller.getTotalUsers();
         const totalPages = Math.ceil(totalUsers / this.pageSize);
-        
+
         const pagination = new Pagination({
             currentPage: this.currentPage,
             totalPages: totalPages,
@@ -221,11 +221,11 @@ export class BalanceManagerView {
             onPageChange: (page) => this.handlePageChange(page),
             onPageSizeChange: (size) => this.handlePageSizeChange(size)
         });
-        
+
         const paginationContainer = document.createElement('div');
         paginationContainer.className = 'balance-pagination';
         paginationContainer.appendChild(pagination.render());
-        
+
         return paginationContainer;
     }
 
@@ -233,42 +233,57 @@ export class BalanceManagerView {
         if (!balances || Object.keys(balances).length === 0) {
             return '<span class="no-balances">No balances</span>';
         }
-        
+
+        const availableCurrencies = this.controller.getCurrencies();
+
         const balanceItems = Object.entries(balances)
-            .map(([currency, amount]) => 
-                `<div class="balance-item">
-                    <span class="currency-code">${currency}</span>
+            .map(([currencyId, amount]) => {
+                const currencyInfo = availableCurrencies.find(c => c.id === currencyId) || { name: currencyId, symbol: '' };
+                const displayName = currencyInfo.symbol || currencyInfo.name;
+
+                return `<div class="balance-item">
                     <span class="balance-amount ${amount >= 0 ? 'positive' : 'negative'}">
-                        ${this.formatCurrency(amount)}
+                        ${this.formatNumber(amount)}
                     </span>
-                </div>`
-            )
+                    <span class="currency-code" title="${currencyInfo.name}">${displayName}</span>
+                </div>`;
+            })
             .join('');
-            
+
         return `<div class="balances-list">${balanceItems}</div>`;
+    }
+
+    // Renamed from formatCurrency to avoid confusion since it no longer adds the symbol
+    formatNumber(amount) {
+        return new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2
+        }).format(amount);
     }
 
     renderRowActions(row) {
         const actions = document.createElement('div');
         actions.className = 'row-actions';
-        
+
         const historyBtn = new Button({
             label: 'History',
-            variant: 'outline',
+            variant: 'info',
             size: 'small',
+            icon: 'history',
             onClick: () => this.controller.showTransactionHistory(row.id)
         });
-        
+
         const editBtn = new Button({
             label: 'Edit',
             variant: 'primary',
             size: 'small',
+            icon: 'edit',
             onClick: () => this.controller.showBalanceModal(row.id)
         });
-        
+
         actions.appendChild(historyBtn.render());
         actions.appendChild(editBtn.render());
-        
+
         return actions;
     }
 
@@ -278,7 +293,7 @@ export class BalanceManagerView {
             inactive: { class: 'status-inactive', label: 'Inactive' },
             suspended: { class: 'status-suspended', label: 'Suspended' }
         };
-        
+
         const statusInfo = statusMap[status] || { class: 'status-unknown', label: status };
         return `<span class="status-badge ${statusInfo.class}">${statusInfo.label}</span>`;
     }
@@ -292,15 +307,6 @@ export class BalanceManagerView {
             hour: '2-digit',
             minute: '2-digit'
         });
-    }
-
-    formatCurrency(amount) {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }).format(amount);
     }
 
     handlePageChange(page) {
@@ -317,7 +323,7 @@ export class BalanceManagerView {
     updateTable() {
         const users = this.controller.getPaginatedUsers(this.currentPage, this.pageSize);
         this.dataTable.updateData(users);
-        
+
         // Update pagination
         const paginationContainer = this.container.querySelector('.balance-pagination');
         if (paginationContainer) {
@@ -343,7 +349,7 @@ export class BalanceManagerView {
         const errorDiv = document.createElement('div');
         errorDiv.className = 'error-message';
         errorDiv.textContent = message;
-        
+
         const tableContainer = this.container.querySelector('.balance-table-container');
         if (tableContainer) {
             tableContainer.innerHTML = '';
