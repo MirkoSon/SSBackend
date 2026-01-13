@@ -13,7 +13,7 @@ class AdminDashboard {
     this.pluginNavManager = null;
     this.pluginTabs = null;
     this.pluginDropdown = null;
-    
+
     this.init();
   }
 
@@ -22,10 +22,10 @@ class AdminDashboard {
     this.setupEventListeners();
     this.setupNavigation();
     this.initializeTabNavigation();
-    
+
     // Initialize dynamic navigation if components are available
     await this.initializePluginNavigation();
-    
+
     await this.loadView(this.currentView);
   }
 
@@ -35,7 +35,7 @@ class AdminDashboard {
     if (!container) return;
 
     this.pluginNavManager = new window.PluginNavigationManager();
-    
+
     // Mock plugins for demonstration
     const mockPlugins = [
       { name: 'economy', version: '1.0.0', adminUI: { enabled: true, navigation: { label: 'Economy', icon: '💰', priority: 10 } } },
@@ -45,27 +45,27 @@ class AdminDashboard {
     mockPlugins.forEach(p => this.pluginNavManager.registerPlugin(p));
 
     const allPlugins = this.pluginNavManager.getRegisteredPlugins().map(p => {
-        const manifest = mockPlugins.find(m => m.name === p.id);
-        return { ...p, enabled: manifest.adminUI.enabled };
+      const manifest = mockPlugins.find(m => m.name === p.id);
+      return { ...p, enabled: manifest.adminUI.enabled };
     });
 
     this.pluginTabs = new PluginTabs({
-        allPlugins: allPlugins,
-        activePlugin: 'economy',
-        onTabClick: (pluginId) => {
-            console.log('Tab clicked:', pluginId);
-            // This would navigate to the plugin's view.
-            // For now, we just update the active tab visually.
-            this.pluginTabs.config.activePlugin = pluginId;
-            this.pluginTabs.render();
-        },
+      allPlugins: allPlugins,
+      activePlugin: 'economy',
+      onTabClick: (pluginId) => {
+        console.log('Tab clicked:', pluginId);
+        // This would navigate to the plugin's view.
+        // For now, we just update the active tab visually.
+        this.pluginTabs.config.activePlugin = pluginId;
+        this.pluginTabs.render();
+      },
     });
 
     this.pluginDropdown = new PluginDropdown({
-        plugins: allPlugins,
-        onToggle: (pluginId, isEnabled) => {
-            console.log('Toggle clicked:', pluginId, isEnabled);
-        }
+      plugins: allPlugins,
+      onToggle: (pluginId, isEnabled) => {
+        console.log('Toggle clicked:', pluginId, isEnabled);
+      }
     });
 
     const navWrapper = document.createElement('div');
@@ -80,7 +80,7 @@ class AdminDashboard {
     try {
       const response = await fetch('/admin/status');
       const result = await response.json();
-      
+
       if (!result.authenticated) {
         window.location.href = '/admin/login';
         return;
@@ -217,7 +217,7 @@ class AdminDashboard {
   async loadUsers() {
     const response = await fetch('/admin/api/users');
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.error || 'Failed to load users');
     }
@@ -230,7 +230,7 @@ class AdminDashboard {
   async loadSaves() {
     const response = await fetch('/admin/api/saves');
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.error || 'Failed to load saves');
     }
@@ -243,7 +243,7 @@ class AdminDashboard {
   async loadInventories() {
     const response = await fetch('/admin/api/inventories');
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.error || 'Failed to load inventories');
     }
@@ -256,7 +256,7 @@ class AdminDashboard {
   async loadProgress() {
     const response = await fetch('/admin/api/progress');
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.error || 'Failed to load progress');
     }
@@ -268,7 +268,7 @@ class AdminDashboard {
 
   async loadExports() {
     const content = document.getElementById('dashboardContent');
-    
+
     content.innerHTML = `
       <div class="export-center">
         <div class="export-grid">
@@ -305,7 +305,7 @@ class AdminDashboard {
 
   renderUsersTable(users) {
     const content = document.getElementById('dashboardContent');
-    
+
     if (users.length === 0) {
       content.innerHTML = '<div class="no-data">No users found</div>';
       return;
@@ -343,13 +343,13 @@ class AdminDashboard {
         </table>
       </div>
     `;
-    
+
     content.innerHTML = tableHTML;
   }
 
   renderSavesTable(saves) {
     const content = document.getElementById('dashboardContent');
-    
+
     if (saves.length === 0) {
       content.innerHTML = '<div class="no-data">No saves found</div>';
       return;
@@ -389,13 +389,13 @@ class AdminDashboard {
         </table>
       </div>
     `;
-    
+
     content.innerHTML = tableHTML;
   }
 
   renderInventoriesTable(inventories) {
     const content = document.getElementById('dashboardContent');
-    
+
     if (inventories.length === 0) {
       content.innerHTML = '<div class="no-data">No inventories found</div>';
       return;
@@ -431,13 +431,13 @@ class AdminDashboard {
         </table>
       </div>
     `;
-    
+
     content.innerHTML = tableHTML;
   }
 
   renderProgressTable(progressData) {
     const content = document.getElementById('dashboardContent');
-    
+
     if (progressData.length === 0) {
       content.innerHTML = '<div class="no-data">No progress data found</div>';
       return;
@@ -452,7 +452,6 @@ class AdminDashboard {
               <th>Level</th>
               <th>Experience</th>
               <th>Play Time</th>
-              <th>Achievements</th>
               <th>Last Active</th>
               <th>Actions</th>
             </tr>
@@ -464,7 +463,6 @@ class AdminDashboard {
                 <td>${progress.level}</td>
                 <td>${progress.experience}</td>
                 <td>${this.formatPlayTime(progress.play_time)}</td>
-                <td>${progress.achievement_count}</td>
                 <td>${progress.last_active ? this.formatDate(progress.last_active) : 'Never'}</td>
                 <td>
                   <button onclick="adminDashboard.viewProgressDetails(${progress.user_id})" class="btn btn-sm btn-primary">
@@ -477,7 +475,7 @@ class AdminDashboard {
         </table>
       </div>
     `;
-    
+
     content.innerHTML = tableHTML;
   }
 
@@ -497,7 +495,7 @@ class AdminDashboard {
 
     switch (this.currentView) {
       case 'users':
-        filteredData = this.currentData.filter(user => 
+        filteredData = this.currentData.filter(user =>
           user.username.toLowerCase().includes(query) ||
           user.id.toString().includes(query)
         );
@@ -505,13 +503,20 @@ class AdminDashboard {
         this.updateStats(filteredData.length, 'Filtered Users');
         break;
       case 'saves':
-        filteredData = this.currentData.filter(save => 
+        filteredData = this.currentData.filter(save =>
           (save.username && save.username.toLowerCase().includes(query)) ||
           save.id.toString().includes(query) ||
           save.data_preview.toLowerCase().includes(query)
         );
         this.renderSavesTable(filteredData);
         this.updateStats(filteredData.length, 'Filtered Saves');
+        break;
+      case 'progress':
+        filteredData = this.currentData.filter(p =>
+          (p.username && p.username.toLowerCase().includes(query))
+        );
+        this.renderProgressTable(filteredData);
+        this.updateStats(filteredData.length, 'Filtered Progress');
         break;
       // Add more filter cases as needed
     }
@@ -521,7 +526,7 @@ class AdminDashboard {
     try {
       const response = await fetch(`/admin/api/users/${userId}`);
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error);
       }
@@ -555,7 +560,7 @@ class AdminDashboard {
     try {
       const response = await fetch(`/admin/api/saves/${saveId}`);
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error);
       }
@@ -656,20 +661,6 @@ class AdminDashboard {
             ${metricsDisplay || '<p>No metrics available</p>'}
           </div>
         </div>
-        <div class="detail-row">
-          <strong>Achievements:</strong> ${progress.achievement_count}
-          ${progress.achievements.length > 0 ? `
-            <div class="achievements-list">
-              ${progress.achievements.map(achievement => `
-                <div class="achievement-item">
-                  <strong>${achievement.achievement_name}</strong>
-                  <p>${achievement.description}</p>
-                  <small>(Unlocked: ${this.formatDate(achievement.unlocked_at)})</small>
-                </div>
-              `).join('')}
-            </div>
-          ` : '<p>No achievements unlocked</p>'}
-        </div>
       </div>
     `);
   }
@@ -677,7 +668,7 @@ class AdminDashboard {
   async exportData(type) {
     try {
       this.showToast(`Exporting ${type} data...`, 'info');
-      
+
       const response = await fetch(`/admin/api/export/${type}`);
       if (!response.ok) {
         throw new Error('Export failed');
@@ -724,7 +715,7 @@ class AdminDashboard {
 
   toggleAutoRefresh() {
     const button = document.getElementById('autoRefreshToggle');
-    
+
     if (this.autoRefreshEnabled) {
       clearInterval(this.autoRefreshInterval);
       this.autoRefreshEnabled = false;
@@ -748,7 +739,7 @@ class AdminDashboard {
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (response.ok) {
         window.location.href = '/admin/login';
       } else {
@@ -774,10 +765,10 @@ class AdminDashboard {
   showToast(message, type = 'info') {
     const toast = document.getElementById('toast');
     const messageEl = document.getElementById('toastMessage');
-    
+
     messageEl.textContent = message;
     toast.className = `toast toast-${type} toast-show`;
-    
+
     setTimeout(() => {
       toast.classList.remove('toast-show');
     }, 3000);
@@ -800,7 +791,7 @@ class AdminDashboard {
     if (!seconds) return '0m';
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes}m`;
     }
@@ -815,13 +806,13 @@ class AdminDashboard {
       // Check if dynamic navigation components are available
       if (typeof DynamicNavigation !== 'undefined') {
         console.log('🔄 Initializing plugin navigation system...');
-        
+
         // Create dynamic navigation instance
         this.dynamicNav = new DynamicNavigation();
-        
+
         // Make this dashboard instance available globally for navigation
         window.adminDashboard = this;
-        
+
         console.log('✅ Plugin navigation system initialized');
       } else {
         console.log('ℹ️ Dynamic navigation components not loaded, using static navigation');
@@ -837,17 +828,17 @@ class AdminDashboard {
    */
   async showPluginUI(pluginId, view) {
     console.log(`🔄 Loading plugin UI: ${pluginId}/${view}`);
-    
+
     try {
       // Check if plugin UI framework is available
       if (!window.pluginUILoader) {
         this.showPluginPlaceholder(pluginId, view);
         return;
       }
-      
+
       // Load the plugin view
       await this.loadPluginView(pluginId, view);
-      
+
     } catch (error) {
       console.error(`❌ Failed to load plugin UI: ${pluginId}/${view}`, error);
       this.showPluginError(pluginId, error);
@@ -859,7 +850,7 @@ class AdminDashboard {
    */
   showPluginPlaceholder(pluginId, view) {
     console.log(`🚧 Plugin UI placeholder: ${pluginId}/${view}`);
-    
+
     // Update view title
     const viewTitle = document.getElementById('viewTitle');
     if (viewTitle) {

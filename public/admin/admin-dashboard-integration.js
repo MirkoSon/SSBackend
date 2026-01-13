@@ -38,8 +38,15 @@ async function initializePluginRegistry() {
       enabled: true,
       displayOrder: 1,
       description: 'Manage virtual economy, balances, and transactions'
+    },
+    {
+      id: 'achievements',
+      name: 'Achievements',
+      icon: '🏆',
+      enabled: true,
+      displayOrder: 2,
+      description: 'Manage achievements and user progress'
     }
-    // Future plugins will be added here dynamically
   ];
 
   console.log('📋 Plugins registered:', window.availablePlugins);
@@ -269,9 +276,42 @@ async function loadPluginUI(pluginId) {
   // Plugin-specific loading logic
   if (pluginId === 'economy') {
     await loadEconomyPlugin(container);
+  } else if (pluginId === 'achievements') {
+    await loadAchievementsPlugin(container);
   }
 
   // Future plugins will have their own loaders
+}
+
+/**
+ * Load Achievements Plugin UI
+ */
+async function loadAchievementsPlugin(container) {
+  try {
+    // Wait for Achievement modules
+    if (!window.AchievementModules) {
+      console.log('⏳ Waiting for Achievement modules...');
+      await new Promise(resolve => {
+        const check = setInterval(() => {
+          if (window.AchievementModules) { clearInterval(check); resolve(); }
+        }, 100);
+        setTimeout(() => { clearInterval(check); resolve(); }, 5000);
+      });
+    }
+
+    if (!window.AchievementModules) throw new Error('Achievement modules failed to load');
+
+    container.innerHTML = '';
+    const { PluginView } = window.AchievementModules;
+    const view = new PluginView(container);
+    await view.render();
+
+    console.log('✅ Achievements UI loaded');
+
+  } catch (error) {
+    console.error('❌ Failed to load Achievements plugin:', error);
+    container.innerHTML = `<div class="error-message"><p>${error.message}</p></div>`;
+  }
 }
 
 /**

@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stupid Simple Backend - Admin Dashboard</title>
-    
+
     <!-- Import Maps for Component Aliases -->
     <script type="importmap">
     {
@@ -15,21 +16,23 @@
         "@ui/Button": "/ui/components/inputs/Button.js",
         "@ui/Pagination": "/ui/components/navigation/Pagination.js",
         "@ui/StatCard": "/ui/components/data-display/StatCard.js",
-        "@economy/": "/plugins/internal/economy/ui/"
+        "@economy/": "/plugins/internal/economy/ui/",
+        "@achievements/": "/plugins/internal/achievements/ui/"
       }
 
     }
     </script>
-    
+
     <!-- Legacy styles (load first, will be overridden) -->
     <link rel="stylesheet" href="style.css">
-    
+
     <!-- Theme System (Epic 6) -->
     <link rel="stylesheet" href="/ui/styles/theme.css">
-    
+
     <!-- Modern Dashboard Styles (Story 4.2) - LOADS LAST TO OVERRIDE -->
     <link rel="stylesheet" href="modern-dashboard.css">
 </head>
+
 <body class="admin-dashboard">
     <!-- Top Navigation Bar -->
     <nav class="top-nav">
@@ -37,7 +40,7 @@
             <span class="top-nav__icon">🎮</span>
             <span class="top-nav__title">Stupid Simple Backend</span>
         </div>
-        
+
         <div class="top-nav__links">
             <a href="#users" class="top-nav__link top-nav__link--active" data-view="users">
                 <span>👥</span> Users
@@ -46,13 +49,14 @@
                 <span>💾</span> Saves
             </a>
             <a href="#progress" class="top-nav__link" data-view="progress">
-                <span>⭐</span> Progress  
+                <span>📈</span> Progress
             </a>
+
             <a href="#exports" class="top-nav__link" data-view="exports">
                 <span>📥</span> Export
             </a>
         </div>
-        
+
         <div class="top-nav__actions">
             <button id="refreshButton" class="btn btn-secondary">
                 <span>🔄</span> Refresh
@@ -105,7 +109,16 @@
         </div>
         <div id="plugin-content-area" style="display: none;">
             <div id="economy-plugin-container" class="plugin-view" style="display: none;">
-                <div class="loading-spinner"><div class="spinner"></div><p>Loading Economy Plugin...</p></div>
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>Loading Economy Plugin...</p>
+                </div>
+            </div>
+            <div id="achievements-plugin-container" class="plugin-view" style="display: none;">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>Loading Achievements Plugin...</p>
+                </div>
             </div>
         </div>
     </main>
@@ -119,10 +132,14 @@
             <div class="modal-body" id="modalBody"></div>
         </div>
     </div>
-    <div id="toast" class="toast"><div class="toast-content"><span id="toastMessage"></span></div></div>
+    <div id="toast" class="toast">
+        <div class="toast-content"><span id="toastMessage"></span></div>
+    </div>
 
     <script type="module" src="/plugins/internal/economy/ui/economyUI.module.js"></script>
+    <script type="module" src="/plugins/internal/achievements/ui/achievementsUI.module.js"></script>
     <script src="script.js"></script>
     <script src="admin-dashboard-integration.js"></script>
 </body>
+
 </html>
