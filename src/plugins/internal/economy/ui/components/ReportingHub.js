@@ -35,7 +35,7 @@ class ReportingHub {
 
     // Event bus for real-time updates
     this.eventBus = window.PluginFramework?.eventBus || null;
-    
+
     this.init();
   }
 
@@ -46,14 +46,14 @@ class ReportingHub {
       await this.loadCurrencies();
       this.render();
       this.setupEventListeners();
-      
+
       // Set up real-time updates
       if (this.eventBus) {
         this.eventBus.on('economy:report:generated', (data) => {
           this.handleReportGenerated(data);
         });
       }
-      
+
     } catch (error) {
       console.error('Error initializing Reporting Hub:', error);
       this.renderError('Failed to initialize reporting system');
@@ -145,7 +145,7 @@ class ReportingHub {
       const data = await response.json();
       this.reports = data.reports || [];
       this.totalReports = data.total || 0;
-      
+
     } catch (error) {
       console.error('Error loading recent reports:', error);
       this.reports = [];
@@ -164,7 +164,7 @@ class ReportingHub {
 
       const data = await response.json();
       this.currencies = data.currencies || [];
-      
+
     } catch (error) {
       console.error('Error loading currencies:', error);
       this.currencies = [];
@@ -237,23 +237,23 @@ class ReportingHub {
 
   renderReportTemplates() {
     const categories = [...new Set(this.reportTemplates.map(t => t.category))];
-    
+
     return categories.map(category => `
       <div class="template-category">
         <h4 class="category-title">${category}</h4>
         <div class="template-cards">
           ${this.reportTemplates
-            .filter(template => template.category === category)
-            .map(template => `
+        .filter(template => template.category === category)
+        .map(template => `
               <div class="template-card" data-template-id="${template.id}">
                 <div class="template-icon">${template.icon}</div>
                 <div class="template-content">
                   <h5 class="template-name">${template.name}</h5>
                   <p class="template-description">${template.description}</p>
                   <div class="template-formats">
-                    ${template.formats.map(format => 
-                      `<span class="format-badge">${format.toUpperCase()}</span>`
-                    ).join('')}
+                    ${template.formats.map(format =>
+          `<span class="format-badge">${format.toUpperCase()}</span>`
+        ).join('')}
                   </div>
                 </div>
                 <div class="template-actions">
@@ -366,26 +366,8 @@ class ReportingHub {
                     ${report.status}
                   </span>
                 </td>
-                <td>
-                  <div class="table-actions">
-                    ${report.status === 'completed' ? `
-                      <button class="btn btn-sm btn-primary download-report-btn" 
-                              data-report-id="${report.id}" 
-                              title="Download Report">
-                        📥
-                      </button>
-                    ` : ''}
-                    <button class="btn btn-sm btn-secondary view-report-btn" 
-                            data-report-id="${report.id}" 
-                            title="View Details">
-                      👁️
-                    </button>
-                    <button class="btn btn-sm btn-danger delete-report-btn" 
-                            data-report-id="${report.id}" 
-                            title="Delete Report">
-                      🗑️
-                    </button>
-                  </div>
+                <td id="actions-${report.id}">
+                  <!-- Actions will be rendered here -->
                 </td>
               </tr>
             `).join('')}
@@ -428,7 +410,7 @@ class ReportingHub {
 
   renderPagination() {
     const totalPages = Math.ceil(this.totalReports / this.itemsPerPage);
-    
+
     if (totalPages <= 1) return '';
 
     return `
@@ -444,16 +426,16 @@ class ReportingHub {
             Previous
           </button>
           
-          ${Array.from({length: Math.min(5, totalPages)}, (_, i) => {
-            const page = Math.max(1, this.currentPage - 2) + i;
-            if (page > totalPages) return '';
-            return `
+          ${Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+      const page = Math.max(1, this.currentPage - 2) + i;
+      if (page > totalPages) return '';
+      return `
               <button class="btn btn-sm ${page === this.currentPage ? 'btn-primary' : 'btn-secondary'}" 
                       data-page="${page}">
                 ${page}
               </button>
             `;
-          }).join('')}
+    }).join('')}
           
           <button class="btn btn-sm ${this.currentPage === totalPages ? 'btn-disabled' : 'btn-secondary'}" 
                   id="next-page-btn" ${this.currentPage === totalPages ? 'disabled' : ''}>
@@ -473,35 +455,35 @@ class ReportingHub {
       if (e.target.id === 'generate-report-btn') {
         this.showGenerateReportModal();
       }
-      
+
       // Template generate buttons
       if (e.target.classList.contains('generate-template-btn')) {
         const templateId = e.target.dataset.templateId;
         this.showTemplateConfigModal(templateId);
       }
-      
+
       // Report table actions
       if (e.target.classList.contains('download-report-btn')) {
         const reportId = e.target.dataset.reportId;
         this.downloadReport(reportId);
       }
-      
+
       if (e.target.classList.contains('view-report-btn')) {
         const reportId = e.target.dataset.reportId;
         this.viewReportDetails(reportId);
       }
-      
+
       if (e.target.classList.contains('delete-report-btn')) {
         const reportId = e.target.dataset.reportId;
         this.confirmDeleteReport(reportId);
       }
-      
+
       // Export queue actions
       if (e.target.classList.contains('cancel-export-btn')) {
         const queueId = e.target.dataset.queueId;
         this.cancelExport(queueId);
       }
-      
+
       // Pagination
       if (e.target.id === 'prev-page-btn') {
         if (this.currentPage > 1) {
@@ -509,7 +491,7 @@ class ReportingHub {
           this.refreshReports();
         }
       }
-      
+
       if (e.target.id === 'next-page-btn') {
         const totalPages = Math.ceil(this.totalReports / this.itemsPerPage);
         if (this.currentPage < totalPages) {
@@ -517,12 +499,12 @@ class ReportingHub {
           this.refreshReports();
         }
       }
-      
+
       if (e.target.dataset.page) {
         this.currentPage = parseInt(e.target.dataset.page);
         this.refreshReports();
       }
-      
+
       // Clear filters
       if (e.target.id === 'clear-filters-btn') {
         this.clearFilters();
@@ -535,17 +517,17 @@ class ReportingHub {
         this.filters.dateFrom = e.target.value;
         this.applyFilters();
       }
-      
+
       if (e.target.id === 'filter-date-to') {
         this.filters.dateTo = e.target.value;
         this.applyFilters();
       }
-      
+
       if (e.target.id === 'filter-report-type') {
         this.filters.reportType = e.target.value;
         this.applyFilters();
       }
-      
+
       if (e.target.id === 'filter-status') {
         this.filters.status = e.target.value;
         this.applyFilters();
@@ -565,11 +547,11 @@ class ReportingHub {
 
     // Modal event delegation
     document.addEventListener('click', (e) => {
-      if (e.target.classList.contains('modal-close') || 
-          e.target.classList.contains('modal-backdrop')) {
+      if (e.target.classList.contains('modal-close') ||
+        e.target.classList.contains('modal-backdrop')) {
         this.closeModal();
       }
-      
+
       if (e.target.id === 'confirm-generate-report') {
         this.confirmGenerateReport();
       }
@@ -608,21 +590,21 @@ class ReportingHub {
     const date = new Date(dateString);
     const now = new Date();
     const diffMs = now - date;
-    
+
     const diffMins = Math.floor(diffMs / (1000 * 60));
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
+
     if (diffMins < 1) return 'Just now';
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
     return `${diffDays}d ago`;
   }
 option">
-                    <input type="checkbox" id="include-metadata" checked>
+    <input type = "checkbox" id = "include-metadata" checked>
                     <span class="checkmark"></span>
                     Include metadata and additional fields
-                  </label>
+                  </label >
                   
                   <label class="checkbox-option">
                     <input type="checkbox" id="compress-output">
@@ -635,30 +617,30 @@ option">
                     <span class="checkmark"></span>
                     Email report when ready (if configured)
                   </label>
-                </div>
-              </div>
+                </div >
+              </div >
 
-              <div class="config-section limits-section">
-                <h4>Output Limits</h4>
-                <div class="form-group">
-                  <label for="max-rows">Maximum Rows (0 = unlimited)</label>
-                  <input type="number" id="max-rows" class="form-control" 
-                         value="10000" min="0" max="1000000">
-                  <small class="form-help">Large reports may take longer to generate</small>
-                </div>
-              </div>
-            </div>
-          </div>
+  <div class="config-section limits-section">
+    <h4>Output Limits</h4>
+    <div class="form-group">
+      <label for="max-rows">Maximum Rows (0 = unlimited)</label>
+      <input type="number" id="max-rows" class="form-control"
+        value="10000" min="0" max="1000000">
+        <small class="form-help">Large reports may take longer to generate</small>
+    </div>
+  </div>
+            </div >
+          </div >
 
-          <div class="modal-footer">
-            <button class="btn btn-secondary modal-close">Cancel</button>
-            <button class="btn btn-primary" id="confirm-generate-report">
-              📊 Generate Report
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
+  <div class="modal-footer">
+    <button class="btn btn-secondary modal-close">Cancel</button>
+    <button class="btn btn-primary" id="confirm-generate-report">
+      📊 Generate Report
+    </button>
+  </div>
+        </div >
+      </div >
+  `;
 
     document.body.insertAdjacentHTML('beforeend', modalHtml);
   }
@@ -668,32 +650,32 @@ option">
     if (!template) return;
 
     const modalHtml = `
-      <div class="modal-backdrop">
-        <div class="modal template-config-modal">
-          <div class="modal-header">
-            <h3>${template.icon} ${template.name}</h3>
-            <button class="modal-close">&times;</button>
-          </div>
-          
-          <div class="modal-body">
-            <div class="template-description">
-              <p>${template.description}</p>
-            </div>
+  < div class="modal-backdrop" >
+    <div class="modal template-config-modal">
+      <div class="modal-header">
+        <h3>${template.icon} ${template.name}</h3>
+        <button class="modal-close">&times;</button>
+      </div>
 
-            <div class="template-config-form">
-              <div class="config-section">
-                <h4>Report Settings</h4>
-                <div class="form-grid">
-                  <div class="form-group">
-                    <label for="template-format">Format</label>
-                    <select id="template-format" class="form-control">
-                      ${template.formats.map(format => `
+      <div class="modal-body">
+        <div class="template-description">
+          <p>${template.description}</p>
+        </div>
+
+        <div class="template-config-form">
+          <div class="config-section">
+            <h4>Report Settings</h4>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="template-format">Format</label>
+                <select id="template-format" class="form-control">
+                  ${template.formats.map(format => `
                         <option value="${format}">${format.toUpperCase()}</option>
                       `).join('')}
-                    </select>
-                  </div>
-                  
-                  ${template.filters.includes('dateRange') ? `
+                </select>
+              </div>
+
+              ${template.filters.includes('dateRange') ? `
                     <div class="form-group">
                       <label for="template-date-from">From Date</label>
                       <input type="date" id="template-date-from" class="form-control" 
@@ -706,8 +688,8 @@ option">
                              value="${this.filters.dateTo}">
                     </div>
                   ` : ''}
-                  
-                  ${template.filters.includes('currency') ? `
+
+              ${template.filters.includes('currency') ? `
                     <div class="form-group">
                       <label for="template-currency">Currency</label>
                       <select id="template-currency" class="form-control">
@@ -718,8 +700,8 @@ option">
                       </select>
                     </div>
                   ` : ''}
-                  
-                  ${template.filters.includes('transactionType') ? `
+
+              ${template.filters.includes('transactionType') ? `
                     <div class="form-group">
                       <label for="template-transaction-type">Transaction Type</label>
                       <select id="template-transaction-type" class="form-control">
@@ -731,38 +713,38 @@ option">
                       </select>
                     </div>
                   ` : ''}
-                </div>
-              </div>
-
-              <div class="config-section">
-                <h4>Output Options</h4>
-                <div class="checkbox-group">
-                  <label class="checkbox-option">
-                    <input type="checkbox" id="template-include-headers" checked>
-                    <span class="checkmark"></span>
-                    Include column headers
-                  </label>
-                  
-                  <label class="checkbox-option">
-                    <input type="checkbox" id="template-compress">
-                    <span class="checkmark"></span>
-                    Compress output (for large reports)
-                  </label>
-                </div>
-              </div>
             </div>
           </div>
 
-          <div class="modal-footer">
-            <button class="btn btn-secondary modal-close">Cancel</button>
-            <button class="btn btn-primary" id="generate-template-report" 
-                    data-template-id="${templateId}">
-              ${template.icon} Generate Report
-            </button>
+          <div class="config-section">
+            <h4>Output Options</h4>
+            <div class="checkbox-group">
+              <label class="checkbox-option">
+                <input type="checkbox" id="template-include-headers" checked>
+                  <span class="checkmark"></span>
+                  Include column headers
+              </label>
+
+              <label class="checkbox-option">
+                <input type="checkbox" id="template-compress">
+                  <span class="checkmark"></span>
+                  Compress output (for large reports)
+              </label>
+            </div>
           </div>
         </div>
       </div>
-    `;
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-close">Cancel</button>
+        <button class="btn btn-primary" id="generate-template-report"
+          data-template-id="${templateId}">
+          ${template.icon} Generate Report
+        </button>
+      </div>
+    </div>
+      </div >
+  `;
 
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 
@@ -860,7 +842,7 @@ option">
       });
 
       if (!response.ok) {
-        throw new Error(`Report generation failed: ${response.status}`);
+        throw new Error(`Report generation failed: ${ response.status } `);
       }
 
       const result = await response.json();
@@ -907,63 +889,63 @@ option">
 
   async downloadReport(reportId) {
     try {
-      const response = await fetch(`/admin/api/plugins/economy/reports/${reportId}/download`, {
-        headers: { 'Content-Type': 'application/json' }
+      const response = await fetch(`/ admin / api / plugins / economy / reports / ${ reportId }/download`, {
+headers: { 'Content-Type': 'application/json' }
       });
 
-      if (!response.ok) {
-        throw new Error(`Download failed: ${response.status}`);
-      }
+if (!response.ok) {
+  throw new Error(`Download failed: ${response.status}`);
+}
 
-      // Get filename from response header
-      const contentDisposition = response.headers.get('content-disposition');
-      let filename = 'report.csv';
-      if (contentDisposition) {
-        const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-        if (match) {
-          filename = match[1].replace(/['"]/g, '');
-        }
-      }
+// Get filename from response header
+const contentDisposition = response.headers.get('content-disposition');
+let filename = 'report.csv';
+if (contentDisposition) {
+  const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+  if (match) {
+    filename = match[1].replace(/['"]/g, '');
+  }
+}
 
-      // Download the file
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+// Download the file
+const blob = await response.blob();
+const url = window.URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.style.display = 'none';
+a.href = url;
+a.download = filename;
+document.body.appendChild(a);
+a.click();
+window.URL.revokeObjectURL(url);
+document.body.removeChild(a);
 
     } catch (error) {
-      console.error('Error downloading report:', error);
-      this.showErrorMessage('Failed to download report');
-    }
+  console.error('Error downloading report:', error);
+  this.showErrorMessage('Failed to download report');
+}
   }
 
   async viewReportDetails(reportId) {
-    try {
-      const response = await fetch(`/admin/api/plugins/economy/reports/${reportId}`, {
-        headers: { 'Content-Type': 'application/json' }
-      });
+  try {
+    const response = await fetch(`/admin/api/plugins/economy/reports/${reportId}`, {
+      headers: { 'Content-Type': 'application/json' }
+    });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch report details: ${response.status}`);
-      }
-
-      const report = await response.json();
-      this.showReportDetailsModal(report);
-
-    } catch (error) {
-      console.error('Error fetching report details:', error);
-      this.showErrorMessage('Failed to load report details');
+    if (!response.ok) {
+      throw new Error(`Failed to fetch report details: ${response.status}`);
     }
-  }
 
-  showReportDetailsModal(report) {
-    const modalHtml = `
+    const report = await response.json();
+    this.showReportDetailsModal(report);
+
+  } catch (error) {
+    console.error('Error fetching report details:', error);
+    this.showErrorMessage('Failed to load report details');
+  }
+}
+
+showReportDetailsModal(report) {
+  const modalHtml = `
       <div class="modal-backdrop">
         <div class="modal report-details-modal">
           <div class="modal-header">
@@ -1057,14 +1039,14 @@ option">
       </div>
     `;
 
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-  }
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
 
   async confirmDeleteReport(reportId) {
-    const report = this.reports.find(r => r.id === reportId);
-    if (!report) return;
+  const report = this.reports.find(r => r.id === reportId);
+  if (!report) return;
 
-    const modalHtml = `
+  const modalHtml = `
       <div class="modal-backdrop">
         <div class="modal delete-confirmation-modal">
           <div class="modal-header">
@@ -1108,129 +1090,163 @@ option">
       </div>
     `;
 
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
 
-    // Add event listener for delete confirmation
-    document.getElementById('confirm-delete-report').addEventListener('click', () => {
-      this.deleteReport(reportId);
-    });
-  }
+  // Add event listener for delete confirmation
+  document.getElementById('confirm-delete-report').addEventListener('click', () => {
+    this.deleteReport(reportId);
+  });
+}
 
   async deleteReport(reportId) {
-    try {
-      const response = await fetch(`/admin/api/plugins/economy/reports/${reportId}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' }
-      });
+  try {
+    const response = await fetch(`/admin/api/plugins/economy/reports/${reportId}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    });
 
-      if (!response.ok) {
-        throw new Error(`Delete failed: ${response.status}`);
-      }
-
-      await this.refreshReports();
-      this.showSuccessMessage('Report deleted successfully');
-      this.closeModal();
-
-    } catch (error) {
-      console.error('Error deleting report:', error);
-      this.showErrorMessage('Failed to delete report');
+    if (!response.ok) {
+      throw new Error(`Delete failed: ${response.status}`);
     }
+
+    await this.refreshReports();
+    this.showSuccessMessage('Report deleted successfully');
+    this.closeModal();
+
+  } catch (error) {
+    console.error('Error deleting report:', error);
+    this.showErrorMessage('Failed to delete report');
   }
+}
 
   async cancelExport(queueId) {
-    const queueIndex = this.exportQueue.findIndex(item => item.id === queueId);
-    if (queueIndex !== -1) {
-      this.exportQueue.splice(queueIndex, 1);
-      this.render();
-      this.showSuccessMessage('Export cancelled');
-    }
+  const queueIndex = this.exportQueue.findIndex(item => item.id === queueId);
+  if (queueIndex !== -1) {
+    this.exportQueue.splice(queueIndex, 1);
+    this.render();
+    this.showSuccessMessage('Export cancelled');
   }
+}
 
   async refreshReports() {
-    await this.loadRecentReports();
+  await this.loadRecentReports();
+  this.render();
+
+  // Render standardized action buttons
+  this.reports.forEach(report => {
+    const actionContainer = document.getElementById(`actions-${report.id}`);
+    if (actionContainer) {
+      this.renderStandardActions(actionContainer, report);
+    }
+  });
+}
+
+applyFilters() {
+  this.currentPage = 1; // Reset to first page when filters change
+  this.refreshReports();
+}
+
+clearFilters() {
+  this.filters = {
+    dateFrom: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    dateTo: new Date().toISOString().split('T')[0],
+    reportType: 'all',
+    status: 'all',
+    search: ''
+  };
+  this.currentPage = 1;
+  this.refreshReports();
+}
+
+renderStandardActions(container, report) {
+  const actions = [];
+  if (report.status === 'completed') {
+    actions.push({
+      id: 'save',
+      label: '📥',
+      title: 'Download Report',
+      handler: () => this.downloadReport(report.id)
+    });
+  }
+  actions.push({ id: 'view', handler: () => this.viewReportDetails(report.id) });
+  actions.push({ id: 'delete', handler: () => this.confirmDeleteReport(report.id) });
+  actions.forEach(config => {
+    const action = window.PluginFramework?.components?.ActionRegistry?.resolve(config.id);
+    const btn = document.createElement('button');
+    btn.className = `action-btn ${action.className || ''}`;
+    btn.textContent = config.label || action.label;
+    btn.title = config.title || action.title;
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      config.handler();
+    };
+    container.appendChild(btn);
+  });
+}
+
+closeModal() {
+  const modal = document.querySelector('.modal-backdrop');
+  if (modal) {
+    modal.remove();
+  }
+}
+
+// Handle real-time updates from event bus
+handleReportGenerated(data) {
+  // Update export queue or reports list based on the data
+  const queueIndex = this.exportQueue.findIndex(item => item.reportId === data.reportId);
+  if (queueIndex !== -1) {
+    this.exportQueue[queueIndex].progress = data.progress || 100;
+    this.exportQueue[queueIndex].status_message = data.status_message || 'Completed';
     this.render();
   }
 
-  applyFilters() {
-    this.currentPage = 1; // Reset to first page when filters change
+  // Refresh reports if generation is complete
+  if (data.status === 'completed') {
     this.refreshReports();
   }
+}
 
-  clearFilters() {
-    this.filters = {
-      dateFrom: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      dateTo: new Date().toISOString().split('T')[0],
-      reportType: 'all',
-      status: 'all',
-      search: ''
-    };
-    this.currentPage = 1;
-    this.refreshReports();
-  }
+formatFileSize(bytes) {
+  if (!bytes) return 'N/A';
 
-  closeModal() {
-    const modal = document.querySelector('.modal-backdrop');
-    if (modal) {
-      modal.remove();
-    }
-  }
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+}
 
-  // Handle real-time updates from event bus
-  handleReportGenerated(data) {
-    // Update export queue or reports list based on the data
-    const queueIndex = this.exportQueue.findIndex(item => item.reportId === data.reportId);
-    if (queueIndex !== -1) {
-      this.exportQueue[queueIndex].progress = data.progress || 100;
-      this.exportQueue[queueIndex].status_message = data.status_message || 'Completed';
-      this.render();
-    }
+// Message display methods
+showSuccessMessage(message) {
+  this.showMessage(message, 'success');
+}
 
-    // Refresh reports if generation is complete
-    if (data.status === 'completed') {
-      this.refreshReports();
-    }
-  }
+showErrorMessage(message) {
+  this.showMessage(message, 'error');
+}
 
-  formatFileSize(bytes) {
-    if (!bytes) return 'N/A';
-    
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
-  }
-
-  // Message display methods
-  showSuccessMessage(message) {
-    this.showMessage(message, 'success');
-  }
-
-  showErrorMessage(message) {
-    this.showMessage(message, 'error');
-  }
-
-  showMessage(message, type) {
-    // Create and show a toast notification
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.innerHTML = `
+showMessage(message, type) {
+  // Create and show a toast notification
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.innerHTML = `
       <span class="toast-icon">${type === 'success' ? '✅' : '❌'}</span>
       <span class="toast-message">${message}</span>
     `;
 
-    document.body.appendChild(toast);
+  document.body.appendChild(toast);
 
-    // Auto remove after 5 seconds
-    setTimeout(() => {
-      toast.classList.add('toast-fade-out');
-      setTimeout(() => toast.remove(), 300);
-    }, 5000);
-  }
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    toast.classList.add('toast-fade-out');
+    setTimeout(() => toast.remove(), 300);
+  }, 5000);
+}
 
-  renderError(message) {
-    const container = document.getElementById('reporting-hub');
-    if (!container) return;
+renderError(message) {
+  const container = document.getElementById('reporting-hub');
+  if (!container) return;
 
-    container.innerHTML = `
+  container.innerHTML = `
       <div class="error-state">
         <div class="error-icon">❌</div>
         <h3>Error Loading Reporting Hub</h3>
@@ -1240,22 +1256,22 @@ option">
         </button>
       </div>
     `;
+}
+
+destroy() {
+  // Clean up event listeners and intervals
+  if (this.refreshInterval) {
+    clearInterval(this.refreshInterval);
   }
 
-  destroy() {
-    // Clean up event listeners and intervals
-    if (this.refreshInterval) {
-      clearInterval(this.refreshInterval);
-    }
-
-    if (this.searchTimeout) {
-      clearTimeout(this.searchTimeout);
-    }
-
-    if (this.eventBus) {
-      this.eventBus.off('economy:report:generated');
-    }
+  if (this.searchTimeout) {
+    clearTimeout(this.searchTimeout);
   }
+
+  if (this.eventBus) {
+    this.eventBus.off('economy:report:generated');
+  }
+}
 }
 
 // Export the component

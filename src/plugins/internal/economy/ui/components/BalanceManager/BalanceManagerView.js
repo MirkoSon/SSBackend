@@ -184,12 +184,6 @@ export class BalanceManagerView {
                 label: 'Last Updated',
                 width: '150px',
                 formatter: (date) => this.formatDate(date)
-            },
-            {
-                field: 'actions',
-                label: 'Actions',
-                width: '150px',
-                formatter: (_, row) => this.renderRowActions(row)
             }
         ];
 
@@ -198,6 +192,18 @@ export class BalanceManagerView {
         this.dataTable = new DataTable({
             columns,
             data: users,
+            actions: [
+                {
+                    id: 'history',
+                    title: 'Transaction History',
+                    handler: (row) => this.controller.showTransactionHistory(row.id)
+                },
+                {
+                    id: 'edit',
+                    title: 'Adjust Balance',
+                    handler: (row) => this.controller.showBalanceModal(row.id)
+                }
+            ],
             emptyMessage: 'No users found matching your criteria.',
             loading: false,
             selectable: true,
@@ -261,31 +267,6 @@ export class BalanceManagerView {
         }).format(amount);
     }
 
-    renderRowActions(row) {
-        const actions = document.createElement('div');
-        actions.className = 'row-actions';
-
-        const historyBtn = new Button({
-            label: 'History',
-            variant: 'info',
-            size: 'small',
-            icon: 'history',
-            onClick: () => this.controller.showTransactionHistory(row.id)
-        });
-
-        const editBtn = new Button({
-            label: 'Edit',
-            variant: 'primary',
-            size: 'small',
-            icon: 'edit',
-            onClick: () => this.controller.showBalanceModal(row.id)
-        });
-
-        actions.appendChild(historyBtn.render());
-        actions.appendChild(editBtn.render());
-
-        return actions;
-    }
 
     formatStatus(status) {
         const statusMap = {

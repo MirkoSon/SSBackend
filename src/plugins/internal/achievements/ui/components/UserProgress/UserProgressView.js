@@ -82,26 +82,19 @@ export class UserProgressView {
             { field: 'username', label: 'User', width: '25%', sortable: true, formatter: (val) => `<strong>${val}</strong>` },
             { field: 'unlocked_count', label: 'Unlocked', width: '15%', sortable: true, formatter: (val) => `<span class="status-badge status-active">${val}</span>` },
             { field: 'total_progress_records', label: 'Tracked', width: '15%' },
-            { field: 'last_updated', label: 'Last Updated', width: '25%', formatter: (val) => val ? new Date(val).toLocaleString() : '-' },
-            {
-                field: 'actions',
-                label: 'Actions',
-                width: '15%',
-                formatter: (_, row) => {
-                    const btn = new Button({
-                        label: 'View Details',
-                        size: 'small',
-                        variant: 'primary',
-                        onClick: () => this.showUserDetails(row.id, row.username)
-                    });
-                    return btn.render();
-                }
-            }
+            { field: 'last_updated', label: 'Last Updated', width: '25%', formatter: (val) => val ? new Date(val).toLocaleString() : '-' }
         ];
 
         this.dataTable = new DataTable({
             columns,
             data: this.users,
+            actions: [
+                {
+                    id: 'view',
+                    title: 'View Details',
+                    handler: (row) => this.showUserDetails(row.id, row.username)
+                }
+            ],
             emptyMessage: 'No user progress found.',
             loading: false
         });

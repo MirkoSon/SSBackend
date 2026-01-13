@@ -46,12 +46,18 @@ class CurrencyConfig {
         const columns = [
             { key: 'name', label: 'Currency Name' },
             { key: 'symbol', label: 'Symbol' },
-            { key: 'id', label: 'Type' }, // Using ID as type for this example
-            { key: 'active', label: 'Status', render: (active) => this.renderStatus(active) },
-            { key: 'id', label: 'Actions', render: (id) => this.renderActions(id) },
+            { key: 'id', label: 'Type' },
+            { key: 'active', label: 'Status', render: (active) => this.renderStatus(active) }
         ];
 
-        this.dataTable = new DataTable({ columns, data: this.currencies });
+        this.dataTable = new DataTable({
+            columns,
+            data: this.currencies,
+            actions: [
+                { id: 'edit', handler: (row) => this.showCurrencyModal(row.id) },
+                { id: 'delete', handler: (row) => this.deleteCurrency(row.id) }
+            ]
+        });
         return this.dataTable.render();
     }
 
@@ -61,28 +67,14 @@ class CurrencyConfig {
         return `<span class="status-badge ${className}">${status}</span>`;
     }
 
-    renderActions(currencyId) {
-        return `
-            <button class="btn btn-sm btn-secondary edit-btn" data-id="${currencyId}">Edit</button>
-            <button class="btn btn-sm btn-danger delete-btn" data-id="${currencyId}">Delete</button>
-        `;
-    }
-
     postRender() {
-        this.dataTable.getElement().addEventListener('click', (e) => {
-            if (e.target.classList.contains('edit-btn')) {
-                this.showCurrencyModal(e.target.dataset.id);
-            }
-            if (e.target.classList.contains('delete-btn')) {
-                this.deleteCurrency(e.target.dataset.id);
-            }
-        });
+        // No longer needed for action buttons as DataTable handles them via handlers
     }
 
     showCurrencyModal(currencyId = null) {
         const isEdit = !!currencyId;
         const currency = isEdit ? this.currencies.find(c => c.id === currencyId) : {};
-        
+
         const modalHTML = `
             <div class="modal-backdrop">
                 <div class="modal">

@@ -16,7 +16,7 @@ class AlertConfig {
       { value: 'currency_flow', label: 'Currency Flow', description: 'Alert when currency flow rates change significantly' },
       { value: 'system_health', label: 'System Health', description: 'Alert when system performance metrics are concerning' }
     ];
-    
+
     this.init();
   }
 
@@ -36,11 +36,11 @@ class AlertConfig {
       const response = await fetch('/admin/api/plugins/economy/alerts', {
         headers: { 'Content-Type': 'application/json' }
       });
-      
+
       if (!response.ok) {
         throw new Error(`Failed to load alerts: ${response.status}`);
       }
-      
+
       const data = await response.json();
       this.alerts = data.success ? data.alerts : [];
     } catch (error) {
@@ -89,7 +89,7 @@ class AlertConfig {
     const totalAlerts = this.alerts.length;
     const activeAlerts = this.alerts.filter(a => a.status === 'active').length;
     const triggeredToday = 0; // Placeholder - would track actual triggers
-    
+
     const cards = [
       {
         title: 'Total Alerts',
@@ -148,15 +148,8 @@ class AlertConfig {
             <h4>${alert.name}</h4>
             <span class="alert-status ${statusClass}">${statusIcon} ${alert.status}</span>
           </div>
-          <div class="alert-item-actions">
-            <button class="btn btn-sm btn-secondary edit-alert-btn" data-alert-id="${alert.id}">
-              <span class="icon">✏️</span>
-              Edit
-            </button>
-            <button class="btn btn-sm btn-danger delete-alert-btn" data-alert-id="${alert.id}">
-              <span class="icon">🗑️</span>
-              Delete
-            </button>
+          <div class="alert-item-actions" id="actions-${alert.id}">
+            <!-- Actions will be rendered here -->
           </div>
         </div>
         <div class="alert-item-details">
@@ -256,7 +249,7 @@ class AlertConfig {
     document.getElementById('modal-close-btn')?.addEventListener('click', () => {
       this.closeAlertModal();
     });
-    
+
     document.getElementById('modal-cancel-btn')?.addEventListener('click', () => {
       this.closeAlertModal();
     });
@@ -279,7 +272,7 @@ class AlertConfig {
     document.getElementById('notification-method')?.addEventListener('change', (e) => {
       const detailsSection = document.getElementById('notification-details');
       const targetInput = document.getElementById('notification-target');
-      
+
       if (e.target.value === 'email') {
         detailsSection.style.display = 'block';
         targetInput.placeholder = 'admin@example.com';
@@ -300,7 +293,7 @@ class AlertConfig {
         const alertId = btn.dataset.alertId;
         this.editAlert(alertId);
       }
-      
+
       if (e.target.matches('.delete-alert-btn') || e.target.closest('.delete-alert-btn')) {
         const btn = e.target.matches('.delete-alert-btn') ? e.target : e.target.closest('.delete-alert-btn');
         const alertId = btn.dataset.alertId;
@@ -321,7 +314,7 @@ class AlertConfig {
     const modal = document.getElementById('alert-modal');
     const title = document.getElementById('modal-title');
     const saveBtn = document.getElementById('modal-save-btn');
-    
+
     if (alert) {
       title.textContent = 'Edit Alert';
       saveBtn.textContent = 'Update Alert';
@@ -331,7 +324,7 @@ class AlertConfig {
       saveBtn.textContent = 'Create Alert';
       document.getElementById('alert-form').reset();
     }
-    
+
     modal.style.display = 'flex';
   }
 
@@ -348,11 +341,11 @@ class AlertConfig {
     document.getElementById('alert-threshold').value = alert.threshold || '';
     document.getElementById('notification-method').value = alert.notificationMethod || '';
     document.getElementById('alert-active').checked = alert.status === 'active';
-    
+
     // Trigger change events to show descriptions
     document.getElementById('alert-type').dispatchEvent(new Event('change'));
     document.getElementById('notification-method').dispatchEvent(new Event('change'));
-    
+
     if (alert.notificationTarget) {
       document.getElementById('notification-target').value = alert.notificationTarget;
     }
@@ -360,7 +353,7 @@ class AlertConfig {
 
   async handleFormSubmit(e) {
     e.preventDefault();
-    
+
     const formData = new FormData(e.target);
     const alertData = {
       name: formData.get('name'),
@@ -373,7 +366,7 @@ class AlertConfig {
 
     try {
       let response;
-      
+
       if (this.editingAlert) {
         // Update existing alert
         response = await fetch(`/admin/api/plugins/economy/alerts/${this.editingAlert.id}`, {
@@ -396,7 +389,7 @@ class AlertConfig {
       }
 
       const result = await response.json();
-      
+
       if (result.success) {
         this.showSuccessMessage(`Alert ${this.editingAlert ? 'updated' : 'created'} successfully`);
         this.closeAlertModal();
@@ -439,7 +432,7 @@ class AlertConfig {
       }
 
       const result = await response.json();
-      
+
       if (result.success) {
         this.showSuccessMessage(`Alert "${alert.name}" deleted successfully`);
         await this.loadAlerts();
@@ -465,7 +458,35 @@ class AlertConfig {
     const listContainer = document.querySelector('.alert-list');
     if (listContainer) {
       listContainer.innerHTML = this.renderAlertList();
+
+      // Render standardized action buttons
+      this.alerts.forEach(alert => {
+        const actionContainer = document.getElementById(`actions-${alert.id}`);
+        if (actionContainer) {
+          this.renderStandardActions(actionContainer, alert);
+        }
+      });
     }
+  }
+
+  renderStandardActions(container, alert) {
+    const actions = [
+      { id: 'edit', handler: () => this.editAlert(alert.id) },
+      { id: 'delete', handler: () => this.deleteAlert(alert.id) }
+    ];
+
+    actions.forEach(config => {
+      const action = window.PluginFramework?.components?.ActionRegistry?.resolve(config.id);
+      const btn = document.createElement('button');
+      btn.className = `action-btn ${action.className || ''}`;
+      btn.textContent = action.label;
+      btn.title = action.title;
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        config.handler();
+      };
+      container.appendChild(btn);
+    });
   }
 
   renderError(message) {
@@ -507,7 +528,7 @@ class AlertConfig {
     if (this.eventBus) {
       // Clean up any event listeners if needed
     }
-    
+
     // Remove modal from DOM if it exists
     const modal = document.getElementById('alert-modal');
     if (modal) {

@@ -46,6 +46,14 @@ async function initializePluginRegistry() {
       enabled: true,
       displayOrder: 2,
       description: 'Manage achievements and user progress'
+    },
+    {
+      id: 'leaderboards',
+      name: 'Leaderboards',
+      icon: '🏆',
+      enabled: true,
+      displayOrder: 3,
+      description: 'Competitive ranking and scoring system'
     }
   ];
 
@@ -278,6 +286,8 @@ async function loadPluginUI(pluginId) {
     await loadEconomyPlugin(container);
   } else if (pluginId === 'achievements') {
     await loadAchievementsPlugin(container);
+  } else if (pluginId === 'leaderboards') {
+    await loadLeaderboardsPlugin(container);
   }
 
   // Future plugins will have their own loaders
@@ -310,6 +320,37 @@ async function loadAchievementsPlugin(container) {
 
   } catch (error) {
     console.error('❌ Failed to load Achievements plugin:', error);
+    container.innerHTML = `<div class="error-message"><p>${error.message}</p></div>`;
+  }
+}
+
+/**
+ * Load Leaderboards Plugin UI
+ */
+async function loadLeaderboardsPlugin(container) {
+  try {
+    // Wait for Leaderboard modules
+    if (!window.LeaderboardModules) {
+      console.log('⏳ Waiting for Leaderboard modules...');
+      await new Promise(resolve => {
+        const check = setInterval(() => {
+          if (window.LeaderboardModules) { clearInterval(check); resolve(); }
+        }, 100);
+        setTimeout(() => { clearInterval(check); resolve(); }, 5000);
+      });
+    }
+
+    if (!window.LeaderboardModules) throw new Error('Leaderboard modules failed to load');
+
+    container.innerHTML = '';
+    const { PluginView } = window.LeaderboardModules;
+    const view = new PluginView(container);
+    await view.render();
+
+    console.log('✅ Leaderboards UI loaded');
+
+  } catch (error) {
+    console.error('❌ Failed to load Leaderboards plugin:', error);
     container.innerHTML = `<div class="error-message"><p>${error.message}</p></div>`;
   }
 }

@@ -17,7 +17,8 @@
         "@ui/Pagination": "/ui/components/navigation/Pagination.js",
         "@ui/StatCard": "/ui/components/data-display/StatCard.js",
         "@economy/": "/plugins/internal/economy/ui/",
-        "@achievements/": "/plugins/internal/achievements/ui/"
+        "@achievements/": "/plugins/internal/achievements/ui/",
+        "@leaderboards/": "/plugins/internal/leaderboards/ui/"
       }
 
     }
@@ -120,6 +121,12 @@
                     <p>Loading Achievements Plugin...</p>
                 </div>
             </div>
+            <div id="leaderboards-plugin-container" class="plugin-view" style="display: none;">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>Loading Leaderboards Plugin...</p>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -138,6 +145,13 @@
 
     <script type="module" src="/plugins/internal/economy/ui/economyUI.module.js"></script>
     <script type="module" src="/plugins/internal/achievements/ui/achievementsUI.module.js"></script>
+    <script type="module" src="/plugins/internal/leaderboards/ui/leaderboardsUI.module.js"></script>
+    <script type="module">
+        import ActionRegistry from '@ui/ActionRegistry';
+        window.PluginFramework = window.PluginFramework || {};
+        window.PluginFramework.components = window.PluginFramework.components || {};
+        window.PluginFramework.components.ActionRegistry = ActionRegistry;
+    </script>
     <script src="script.js"></script>
     <script src="admin-dashboard-integration.js"></script>
 </body>

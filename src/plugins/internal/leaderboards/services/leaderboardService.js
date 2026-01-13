@@ -17,7 +17,7 @@ class LeaderboardService {
       description = '',
       type = 'all_time',
       gameMode = null,
-      sortOrder = 'DESC', 
+      sortOrder = 'DESC',
       maxEntries = 10000,
       resetSchedule = null,
       metadata = null
@@ -38,7 +38,7 @@ class LeaderboardService {
     const result = await new Promise((resolve, reject) => {
       this.db.run(query, [
         name,
-        description, 
+        description,
         type,
         gameMode,
         sortOrder,
@@ -46,7 +46,7 @@ class LeaderboardService {
         resetSchedule,
         nextReset,
         metadata ? JSON.stringify(metadata) : null
-      ], function(err) {
+      ], function (err) {
         if (err) reject(err);
         else resolve({ lastInsertRowid: this.lastID });
       });
@@ -54,6 +54,50 @@ class LeaderboardService {
 
     return this.getLeaderboard(result.lastInsertRowid);
   }
+  /**
+   * Update an existing leaderboard
+   */
+  async updateLeaderboard(id, data) {
+    const {
+      name,
+      description,
+      type,
+      gameMode,
+      sortOrder,
+      maxEntries,
+      resetSchedule,
+      isActive,
+      metadata
+    } = data;
+
+    const sets = [];
+    const params = [];
+
+    if (name !== undefined) { sets.push('name = ?'); params.push(name); }
+    if (description !== undefined) { sets.push('description = ?'); params.push(description); }
+    if (type !== undefined) { sets.push('type = ?'); params.push(type); }
+    if (gameMode !== undefined) { sets.push('game_mode = ?'); params.push(gameMode); }
+    if (sortOrder !== undefined) { sets.push('sort_order = ?'); params.push(sortOrder); }
+    if (maxEntries !== undefined) { sets.push('max_entries = ?'); params.push(maxEntries); }
+    if (resetSchedule !== undefined) { sets.push('reset_schedule = ?'); params.push(resetSchedule); }
+    if (isActive !== undefined) { sets.push('is_active = ?'); params.push(isActive ? 1 : 0); }
+    if (metadata !== undefined) { sets.push('metadata = ?'); params.push(metadata ? JSON.stringify(metadata) : null); }
+
+    if (sets.length === 0) return this.getLeaderboard(id);
+
+    params.push(id);
+    const query = `UPDATE plugin_leaderboards SET ${sets.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
+
+    await new Promise((resolve, reject) => {
+      this.db.run(query, params, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+    return this.getLeaderboard(id);
+  }
+
   /**
    * Get leaderboard by ID
    */
@@ -64,7 +108,7 @@ class LeaderboardService {
       FROM plugin_leaderboards 
       WHERE id = ?
     `;
-    
+
     const board = await new Promise((resolve, reject) => {
       this.db.get(query, [id, id], (err, row) => {
         if (err) reject(err);
@@ -87,7 +131,7 @@ class LeaderboardService {
    */
   async listLeaderboards(filters = {}) {
     const { type, gameMode, isActive, limit = 50, offset = 0 } = filters;
-    
+
     let query = `
       SELECT *, 
         (SELECT COUNT(*) FROM plugin_leaderboard_entries WHERE leaderboard_id = plugin_leaderboards.id) as entry_count
@@ -153,7 +197,7 @@ class LeaderboardService {
     });
 
     const shouldUpdate = this.shouldUpdateScore(existingEntry, score, board.sort_order);
-    
+
     if (existingEntry && !shouldUpdate) {
       // Existing score is better, return current entry
       return existingEntry;
@@ -168,7 +212,7 @@ class LeaderboardService {
           UPDATE plugin_leaderboard_entries 
           SET score = ?, metadata = ?, updated_at = CURRENT_TIMESTAMP
           WHERE leaderboard_id = ? AND user_id = ?
-        `, [score, metadata ? JSON.stringify(metadata) : null, leaderboardId, userId], function(err) {
+        `, [score, metadata ? JSON.stringify(metadata) : null, leaderboardId, userId], function (err) {
           if (err) reject(err);
           else resolve();
         });
@@ -180,12 +224,12 @@ class LeaderboardService {
         this.db.run(`
           INSERT INTO plugin_leaderboard_entries (leaderboard_id, user_id, score, metadata)
           VALUES (?, ?, ?, ?)
-        `, [leaderboardId, userId, score, metadata ? JSON.stringify(metadata) : null], function(err) {
+        `, [leaderboardId, userId, score, metadata ? JSON.stringify(metadata) : null], function (err) {
           if (err) reject(err);
           else resolve({ lastID: this.lastID });
         });
       });
-      
+
       result = {
         id: insertResult.lastID,
         leaderboard_id: leaderboardId,
@@ -199,7 +243,7 @@ class LeaderboardService {
 
     // Update ranks for this leaderboard
     await this.updateRanks(leaderboardId);
-    
+
     // Get the updated entry with rank
     const updatedEntry = await new Promise((resolve, reject) => {
       this.db.get(`
@@ -218,7 +262,7 @@ class LeaderboardService {
    */
   async getRankings(leaderboardId, options = {}) {
     const { limit = 50, offset = 0, includeUser = null } = options;
-    
+
     const board = await this.getLeaderboard(leaderboardId);
     if (!board) {
       throw new Error('Leaderboard not found');
@@ -283,7 +327,7 @@ class LeaderboardService {
         else resolve(row || null);
       });
     });
-    
+
     if (!entry) return null;
 
     if (entry.metadata) {
@@ -307,7 +351,7 @@ class LeaderboardService {
     const offset = startRank - 1;
 
     const rankings = await this.getRankings(leaderboardId, { limit, offset });
-    
+
     return {
       userRank,
       surrounding: rankings.rankings
@@ -322,7 +366,7 @@ class LeaderboardService {
     const result = await new Promise((resolve, reject) => {
       this.db.run(`
         DELETE FROM plugin_leaderboard_entries WHERE leaderboard_id = ?
-      `, [leaderboardId], function(err) {
+      `, [leaderboardId], function (err) {
         if (err) reject(err);
         else resolve({ changes: this.changes });
       });
@@ -337,7 +381,7 @@ class LeaderboardService {
           UPDATE plugin_leaderboards 
           SET last_reset = CURRENT_TIMESTAMP, next_reset = ?
           WHERE id = ?
-        `, [nextReset, leaderboardId], function(err) {
+        `, [nextReset, leaderboardId], function (err) {
           if (err) reject(err);
           else resolve();
         });
@@ -355,7 +399,7 @@ class LeaderboardService {
     if (!board) return;
 
     const orderBy = board.sort_order === 'ASC' ? 'ASC' : 'DESC';
-    
+
     // Update ranks using ROW_NUMBER() window function
     await new Promise((resolve, reject) => {
       this.db.run(`
@@ -373,7 +417,7 @@ class LeaderboardService {
           WHERE ranked.id = plugin_leaderboard_entries.id
         )
         WHERE leaderboard_id = ?
-      `, [leaderboardId, leaderboardId], function(err) {
+      `, [leaderboardId, leaderboardId], function (err) {
         if (err) reject(err);
         else resolve();
       });
@@ -385,7 +429,7 @@ class LeaderboardService {
 
   shouldUpdateScore(existingEntry, newScore, sortOrder) {
     if (!existingEntry) return true;
-    
+
     if (sortOrder === 'ASC') {
       return newScore < existingEntry.score;
     } else {
@@ -416,6 +460,31 @@ class LeaderboardService {
     }
 
     return nextReset.toISOString();
+  }
+
+  /**
+   * Delete a specific entry from a leaderboard
+   */
+  async deleteEntry(leaderboardId, userId) {
+    return new Promise((resolve, reject) => {
+      this.db.run(
+        'DELETE FROM plugin_leaderboard_entries WHERE leaderboard_id = ? AND user_id = ?',
+        [leaderboardId, userId],
+        async (err) => {
+          if (err) {
+            reject(err);
+          } else {
+            // Need to update ranks after deletion
+            try {
+              await this.updateRanks(leaderboardId);
+              resolve(true);
+            } catch (updateErr) {
+              reject(updateErr);
+            }
+          }
+        }
+      );
+    });
   }
 
   async getLeaderboardStats() {

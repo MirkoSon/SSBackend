@@ -100,26 +100,12 @@ export class AchievementManagerView {
 
   renderRowActions(row) {
     const actions = document.createElement('div');
-    actions.className = 'row-actions';
+    actions.className = 'data-table__actions';
 
-    const editBtn = new Button({
-      icon: 'edit',
-      variant: 'secondary',
-      className: 'btn-icon',
-      size: 'small',
-      onClick: () => this.editAchievement(row.id)
-    });
-
-    const deleteBtn = new Button({
-      icon: 'delete',
-      variant: 'danger',
-      size: 'small',
-      className: 'btn-icon',
-      onClick: () => this.deleteAchievement(row.id)
-    });
-
-    actions.appendChild(editBtn.render());
-    actions.appendChild(deleteBtn.render());
+    this.dataTable.renderActions(actions, row, [
+      { id: 'edit', handler: () => this.editAchievement(row.id) },
+      { id: 'delete', handler: () => this.deleteAchievement(row.id) }
+    ]);
 
     return actions;
   }

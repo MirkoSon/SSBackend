@@ -26,7 +26,7 @@ const manifest = {
         description: 'Default number of entries per page'
       },
       maxPageSize: {
-        type: 'integer', 
+        type: 'integer',
         default: 100,
         description: 'Maximum entries allowed per page'
       },
@@ -101,20 +101,29 @@ async function onLoad(context) {
 async function onActivate(context) {
   console.log('📊 Activating Leaderboards plugin...');
   // Plugin activation logic - register routes, setup database schemas
-  
+
   const { db } = context;
-  
+
   // Initialize leaderboard management service
   const LeaderboardService = require('./services/LeaderboardService');
   context.leaderboardService = new LeaderboardService(db);
-  
+
+  // Mount admin routes
+  try {
+    const adminRoutes = require('./routes/admin/index')(db);
+    context.app.use('/admin/api/plugins/leaderboards', adminRoutes);
+    console.log('  - Mounted admin routes at /admin/api/plugins/leaderboards');
+  } catch (err) {
+    console.warn('  - Failed to mount admin routes:', err.message);
+  }
+
   // Setup database schemas will be handled by plugin manager
 }
 
 async function onDeactivate(context) {
   console.log('📊 Deactivating Leaderboards plugin...');
   // Plugin deactivation logic - cleanup resources, close connections
-  
+
   if (context.leaderboardService) {
     await context.leaderboardService.cleanup();
     delete context.leaderboardService;
@@ -134,13 +143,13 @@ const routes = [
     description: 'Create a new leaderboard'
   },
   {
-    method: 'GET', 
+    method: 'GET',
     path: '/leaderboards',
     handler: './routes/listBoards.js',
     middleware: ['auth'],
     description: 'List all available leaderboards'
   },
-  
+
   // Statistics Routes (MUST be before parameterized routes)
   {
     method: 'GET',
@@ -149,7 +158,7 @@ const routes = [
     middleware: ['auth'],
     description: 'Get global leaderboard statistics'
   },
-  
+
   {
     method: 'GET',
     path: '/leaderboards/:boardId',
@@ -272,7 +281,7 @@ const indexes = [
 module.exports = {
   manifest,
   onLoad,
-  onActivate, 
+  onActivate,
   onDeactivate,
   routes,
   schemas,

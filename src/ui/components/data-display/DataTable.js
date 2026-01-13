@@ -1,3 +1,5 @@
+import ActionRegistry from '../ActionRegistry.js';
+
 /**
  * DataTable - Reusable table component for displaying structured data
  * 
@@ -199,17 +201,7 @@ class DataTable {
       if (this.config.actions && this.config.actions.length > 0) {
         const td = document.createElement('td');
         td.className = 'data-table__cell data-table__actions';
-
-        this.config.actions.forEach(action => {
-          const btn = document.createElement('button');
-          btn.className = 'data-table__action-btn';
-          btn.textContent = action.label;
-          btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            action.handler(row, rowIndex);
-          });
-          td.appendChild(btn);
-        });
+        this.renderActions(td, row, this.config.actions, rowIndex);
         tr.appendChild(td);
       }
 
@@ -221,6 +213,36 @@ class DataTable {
    * Update the data in the table
    * @param {Array} newData - New data array
    */
+  /**
+   * Renders action buttons into a container element.
+   * Useful for custom columns that need to include standard actions.
+   */
+  renderActions(container, row, actions, rowIndex = -1) {
+    actions.forEach(actionOrId => {
+      const action = ActionRegistry.resolve(actionOrId);
+      const btn = document.createElement('button');
+      btn.className = `data-table__action-btn ${action.className || ''}`;
+
+      if (action.label) {
+        btn.textContent = action.label;
+      }
+
+      if (action.title) {
+        btn.title = action.title;
+      }
+
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (action.handler) {
+          action.handler(row, rowIndex);
+        } else if (typeof actionOrId === 'object' && actionOrId.handler) {
+          actionOrId.handler(row, rowIndex);
+        }
+      });
+      container.appendChild(btn);
+    });
+  }
+
   updateData(newData) {
     this.config.data = newData;
     // content update logic

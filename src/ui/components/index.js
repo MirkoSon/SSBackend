@@ -18,6 +18,9 @@ import DataTable from './data-display/DataTable';
 // Input Components
 import SearchBar from './inputs/SearchBar';
 
+// Utility / Shared Components
+import ActionRegistry from './ActionRegistry';
+
 // Navigation Components
 import PluginTabs from './navigation/PluginTabs';
 import PluginDropdown from './navigation/PluginDropdown';
@@ -27,15 +30,18 @@ export {
   // Layout
   CardContainer,
   TopNav,
-  
+
   // Data Display
   StatCard,
   DataTable,
-  
+
   // Inputs
   SearchBar,
-  
+
   // Navigation
   PluginTabs,
-  PluginDropdown
+  PluginDropdown,
+
+  // Shared
+  ActionRegistry
 };
