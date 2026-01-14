@@ -1,7 +1,8 @@
 const express = require('express');
 const { getDatabase } = require('../db/database');
 const { authenticateToken } = require('../middleware/auth');
-const achievementChecker = require('../utils/achievementChecker');
+// achievementChecker is now handled dynamically via the achievements plugin if enabled
+// const achievementChecker = require('../utils/achievementChecker');
 
 const router = express.Router();
 
@@ -29,13 +30,13 @@ router.post('/update', authenticateToken, async (req, res) => {
 
   try {
     const db = getDatabase();
-    
+
     // Get current progress if it exists
     const currentQuery = `
       SELECT current_value, max_value FROM character_progress 
       WHERE user_id = ? AND metric_name = ?
     `;
-    
+
     const currentProgress = await new Promise((resolve, reject) => {
       db.get(currentQuery, [userId, metric], (err, row) => {
         if (err) reject(err);
@@ -65,14 +66,20 @@ router.post('/update', authenticateToken, async (req, res) => {
     `;
 
     await new Promise((resolve, reject) => {
-      db.run(upsertQuery, [userId, metric, newValue], function(err) {
+      db.run(upsertQuery, [userId, metric, newValue], function (err) {
         if (err) reject(err);
         else resolve();
       });
     });
 
-    // Check for new achievements
-    const newAchievements = await achievementChecker.checkAchievements(userId, metric, newValue);
+    // Check for new achievements via the plugin service if active
+    let newAchievements = [];
+    if (global.pluginManager && global.pluginManager.activePlugins.has('achievements')) {
+      const achievementPlugin = global.pluginManager.activePlugins.get('achievements');
+      if (achievementPlugin.context && achievementPlugin.context.achievementService) {
+        newAchievements = await achievementPlugin.context.achievementService.checkAchievements(userId, metric, newValue);
+      }
+    }
 
     res.json({
       userId,
@@ -113,7 +120,7 @@ router.get('/:userId', authenticateToken, async (req, res) => {
 
   try {
     const db = getDatabase();
-    
+
     // Get all progress for user
     const progressQuery = `
       SELECT metric_name, current_value, max_value, updated_at 
@@ -121,7 +128,7 @@ router.get('/:userId', authenticateToken, async (req, res) => {
       WHERE user_id = ?
       ORDER BY metric_name
     `;
-    
+
     const progress = await new Promise((resolve, reject) => {
       db.all(progressQuery, [targetUserId], (err, rows) => {
         if (err) reject(err);
@@ -174,14 +181,14 @@ router.get('/:userId/:metric', authenticateToken, async (req, res) => {
 
   try {
     const db = getDatabase();
-    
+
     // Get specific metric progress
     const progressQuery = `
       SELECT metric_name, current_value, max_value, updated_at 
       FROM character_progress 
       WHERE user_id = ? AND metric_name = ?
     `;
-    
+
     const progress = await new Promise((resolve, reject) => {
       db.get(progressQuery, [targetUserId, metric], (err, row) => {
         if (err) reject(err);
@@ -190,14 +197,20 @@ router.get('/:userId/:metric', authenticateToken, async (req, res) => {
     });
 
     if (!progress) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         error: 'Progress metric not found',
         suggestion: 'Update this metric first to initialize it'
       });
     }
 
-    // Get achievement progress for this metric
-    const achievementProgress = await achievementChecker.getProgressTowardAchievements(targetUserId, metric);
+    // Get achievement progress for this metric via the plugin service if active
+    let achievementProgress = [];
+    if (global.pluginManager && global.pluginManager.activePlugins.has('achievements')) {
+      const achievementPlugin = global.pluginManager.activePlugins.get('achievements');
+      if (achievementPlugin.context && achievementPlugin.context.achievementService) {
+        achievementProgress = await achievementPlugin.context.achievementService.getProgressTowardAchievements(targetUserId, metric);
+      }
+    }
 
     res.json({
       userId: targetUserId,
@@ -236,7 +249,7 @@ router.post('/set-max', authenticateToken, async (req, res) => {
 
   try {
     const db = getDatabase();
-    
+
     // Insert or update max value for metric
     const upsertQuery = `
       INSERT INTO character_progress (user_id, metric_name, current_value, max_value, updated_at)
@@ -247,7 +260,7 @@ router.post('/set-max', authenticateToken, async (req, res) => {
     `;
 
     await new Promise((resolve, reject) => {
-      db.run(upsertQuery, [userId, metric, maxValue], function(err) {
+      db.run(upsertQuery, [userId, metric, maxValue], function (err) {
         if (err) reject(err);
         else resolve();
       });
