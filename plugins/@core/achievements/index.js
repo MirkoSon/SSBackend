@@ -31,6 +31,7 @@ const manifest = {
   // Admin UI Configuration for Enhanced Dashboard Navigation (Story 4.2)
   adminUI: {
     enabled: true,
+    modulePath: './ui/achievementsUI.module.js',
     navigation: {
       label: 'Achievements',
       icon: '🏅',

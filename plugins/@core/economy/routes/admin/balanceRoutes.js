@@ -47,6 +47,7 @@ module.exports = (db) => {
       });
 
       res.json({
+        success: true,
         balances: balances.users,
         currencies: balances.currencies,
         page: parseInt(page),

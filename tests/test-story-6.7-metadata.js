@@ -49,7 +49,7 @@ function runTest() {
     console.log('  - Found economy plugin in registry.');
 
     // 4. Assert the metadata is correct
-    assert.strictEqual(economyPluginData.title, 'Virtual Economy', 'Test Failed: Title is incorrect.');
+    assert.strictEqual(economyPluginData.title, 'Economy', 'Test Failed: Title is incorrect.');
     assert.strictEqual(economyPluginData.icon, '💵', 'Test Failed: Icon is incorrect.');
     assert.strictEqual(economyPluginData.displayOrder, 10, 'Test Failed: displayOrder is incorrect.');
     console.log('  - Verified metadata (title, icon, displayOrder) is correct.');

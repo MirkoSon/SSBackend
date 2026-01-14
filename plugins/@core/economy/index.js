@@ -29,7 +29,7 @@ const manifest = {
           },
           {
             id: 'gems',
-            name: 'Gems', 
+            name: 'Gems',
             symbol: '💎',
             decimal_places: 0,
             starting_balance: 5,
@@ -69,8 +69,9 @@ const manifest = {
   // Admin UI Configuration for Enhanced Dashboard Navigation (Story 4.2)
   adminUI: {
     enabled: true,
+    modulePath: './ui/economyUI.module.js',
     navigation: {
-      label: 'Virtual Economy',
+      label: 'Economy',
       icon: '💵',
       group: 'plugins',
       priority: 10
@@ -127,14 +128,14 @@ const manifest = {
 async function onLoad(context) {
   console.log('💰 Loading Economy plugin...');
   // Plugin loading logic - validate dependencies, setup resources
-  
+
   try {
     // Validate that required services are available
     const { app, db } = context;
     if (!app || !db) {
       throw new Error('Required context missing: app or db not provided');
     }
-    
+
     console.log('✅ Economy plugin context validated');
   } catch (error) {
     console.error('❌ Error loading Economy plugin:', error);
@@ -145,35 +146,35 @@ async function onLoad(context) {
 async function onActivate(context) {
   console.log('💰 Activating Economy plugin...');
   // Plugin activation logic - register routes, setup database schemas
-  
+
   const { app, db, config } = context;
 
   try {
     // Mount admin routes
     const adminRoutes = require('./routes/admin/index')(db);
     app.use('/admin/api/plugins/economy', adminRoutes);
-    
+
     // Initialize economy services
     const CurrencyService = require('./services/CurrencyService');
     const BalanceService = require('./services/balanceService');
     const TransactionService = require('./services/TransactionService');
     const AnalyticsService = require('./services/AnalyticsService');
     const economyAuditLogger = require('./services/economyAuditLogger');
-    
+
     context.currencyService = new CurrencyService(db);
     context.balanceService = new BalanceService(db);
     context.transactionService = new TransactionService(db);
     context.analyticsService = new AnalyticsService(db);
-    
+
     // Initialize audit logger
     economyAuditLogger.init(db);
-    
+
     // Initialize default currencies
     const defaultCurrencies = config.default_currencies || [];
     for (const currency of defaultCurrencies) {
       await context.currencyService.createCurrency(currency);
     }
-    
+
     console.log('💰 Economy plugin activated successfully');
   } catch (error) {
     console.error('❌ Error activating Economy plugin:', error);
@@ -184,7 +185,7 @@ async function onActivate(context) {
 async function onDeactivate(context) {
   console.log('💰 Deactivating Economy plugin...');
   // Plugin deactivation logic - cleanup resources, close connections
-  
+
   if (context.currencyService) delete context.currencyService;
   if (context.balanceService) delete context.balanceService;
   if (context.transactionService) delete context.transactionService;

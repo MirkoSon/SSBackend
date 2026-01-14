@@ -51,6 +51,7 @@ const manifest = {
   // Admin UI Configuration for Enhanced Dashboard Navigation (Story 4.2)
   adminUI: {
     enabled: true,
+    modulePath: './ui/leaderboardsUI.module.js',
     navigation: {
       label: 'Leaderboards',
       icon: '🏆',

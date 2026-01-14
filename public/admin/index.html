@@ -34,6 +34,7 @@
 
     <!-- Modern Dashboard Styles (Story 4.2) - LOADS LAST TO OVERRIDE -->
     <link rel="stylesheet" href="modern-dashboard.css">
+    <link rel="stylesheet" href="plugin-enhancements.css">
 </head>
 
 <body class="admin-dashboard">
@@ -147,9 +148,6 @@
         <div class="toast-content"><span id="toastMessage"></span></div>
     </div>
 
-    <script type="module" src="/plugins/@core/economy/ui/economyUI.module.js"></script>
-    <script type="module" src="/plugins/@core/achievements/ui/achievementsUI.module.js"></script>
-    <script type="module" src="/plugins/@core/leaderboards/ui/leaderboardsUI.module.js"></script>
     <script type="module">
         import ActionRegistry from '@ui/ActionRegistry';
         import { HelpCenter } from './ui/components/HelpCenter.js';

@@ -14,6 +14,7 @@ class PluginManager {
     this.failedPlugins = new Map();
     this.disabledPlugins = new Map();
     this.discoveredPlugins = new Map();
+    this.missingPlugins = new Map();
     this.pluginRoutes = [];
     this.pluginSchemas = [];
   }
@@ -34,6 +35,9 @@ class PluginManager {
     if (autoDiscover) {
       await this.discoverExternalPlugins();
     }
+
+    // Check for reinstalled suppressed plugins and unsuppress them
+    await this.checkSuppressedPlugins();
 
     // Load and activate configured plugins
     await this.loadConfiguredPlugins();
@@ -230,8 +234,24 @@ class PluginManager {
       return;
     }
 
+    // Known setting keys to skip
+    const SETTING_KEYS = ['enabled', 'auto_discover', 'auto_enable_discovered', 'watch_for_changes'];
+
     for (const [pluginName, config] of Object.entries(pluginConfig)) {
-      if (pluginName === 'enabled') continue; // Skip the global enabled flag
+      // Skip global settings
+      if (SETTING_KEYS.includes(pluginName)) continue;
+
+      // Skip if config is not an object (settings are usually booleans)
+      if (typeof config !== 'object' || config === null) {
+        console.warn(`⚠️  Skipping non-object config entry: ${pluginName}`);
+        continue;
+      }
+
+      // Skip suppressed plugins
+      if (config.suppressed === true) {
+        console.log(`🔇 Skipping suppressed plugin: ${pluginName}`);
+        continue;
+      }
 
       try {
         // Mark as discovered
@@ -246,13 +266,23 @@ class PluginManager {
         }
       } catch (error) {
         console.error(`❌ Failed to load plugin ${pluginName}:`, error.message);
-        this.failedPlugins.set(pluginName, {
-          error: error.message,
-          stack: error.stack,
-          timestamp: new Date(),
-          phase: 'load',
-          config
-        });
+
+        // Check if this is a missing plugin error
+        if (error.message.includes('not found') || error.message.includes('ENOENT')) {
+          this.missingPlugins.set(pluginName, {
+            error: error.message,
+            timestamp: new Date(),
+            config
+          });
+        } else {
+          this.failedPlugins.set(pluginName, {
+            error: error.message,
+            stack: error.stack,
+            timestamp: new Date(),
+            phase: 'load',
+            config
+          });
+        }
       }
     }
   }
@@ -570,6 +600,101 @@ class PluginManager {
   }
 
   /**
+   * Get UI metadata for all plugins (active, loaded, disabled)
+   */
+  async getPluginUIMetadata() {
+    const allPlugins = [];
+
+    // Helper function to determine group
+    const getGroup = (config) => {
+      const group = (() => {
+        if (config.type === 'internal' || (config.path && config.path.includes('@core'))) {
+          return 'Core';
+        } else if (config.path && config.path.includes('@examples')) {
+          return 'Examples';
+        }
+        return 'Community';
+      })();
+      console.log(`[PluginManager] Group detection - path: ${config.path}, type: ${config.type}, group: ${group}`);
+      return group;
+    };
+
+    // Add active plugins
+    for (const [name, pluginData] of this.activePlugins.entries()) {
+      const { plugin, config } = pluginData;
+      const manifest = plugin.manifest || {};
+      const adminUI = plugin.adminUI || manifest.adminUI || {};
+
+      if (adminUI.enabled) {
+        // Resolve the web-accessible path for the UI module
+        let webPath = null;
+        if (adminUI.modulePath) {
+          const isCore = config.type === 'internal' || (config.path && config.path.includes('@core'));
+          const isExample = config.path && config.path.includes('@examples');
+          const scope = isCore ? '@core' : (isExample ? '@examples' : null);
+
+          if (scope) {
+            webPath = `/plugins/${scope}/${name}/${adminUI.modulePath.replace(/^\.\//, '')}`;
+          } else {
+            webPath = `/plugins/${name}/${adminUI.modulePath.replace(/^\.\//, '')}`;
+          }
+        }
+
+        allPlugins.push({
+          id: name,
+          name: adminUI.navigation?.label || manifest.name || name,
+          icon: adminUI.navigation?.icon || '🧩',
+          priority: adminUI.navigation?.priority || 100,
+          uiModulePath: webPath,
+          navigation: adminUI.navigation,
+          group: getGroup(config)
+        });
+      }
+    }
+
+    // Add loaded but not active plugins (disabled in config)
+    for (const [name, pluginData] of this.loadedPlugins.entries()) {
+      if (!this.activePlugins.has(name)) {
+        const { plugin, config } = pluginData;
+        const manifest = plugin.manifest || {};
+        const adminUI = plugin.adminUI || manifest.adminUI || {};
+
+        allPlugins.push({
+          id: name,
+          name: adminUI.navigation?.label || manifest.name || name,
+          icon: adminUI.navigation?.icon || '🧩',
+          priority: adminUI.navigation?.priority || 100,
+          uiModulePath: null,
+          navigation: adminUI.navigation,
+          group: getGroup(config)
+        });
+      }
+    }
+
+    // Add disabled plugins from config
+    const pluginConfig = getConfigValue('plugins', {});
+    const SETTING_KEYS = ['enabled', 'auto_discover', 'auto_enable_discovered', 'watch_for_changes'];
+
+    for (const [name, config] of Object.entries(pluginConfig)) {
+      if (SETTING_KEYS.includes(name)) continue;
+      if (typeof config !== 'object' || config === null) continue;
+      if (config.enabled === false && !this.loadedPlugins.has(name) && !this.activePlugins.has(name)) {
+        allPlugins.push({
+          id: name,
+          name: name,
+          icon: '🧩',
+          priority: 999,
+          uiModulePath: null,
+          navigation: null,
+          group: getGroup(config)
+        });
+      }
+    }
+
+    return allPlugins.sort((a, b) => a.priority - b.priority);
+  }
+
+  /**
    * Get plugin health status
    * @returns {Object} Status of all plugins by state
    */
@@ -591,23 +716,66 @@ class PluginManager {
   }
 
   /**
-   * Get detailed status for all plugins
+   * Get plugin health status with group information
    */
   getPluginHealthStatus() {
+    // Helper to get group from plugin data
+    const getGroupForPlugin = (name) => {
+      const pluginData = this.activePlugins.get(name) || this.loadedPlugins.get(name);
+      if (!pluginData) {
+        // Try to get from config
+        const pluginConfig = getConfigValue('plugins', {});
+        const config = pluginConfig[name];
+        if (config && typeof config === 'object') {
+          if (config.type === 'internal' || (config.path && config.path.includes('@core'))) {
+            return 'Core';
+          } else if (config.path && config.path.includes('@examples')) {
+            return 'Examples';
+          }
+        }
+        return 'Community';
+      }
+
+      const { config } = pluginData;
+      if (config.type === 'internal' || (config.path && config.path.includes('@core'))) {
+        return 'Core';
+      } else if (config.path && config.path.includes('@examples')) {
+        return 'Examples';
+      }
+      return 'Community';
+    };
+
     return {
       status: this.failedPlugins.size > 0 ? 'degraded' : 'ok',
       plugins: {
-        active: Array.from(this.activePlugins.keys()),
+        active: Array.from(this.activePlugins.keys()).map(name => ({
+          name,
+          group: getGroupForPlugin(name)
+        })),
         failed: Array.from(this.failedPlugins.entries()).map(([name, data]) => ({
           name,
           error: data.error,
           timestamp: data.timestamp,
-          phase: data.phase
+          phase: data.phase,
+          group: getGroupForPlugin(name)
         })),
-        disabled: Array.from(this.disabledPlugins.keys()),
+        missing: Array.from(this.missingPlugins.entries()).map(([name, data]) => ({
+          name,
+          error: data.error,
+          timestamp: data.timestamp,
+          config: data.config,
+          group: getGroupForPlugin(name)
+        })),
+        disabled: Array.from(this.disabledPlugins.keys()).map(name => ({
+          name,
+          group: getGroupForPlugin(name)
+        })),
         loaded: Array.from(this.loadedPlugins.keys()).filter(
           name => !this.activePlugins.has(name) && !this.failedPlugins.has(name)
-        )
+        ).map(name => ({
+          name,
+          group: getGroupForPlugin(name)
+        }))
       },
       timestamp: new Date().toISOString()
     };
@@ -654,6 +822,89 @@ class PluginManager {
     }
 
     console.log(`⏹️  Disabled plugin: ${pluginName}`);
+  }
+
+  /**
+   * Purge a plugin completely from config
+   */
+  async purgePlugin(pluginName) {
+    const pluginConfig = getConfigValue('plugins', {});
+
+    if (!pluginConfig[pluginName]) {
+      throw new Error(`Plugin not found in config: ${pluginName}`);
+    }
+
+    // Remove from all internal maps
+    this.missingPlugins.delete(pluginName);
+    this.failedPlugins.delete(pluginName);
+    this.loadedPlugins.delete(pluginName);
+    this.activePlugins.delete(pluginName);
+    this.discoveredPlugins.delete(pluginName);
+
+    // Remove from config
+    delete pluginConfig[pluginName];
+    updateConfig('plugins', pluginConfig);
+
+    console.log(`🗑️  Purged plugin: ${pluginName}`);
+  }
+
+  /**
+   * Check for reinstalled suppressed plugins and unsuppress them
+   */
+  async checkSuppressedPlugins() {
+    const pluginConfig = getConfigValue('plugins', {});
+    const SETTING_KEYS = ['enabled', 'auto_discover', 'auto_enable_discovered', 'watch_for_changes'];
+
+    for (const [pluginName, config] of Object.entries(pluginConfig)) {
+      // Skip settings
+      if (SETTING_KEYS.includes(pluginName)) continue;
+      if (typeof config !== 'object' || config === null) continue;
+
+      // Check if plugin is suppressed
+      if (config.suppressed === true) {
+        // Check if plugin files exist
+        let pluginPath;
+        if (config.type === 'external') {
+          pluginPath = config.path;
+        } else {
+          pluginPath = path.join(process.cwd(), 'plugins', '@core', pluginName);
+        }
+
+        const indexPath = path.join(pluginPath, 'index.js');
+        const pluginJsPath = path.join(pluginPath, 'plugin.js');
+
+        if (fs.existsSync(indexPath) || fs.existsSync(pluginJsPath)) {
+          console.log(`🔄 Plugin ${pluginName} has been reinstalled, unsuppressing...`);
+
+          // Unsuppress the plugin
+          pluginConfig[pluginName].suppressed = false;
+          pluginConfig[pluginName].enabled = true;
+          updateConfig('plugins', pluginConfig);
+        }
+      }
+    }
+  }
+
+  /**
+   * Suppress a plugin (hide from UI but keep config)
+   */
+  async suppressPlugin(pluginName) {
+    const pluginConfig = getConfigValue('plugins', {});
+
+    if (!pluginConfig[pluginName]) {
+      throw new Error(`Plugin not found in config: ${pluginName}`);
+    }
+
+    // Mark as suppressed
+    pluginConfig[pluginName].suppressed = true;
+    pluginConfig[pluginName].enabled = false;
+    updateConfig('plugins', pluginConfig);
+
+    // Remove from internal maps
+    this.missingPlugins.delete(pluginName);
+    this.failedPlugins.delete(pluginName);
+
+    console.log(`🔇 Suppressed plugin: ${pluginName}`);
   }
 }
 

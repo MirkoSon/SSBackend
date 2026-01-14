@@ -28,76 +28,154 @@ document.addEventListener('DOMContentLoaded', async () => {
  * Initialize Plugin Registry with available plugins from API
  */
 async function initializePluginRegistry() {
-  // Plugin metadata (icons, descriptions) for known plugins
-  const pluginMeta = {
-    economy: { icon: '💰', name: 'Economy', displayOrder: 1, description: 'Manage virtual economy, balances, and transactions' },
-    achievements: { icon: '🏆', name: 'Achievements', displayOrder: 2, description: 'Manage achievements and user progress' },
-    leaderboards: { icon: '📊', name: 'Leaderboards', displayOrder: 3, description: 'Competitive ranking and scoring system' }
-  };
+  console.log('🔍 Fetching plugin UI metadata...');
 
   try {
-    // Fetch plugin health status from API
+    // Step 1: Fetch UI modules metadata from the new endpoint
+    const uiResponse = await fetch('/admin/api/plugins/ui-modules');
+    const uiData = await uiResponse.json();
+
+    if (!uiData.success) {
+      throw new Error(uiData.error || 'Failed to fetch UI modules');
+    }
+
+    // Step 2: Load each UI module dynamically
+    // Use the convention: plugin 'economy' -> window.EconomyModules
+    const loadPromises = uiData.plugins.map(async (plugin) => {
+      if (plugin.uiModulePath) {
+        try {
+          console.log(`📥 Loading UI module for ${plugin.id} from ${plugin.uiModulePath}...`);
+          const module = await import(plugin.uiModulePath);
+
+          // Conventional naming for plugin modules on window
+          const moduleKey = plugin.id.charAt(0).toUpperCase() + plugin.id.slice(1) + 'Modules';
+          window[moduleKey] = module;
+
+          console.log(`✅ Loaded ${moduleKey}`);
+          return { id: plugin.id, loaded: true };
+        } catch (err) {
+          console.error(`❌ Failed to load UI module for ${plugin.id}:`, err);
+          return { id: plugin.id, loaded: false, error: err.message };
+        }
+      }
+      return { id: plugin.id, loaded: false, message: 'No module path' };
+    });
+
+    await Promise.all(loadPromises);
+
+    // Step 3: Fetch health/status for the registry
     const response = await fetch('/health/plugins');
     const healthData = await response.json();
 
     window.pluginHealthStatus = healthData;
     window.availablePlugins = [];
     window.failedPlugins = [];
+    window.missingPlugins = [];
+
+    // Helper to find UI metadata
+    const getUIMeta = (id) => uiData.plugins.find(p => p.id === id) || {};
 
     // Add active plugins
-    (healthData.plugins?.active || []).forEach((id, index) => {
-      const meta = pluginMeta[id] || { icon: '🧩', name: id, displayOrder: 100 + index, description: 'Plugin' };
+    (healthData.plugins?.active || []).forEach((pluginData) => {
+      const id = typeof pluginData === 'string' ? pluginData : pluginData.name;
+      const group = typeof pluginData === 'object' ? pluginData.group : null;
+      const uiMeta = getUIMeta(id);
       window.availablePlugins.push({
         id,
-        name: meta.name,
-        icon: meta.icon,
+        name: uiMeta.name || id,
+        icon: uiMeta.icon || '🧩',
         enabled: true,
         status: 'active',
-        displayOrder: meta.displayOrder,
-        description: meta.description
+        displayOrder: uiMeta.priority || 100,
+        description: uiMeta.description || 'Plugin',
+        group: group || uiMeta.group || 'Community'
+      });
+    });
+
+    // Add loaded but not active plugins (these are disabled in config)
+    (healthData.plugins?.loaded || []).forEach((pluginData) => {
+      const id = typeof pluginData === 'string' ? pluginData : pluginData.name;
+      const group = typeof pluginData === 'object' ? pluginData.group : null;
+      const uiMeta = getUIMeta(id);
+      window.availablePlugins.push({
+        id,
+        name: uiMeta.name || id,
+        icon: uiMeta.icon || '🧩',
+        enabled: false, // Not active = disabled by default
+        status: 'loaded',
+        displayOrder: uiMeta.priority || 100,
+        description: uiMeta.description || 'Plugin',
+        group: group || uiMeta.group || 'Community'
+      });
+    });
+
+    // Add disabled plugins
+    (healthData.plugins?.disabled || []).forEach((pluginData, index) => {
+      const id = typeof pluginData === 'string' ? pluginData : pluginData.name;
+      const group = typeof pluginData === 'object' ? pluginData.group : null;
+      const uiMeta = getUIMeta(id);
+      window.availablePlugins.push({
+        id,
+        name: uiMeta.name || id,
+        icon: uiMeta.icon || '🧩',
+        enabled: false,
+        status: 'disabled',
+        displayOrder: uiMeta.priority || (300 + index),
+        description: uiMeta.description || 'Plugin',
+        group: group || uiMeta.group || 'Community'
       });
     });
 
     // Add failed plugins
     (healthData.plugins?.failed || []).forEach((failedPlugin, index) => {
       const id = failedPlugin.name;
-      const meta = pluginMeta[id] || { icon: '🧩', name: id, displayOrder: 200 + index, description: 'Plugin' };
+      const uiMeta = getUIMeta(id);
       window.failedPlugins.push({
         id,
-        name: meta.name,
-        icon: meta.icon,
+        name: uiMeta.name || id,
+        icon: uiMeta.icon || '🧩',
         enabled: false,
         status: 'failed',
-        displayOrder: meta.displayOrder,
-        description: meta.description,
+        displayOrder: uiMeta.priority || (200 + index),
+        description: uiMeta.description || 'Plugin',
         error: failedPlugin.error,
         errorPhase: failedPlugin.phase,
         errorTimestamp: failedPlugin.timestamp
       });
     });
 
-    // Add disabled plugins
-    (healthData.plugins?.disabled || []).forEach((id, index) => {
-      const meta = pluginMeta[id] || { icon: '🧩', name: id, displayOrder: 300 + index, description: 'Plugin' };
-      window.availablePlugins.push({
+    // Add missing plugins
+    (healthData.plugins?.missing || []).forEach((missingPlugin, index) => {
+      const id = missingPlugin.name;
+      const uiMeta = getUIMeta(id);
+      window.missingPlugins.push({
         id,
-        name: meta.name,
-        icon: meta.icon,
+        name: uiMeta.name || id,
+        icon: uiMeta.icon || '🧩',
         enabled: false,
-        status: 'disabled',
-        displayOrder: meta.displayOrder,
-        description: meta.description
+        status: 'missing',
+        displayOrder: uiMeta.priority || (300 + index),
+        description: uiMeta.description || 'Plugin',
+        error: missingPlugin.error,
+        errorTimestamp: missingPlugin.timestamp,
+        config: missingPlugin.config
       });
     });
 
     console.log('📋 Active plugins:', window.availablePlugins.length);
     console.log('❌ Failed plugins:', window.failedPlugins.length);
+    console.log('🔍 Missing plugins:', window.missingPlugins.length);
+
+    // Show missing plugin modal queue if any missing plugins found
+    if (window.missingPlugins.length > 0) {
+      showMissingPluginQueue();
+    }
 
   } catch (error) {
     console.error('Failed to fetch plugin status, using defaults:', error);
     // Fallback to hardcoded list
     window.availablePlugins = [
-      { id: 'economy', name: 'Economy', icon: '💰', enabled: true, status: 'unknown', displayOrder: 1, description: 'Manage virtual economy' },
+      { id: 'economy', name: 'Economy', icon: '💰', enabled: true, status: 'unknown', displayOrder: 1, description: 'Manage economy' },
       { id: 'achievements', name: 'Achievements', icon: '🏆', enabled: true, status: 'unknown', displayOrder: 2, description: 'Manage achievements' },
       { id: 'leaderboards', name: 'Leaderboards', icon: '📊', enabled: true, status: 'unknown', displayOrder: 3, description: 'Ranking system' }
     ];
@@ -158,37 +236,64 @@ function populatePluginDropdown() {
     menu.appendChild(statusBanner);
   }
 
-  // Add active plugins section
+  // Add grouped plugins to dropdown
   if (window.availablePlugins.length > 0) {
-    const activeSection = document.createElement('div');
-    activeSection.className = 'plugins-section';
-    activeSection.innerHTML = '<div class="plugins-section-title">Active Plugins</div>';
-    menu.appendChild(activeSection);
+
+    // Group plugins by type
+    const groups = {
+      'Core': [],
+      'Examples': [],
+      'Community': []
+    };
 
     window.availablePlugins.forEach(plugin => {
-      const item = document.createElement('div');
-      item.className = 'plugins-dropdown-item';
-      item.innerHTML = `
-        <div class="plugin-info">
-          <span>${plugin.icon}</span>
-          <span class="plugin-name">${plugin.name}</span>
-          <span class="plugin-status-badge status-${plugin.status || 'active'}">
-            ${plugin.status === 'active' ? '✓' : plugin.status === 'disabled' ? '○' : '?'}
-          </span>
-        </div>
-        <div class="toggle-switch ${plugin.enabled ? 'active' : ''}"
-             data-plugin-id="${plugin.id}">
-        </div>
-      `;
+      const group = plugin.group || 'Community';
+      if (groups[group]) {
+        groups[group].push(plugin);
+      }
+    });
 
-      // Handle toggle click
-      const toggle = item.querySelector('.toggle-switch');
-      toggle.addEventListener('click', (e) => {
-        e.stopPropagation();
-        togglePlugin(plugin.id);
+    // Render each group
+    ['Core', 'Examples', 'Community'].forEach(groupName => {
+      const plugins = groups[groupName];
+      if (plugins.length === 0) return;
+
+      // Add group header
+      const groupHeader = document.createElement('div');
+      groupHeader.className = 'plugins-dropdown-group-header';
+      groupHeader.textContent = groupName.toUpperCase();
+      menu.appendChild(groupHeader);
+
+      // Add plugins in this group
+      plugins.forEach(plugin => {
+        // Check localStorage for actual enabled state
+        const pluginState = getPluginState(plugin.id);
+        const isEnabled = pluginState !== null ? pluginState : plugin.enabled;
+
+        const item = document.createElement('div');
+        item.className = 'plugins-dropdown-item';
+        item.innerHTML = `
+          <div class="plugin-info">
+            <span>${plugin.icon}</span>
+            <span class="plugin-name">${plugin.name}</span>
+            <span class="plugin-status-badge status-${plugin.status || 'active'}">
+              ${plugin.status === 'active' ? '✓' : plugin.status === 'disabled' ? '○' : '?'}
+            </span>
+          </div>
+          <div class="toggle-switch ${isEnabled ? 'active' : ''}"
+               data-plugin-id="${plugin.id}">
+          </div>
+        `;
+
+        // Handle toggle click
+        const toggle = item.querySelector('.toggle-switch');
+        toggle.addEventListener('click', (e) => {
+          e.stopPropagation();
+          togglePlugin(plugin.id);
+        });
+
+        menu.appendChild(item);
       });
-
-      menu.appendChild(item);
     });
   }
 
@@ -273,22 +378,30 @@ function showPluginErrorDetails(plugin) {
 }
 
 /**
- * Toggle plugin enabled state
+ * Toggle plugin enabled state (from dropdown)
  */
 function togglePlugin(pluginId) {
   const plugin = window.availablePlugins.find(p => p.id === pluginId);
   if (!plugin) return;
 
+  // Toggle state
   plugin.enabled = !plugin.enabled;
+
+  // Save to localStorage
+  setPluginState(pluginId, plugin.enabled);
+
   console.log(`Plugin ${pluginId} ${plugin.enabled ? 'enabled' : 'disabled'}`);
 
   // Update UI
   populatePluginDropdown();
   setupPluginTabs();
+
+  // Show toast
+  showToast(`Plugin "${plugin.name}" ${plugin.enabled ? 'enabled' : 'disabled'}`, plugin.enabled ? 'success' : 'info');
 }
 
 /**
- * Setup Plugin Tabs
+ * Setup Plugin Tabs (Horizontal Tab Bar)
  */
 function setupPluginTabs() {
   const container = document.getElementById('plugin-tabs-container');
@@ -300,12 +413,31 @@ function setupPluginTabs() {
   // Clear existing tabs
   container.innerHTML = '';
 
-  // Get enabled plugins
-  const enabledPlugins = window.availablePlugins
-    .filter(p => p.enabled)
-    .sort((a, b) => a.displayOrder - b.displayOrder);
+  // Get all plugins and filter by enabled state (from localStorage or default)
+  const enabledPlugins = window.availablePlugins.filter(plugin => {
+    const pluginState = getPluginState(plugin.id);
+    return pluginState !== null ? pluginState : plugin.enabled;
+  });
 
-  // Create tabs
+  // Get custom order from localStorage or use default sort
+  const customOrder = getPluginOrder();
+  if (customOrder && customOrder.length > 0) {
+    // Sort by custom order
+    enabledPlugins.sort((a, b) => {
+      const indexA = customOrder.indexOf(a.id);
+      const indexB = customOrder.indexOf(b.id);
+      // If not in custom order, put at end sorted by displayOrder
+      if (indexA === -1 && indexB === -1) return a.displayOrder - b.displayOrder;
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    });
+  } else {
+    // Sort by display order
+    enabledPlugins.sort((a, b) => a.displayOrder - b.displayOrder);
+  }
+
+  // Create tabs for enabled plugins only
   enabledPlugins.forEach(plugin => {
     const tab = createPluginTab(plugin);
     container.appendChild(tab);
@@ -313,35 +445,188 @@ function setupPluginTabs() {
 
   console.log('📑 Plugin tabs created:', enabledPlugins.length);
 }
+
 /**
- * Create a plugin tab element
+ * Create a plugin tab element with drag-and-drop support
  */
 function createPluginTab(plugin) {
   const tab = document.createElement('div');
   tab.className = 'plugin-tab';
   tab.dataset.pluginId = plugin.id;
+  tab.draggable = true;
+
+  // Check if plugin is enabled in localStorage
+  const pluginState = getPluginState(plugin.id);
+  const isEnabled = pluginState !== null ? pluginState : plugin.enabled;
+
+  if (!isEnabled) {
+    tab.classList.add('plugin-tab--disabled');
+  }
 
   tab.innerHTML = `
     <span class="plugin-tab__icon">${plugin.icon}</span>
     <span class="plugin-tab__title">${plugin.name}</span>
-    <span class="plugin-tab__close">×</span>
   `;
 
   // Handle tab click
   tab.addEventListener('click', (e) => {
-    if (!e.target.classList.contains('plugin-tab__close')) {
+    if (isEnabled) {
       activatePlugin(plugin.id);
+    } else {
+      showToast(`Plugin "${plugin.name}" is disabled. Enable it from the dropdown menu.`, 'info');
     }
   });
 
-  // Handle close button
-  const closeBtn = tab.querySelector('.plugin-tab__close');
-  closeBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    closePluginTab(plugin.id);
-  });
+  // Drag and drop handlers
+  tab.addEventListener('dragstart', handleDragStart);
+  tab.addEventListener('dragover', handleDragOver);
+  tab.addEventListener('drop', handleDrop);
+  tab.addEventListener('dragend', handleDragEnd);
 
   return tab;
+}
+
+/**
+ * Get plugin enabled state from localStorage
+ */
+function getPluginState(pluginId) {
+  const state = localStorage.getItem(`plugin_${pluginId}_enabled`);
+  return state !== null ? state === 'true' : null;
+}
+
+/**
+ * Set plugin enabled state in localStorage
+ */
+function setPluginState(pluginId, enabled) {
+  localStorage.setItem(`plugin_${pluginId}_enabled`, enabled.toString());
+}
+
+/**
+ * Get plugin order from localStorage
+ */
+function getPluginOrder() {
+  const order = localStorage.getItem('plugin_tab_order');
+  return order ? JSON.parse(order) : null;
+}
+
+/**
+ * Set plugin order in localStorage
+ */
+function setPluginOrder(order) {
+  localStorage.setItem('plugin_tab_order', JSON.stringify(order));
+}
+
+// Drag and drop state
+let draggedElement = null;
+
+/**
+ * Handle drag start
+ */
+function handleDragStart(e) {
+  draggedElement = e.currentTarget;
+  e.currentTarget.style.opacity = '0.4';
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/html', e.currentTarget.innerHTML);
+}
+
+/**
+ * Handle drag over
+ */
+function handleDragOver(e) {
+  if (e.preventDefault) {
+    e.preventDefault();
+  }
+  e.dataTransfer.dropEffect = 'move';
+
+  const target = e.currentTarget;
+  if (draggedElement !== target) {
+    const container = target.parentNode;
+    const allTabs = Array.from(container.children);
+    const draggedIndex = allTabs.indexOf(draggedElement);
+    const targetIndex = allTabs.indexOf(target);
+
+    if (draggedIndex < targetIndex) {
+      target.parentNode.insertBefore(draggedElement, target.nextSibling);
+    } else {
+      target.parentNode.insertBefore(draggedElement, target);
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Handle drop
+ */
+function handleDrop(e) {
+  if (e.stopPropagation) {
+    e.stopPropagation();
+  }
+  return false;
+}
+
+/**
+ * Handle drag end
+ */
+function handleDragEnd(e) {
+  e.currentTarget.style.opacity = '1';
+
+  // Save new order to localStorage
+  const container = document.getElementById('plugin-tabs-container');
+  const tabs = Array.from(container.children);
+  const newOrder = tabs.map(tab => tab.dataset.pluginId);
+  setPluginOrder(newOrder);
+
+  console.log('📋 Plugin order saved:', newOrder);
+}
+
+/**
+ * Toggle plugin enabled state
+ */
+function togglePluginState(pluginId, tabElement) {
+  const currentState = getPluginState(pluginId);
+  const plugin = window.availablePlugins.find(p => p.id === pluginId);
+  const newState = currentState !== null ? !currentState : !plugin.enabled;
+
+  setPluginState(pluginId, newState);
+
+  // Update UI
+  const toggleBtn = tabElement.querySelector('.plugin-tab__toggle');
+  if (newState) {
+    tabElement.classList.remove('plugin-tab--disabled');
+    toggleBtn.textContent = '👁️';
+    toggleBtn.title = 'Disable plugin';
+    showToast(`Plugin "${plugin.name}" enabled`, 'success');
+  } else {
+    tabElement.classList.add('plugin-tab--disabled');
+    toggleBtn.textContent = '🔒';
+    toggleBtn.title = 'Enable plugin';
+    showToast(`Plugin "${plugin.name}" disabled`, 'info');
+
+    // If this plugin is currently active, switch to dashboard
+    if (window.activePluginId === pluginId) {
+      showCoreDashboard();
+    }
+  }
+}
+
+/**
+ * Show a toast notification
+ */
+function showToast(message, type = 'info') {
+  const toast = document.createElement('div');
+  toast.className = `toast toast--${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.add('toast--show');
+  }, 10);
+
+  setTimeout(() => {
+    toast.classList.remove('toast--show');
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
 }
 
 /**
@@ -395,15 +680,17 @@ async function activatePlugin(pluginId) {
   const tabs = document.querySelectorAll('.plugin-tab');
   tabs.forEach(tab => {
     if (tab.dataset.pluginId === pluginId) {
-      tab.classList.add('plugin-tab--active');
+      tab.classList.add('active');
     } else {
-      tab.classList.remove('plugin-tab--active');
+      tab.classList.remove('active');
     }
   });
 
   // Hide core dashboard
   const coreDashboard = document.getElementById('core-dashboard-content');
-  if (coreDashboard) coreDashboard.style.display = 'none';
+  if (coreDashboard) {
+    coreDashboard.style.display = 'none';
+  }
 
   // Show plugin content area
   const pluginArea = document.getElementById('plugin-content-area');
@@ -412,469 +699,180 @@ async function activatePlugin(pluginId) {
   // Load specific plugin UI
   await loadPluginUI(pluginId);
 }
+
 /**
  * Load Plugin UI into its container
  */
 async function loadPluginUI(pluginId) {
-  const container = document.getElementById(`${pluginId}-plugin-container`);
+  let container = document.getElementById(`${pluginId}-plugin-container`);
   if (!container) {
-    console.error(`Container for plugin ${pluginId} not found`);
-    return;
-  }
+    console.log(`🏗️ Creating dynamic container for plugin: ${pluginId}`);
+    container = document.createElement('div');
+    container.id = `${pluginId}-plugin-container`;
+    container.className = 'plugin-view';
+    container.style.display = 'none';
 
-  // Hide all plugin containers
+    const pluginContentArea = document.getElementById('plugin-content-area');
+    if (pluginContentArea) {
+      pluginContentArea.appendChild(container);
+    } else {
+      console.error('❌ plugin-content-area not found! Cannot create container.');
+      return;
+    }
+  }
+  // Hide all plugin containers to prevent stacking
   const allPluginContainers = document.querySelectorAll('.plugin-view');
   allPluginContainers.forEach(c => c.style.display = 'none');
 
   // Show this plugin's container
   container.style.display = 'block';
 
-  // Plugin-specific loading logic
-  if (pluginId === 'economy') {
-    await loadEconomyPlugin(container);
-  } else if (pluginId === 'achievements') {
-    await loadAchievementsPlugin(container);
-  } else if (pluginId === 'leaderboards') {
-    await loadLeaderboardsPlugin(container);
-  }
+  // Generic Plugin Loading Logic
+  // Convention: plugin 'economy' -> EconomyModules.PluginView
+  const moduleKey = pluginId.charAt(0).toUpperCase() + pluginId.slice(1) + 'Modules';
+  const modules = window[moduleKey];
 
-  // Future plugins will have their own loaders
-}
-
-/**
- * Load Achievements Plugin UI
- */
-async function loadAchievementsPlugin(container) {
-  try {
-    // Wait for Achievement modules
-    if (!window.AchievementModules) {
-      console.log('⏳ Waiting for Achievement modules...');
-      await new Promise(resolve => {
-        const check = setInterval(() => {
-          if (window.AchievementModules) { clearInterval(check); resolve(); }
-        }, 100);
-        setTimeout(() => { clearInterval(check); resolve(); }, 5000);
-      });
-    }
-
-    if (!window.AchievementModules) throw new Error('Achievement modules failed to load');
-
-    container.innerHTML = '';
-    const { PluginView } = window.AchievementModules;
-    const view = new PluginView(container);
-    await view.render();
-
-    console.log('✅ Achievements UI loaded');
-
-  } catch (error) {
-    console.error('❌ Failed to load Achievements plugin:', error);
-    container.innerHTML = `<div class="error-message"><p>${error.message}</p></div>`;
-  }
-}
-
-/**
- * Load Leaderboards Plugin UI
- */
-async function loadLeaderboardsPlugin(container) {
-  try {
-    // Wait for Leaderboard modules
-    if (!window.LeaderboardModules) {
-      console.log('⏳ Waiting for Leaderboard modules...');
-      await new Promise(resolve => {
-        const check = setInterval(() => {
-          if (window.LeaderboardModules) { clearInterval(check); resolve(); }
-        }, 100);
-        setTimeout(() => { clearInterval(check); resolve(); }, 5000);
-      });
-    }
-
-    if (!window.LeaderboardModules) throw new Error('Leaderboard modules failed to load');
-
-    container.innerHTML = '';
-    const { PluginView } = window.LeaderboardModules;
-    const view = new PluginView(container);
-    await view.render();
-
-    console.log('✅ Leaderboards UI loaded');
-
-  } catch (error) {
-    console.error('❌ Failed to load Leaderboards plugin:', error);
-    container.innerHTML = `<div class="error-message"><p>${error.message}</p></div>`;
-  }
-}
-
-/**
- * Load Economy Plugin UI
- */
-async function loadEconomyPlugin(container) {
-  try {
-    // Wait for Economy modules to be available
-    if (!window.EconomyModules) {
-      console.log('⏳ Waiting for Economy modules to load...');
-      await new Promise(resolve => {
-        const checkInterval = setInterval(() => {
-          if (window.EconomyModules) {
-            clearInterval(checkInterval);
-            resolve();
-          }
-        }, 100);
-        // Timeout after 5 seconds
-        setTimeout(() => {
-          clearInterval(checkInterval);
-          resolve();
-        }, 5000);
-      });
-    }
-
-    if (!window.EconomyModules) {
-      throw new Error('Economy modules failed to load within timeout');
-    }
-
-    console.log('✅ Economy modules available');
-
-    // Clear loading spinner
-    container.innerHTML = '';
-
-    // Initialize Economy plugin with simpler approach
-    const { BalanceManagerView, EconomyAPI } = window.EconomyModules;
-
-    // Create a robust controller object that BalanceManagerView expects
-    const simpleController = {
-      users: [],
-      filteredUsers: [],
-      currencies: [],
-      view: null,
-
-      // Data Access Methods
-      getCurrencies: () => simpleController.currencies,
-      getTotalUsers: () => simpleController.filteredUsers.length,
-
-      getPaginatedUsers: (page, pageSize) => {
-        const start = (page - 1) * pageSize;
-        return simpleController.filteredUsers.slice(start, start + pageSize);
-      },
-
-      // Filter & Search Methods
-      handleSearch: (query) => {
-        const q = query.toLowerCase();
-        simpleController.filteredUsers = simpleController.users.filter(u =>
-          u.username.toLowerCase().includes(q) ||
-          (u.email && u.email.toLowerCase().includes(q)) ||
-          u.id.toString().includes(q)
-        );
-        if (simpleController.view) {
-          simpleController.view.currentPage = 1;
-          simpleController.view.updateTable();
-        }
-      },
-
-      handleCurrencyFilter: (currencyCode) => {
-        // Reset to full list first
-        simpleController.filteredUsers = [...simpleController.users];
-
-        // Apply currency filter if selected
-        if (currencyCode) {
-          simpleController.filteredUsers = simpleController.filteredUsers.filter(u =>
-            u.balances && u.balances[currencyCode] !== undefined
-          );
-        }
-
-        if (simpleController.view) {
-          simpleController.view.currentPage = 1;
-          simpleController.view.updateTable();
-        }
-      },
-
-      handleStatusFilter: (status) => {
-        // Mock implementation - users don't have status yet
-        console.log('Status filter not fully implemented:', status);
-      },
-
-      handleSort: (field, direction) => {
-        simpleController.filteredUsers.sort((a, b) => {
-          let valA = a[field];
-          let valB = b[field];
-
-          // Handle undefined/null
-          if (valA == null) valA = '';
-          if (valB == null) valB = '';
-
-          // Case insensitive string sort
-          if (typeof valA === 'string') valA = valA.toLowerCase();
-          if (typeof valB === 'string') valB = valB.toLowerCase();
-
-          if (valA < valB) return direction === 'asc' ? -1 : 1;
-          if (valA > valB) return direction === 'asc' ? 1 : -1;
-          return 0;
-        });
-        if (simpleController.view) simpleController.view.updateTable();
-      },
-
-      // Actions
-      refreshData: async () => {
-        await loadEconomyPlugin(container);
-      },
-
-      exportData: () => {
-        alert('Export feature coming soon!');
-      },
-
-      handleRowSelect: (row) => {
-        console.log('Row selected:', row);
-      },
-
-      showTransactionHistory: async (userId) => {
-        try {
-          const user = simpleController.users.find(u => u.id == userId);
-          const username = user ? user.username : 'Unknown User';
-
-          // Create Modal Container
-          const overlay = document.createElement('div');
-          overlay.className = 'modal-overlay';
-
-          // Fetch Data
-          const res = await fetch(`/admin/api/plugins/economy/transactions?userId=${userId}&limit=50&_t=${Date.now()}`);
-          if (!res.ok) throw new Error('Failed to fetch transactions');
-          const data = await res.json();
-          const transactions = data.transactions || [];
-
-          // Build Content
-          const tableRows = transactions.length > 0
-            ? transactions.map(tx => `
-                <tr>
-                  <td class="data-table__cell">${new Date(tx.created_at).toLocaleString()}</td>
-                  <td class="data-table__cell"><span class="status-badge status-active">${tx.transaction_type}</span></td>
-                  <td class="data-table__cell ${tx.amount >= 0 ? 'positive-text' : 'negative-text'}">
-                    ${tx.amount > 0 ? '+' : ''}${tx.amount}
-                  </td>
-                  <td class="data-table__cell">${tx.currency_symbol || tx.currency_id}</td>
-                  <td class="data-table__cell">${tx.description || '-'}</td>
-                  <td class="data-table__cell small-text">${tx.source}</td>
-                </tr>
-              `).join('')
-            : `<tr><td colspan="6" class="data-table__cell text-center" style="text-align:center; padding: 2rem;">No transaction history found.</td></tr>`;
-
-          overlay.innerHTML = `
-            <div class="modal-container" style="max-width: 900px; width: 90%;">
-              <div class="modal-header">
-                <h3>History: ${username}</h3>
-                <button class="btn-close">&times;</button>
-              </div>
-              <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
-                <table class="data-table__table">
-                  <thead>
-                    <tr>
-                      <th class="data-table__header-cell">Date</th>
-                      <th class="data-table__header-cell">Type</th>
-                      <th class="data-table__header-cell">Amount</th>
-                      <th class="data-table__header-cell">Currency</th>
-                      <th class="data-table__header-cell">Description</th>
-                      <th class="data-table__header-cell">Source</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${tableRows}
-                  </tbody>
-                </table>
-              </div>
-              <div class="modal-footer">
-                <button class="btn btn-secondary btn-close-modal">Close</button>
-              </div>
-            </div>
-          `;
-
-          document.body.appendChild(overlay);
-
-          // Bind Events
-          const close = () => document.body.removeChild(overlay);
-          overlay.querySelectorAll('.btn-close, .btn-close-modal').forEach(btn => btn.onclick = close);
-          overlay.onclick = (e) => { if (e.target === overlay) close(); };
-
-        } catch (error) {
-          console.error('Error fetching history:', error);
-          alert('Failed to load transaction history: ' + error.message);
-        }
-      },
-
-      showBalanceModal: (userId) => {
-        const user = simpleController.users.find(u => u.id === userId);
-        if (!user) return;
-
-        // Ensure user has balances object
-        const balances = user.balances || {};
-
-        // Create modal overlay
-        const overlay = document.createElement('div');
-        overlay.className = 'modal-overlay';
-
-        // Modal HTML - constructing the form
-        // We use innerHTML for simplicity in this integration script
-        overlay.innerHTML = `
-          <div class="modal-container">
-            <div class="modal-header">
-              <h3 class="modal-title">Adjust Balance: <span style="color: var(--color-primary)">${user.username}</span></h3>
-              <button class="modal-close" type="button">&times;</button>
-            </div>
-            <div class="modal-body">
-              <div style="margin-bottom: 1.5rem; padding: 1rem; background: var(--color-background-tertiary); border-radius: var(--border-radius);">
-                <h4 style="margin: 0 0 0.5rem 0; font-size: 0.9rem; color: var(--color-text-secondary);">Current Balances</h4>
-                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                  ${Object.entries(balances).length ?
-            Object.entries(balances).map(([curr, amt]) =>
-              `<span class="status-badge status-active">${curr}: ${amt}</span>`
-            ).join('') :
-            '<span style="font-style: italic; color: var(--color-text-secondary)">No active balances</span>'
-          }
-                </div>
-              </div>
-
-              <form id="balance-form">
-                <div class="form-group">
-                  <label class="form-label">Currency</label>
-                  <select name="currency" class="form-control form-select" required>
-                    ${simpleController.currencies.map(c =>
-            `<option value="${c.id}">${c.name} (${c.symbol || c.code})</option>`
-          ).join('')}
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Action</label>
-                  <select name="adjustmentType" class="form-control form-select" required>
-                    <option value="add">Add (+)</option>
-                    <option value="subtract">Subtract (-)</option>
-                    <option value="set">Set (=)</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Amount</label>
-                  <input type="number" name="amount" class="form-control" min="0" step="1" required placeholder="Enter amount">
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Reason</label>
-                  <input type="text" name="reason" class="form-control" required placeholder="e.g. Admin adjustment, Bonus">
-                </div>
-              </form>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary modal-cancel">Cancel</button>
-              <button type="submit" form="balance-form" class="btn btn-primary">Save Changes</button>
-            </div>
-          </div>
-        `;
-
-        document.body.appendChild(overlay);
-
-        // Event Handlers
-        const close = () => {
-          if (overlay.parentNode) {
-            document.body.removeChild(overlay);
-          }
-        };
-
-        const closeBtn = overlay.querySelector('.modal-close');
-        const cancelBtn = overlay.querySelector('.modal-cancel');
-
-        closeBtn.onclick = close;
-        cancelBtn.onclick = close;
-
-        // Close on outside click
-        overlay.onclick = (e) => {
-          if (e.target === overlay) close();
-        };
-
-        // Form Submission
-        const form = overlay.querySelector('#balance-form');
-        form.onsubmit = async (e) => {
-          e.preventDefault();
-          const formData = new FormData(form);
-          const data = {
-            currency: formData.get('currency'),
-            adjustmentType: formData.get('adjustmentType'),
-            amount: parseInt(formData.get('amount')),
-            reason: formData.get('reason')
-          };
-
-          try {
-            const submitBtn = overlay.querySelector('button[type="submit"]');
-            if (submitBtn) {
-              submitBtn.disabled = true;
-              submitBtn.textContent = 'Saving...';
-            }
-
-            const res = await fetch(`/admin/api/plugins/economy/balances/${userId}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(data)
-            });
-
-            if (!res.ok) {
-              const err = await res.json();
-              throw new Error(err.error || 'Failed to update balance');
-            }
-
-            const result = await res.json();
-            close();
-
-            // Reload the plugin to refresh data
-            loadEconomyPlugin(container);
-
-          } catch (error) {
-            console.error('Error updating balance:', error);
-            alert('Error: ' + error.message);
-            const submitBtn = overlay.querySelector('button[type="submit"]');
-            if (submitBtn) {
-              submitBtn.disabled = false;
-              submitBtn.textContent = 'Save Changes';
-            }
-          }
-        };
+  if (modules && modules.PluginView) {
+    try {
+      console.log(`🏗️ Initializing UI for ${pluginId} using ${moduleKey}.PluginView...`);
+      container.innerHTML = '';
+      const view = new modules.PluginView(container);
+      if (view.render) {
+        await view.render();
       }
-    };
-
-    // Fetch data using the fixed Economy API endpoint that includes balances for ALL users
-    const [balancesResponse, currenciesResponse] = await Promise.all([
-      fetch(`/admin/api/plugins/economy/balances?limit=1000&_t=${Date.now()}`).then(r => r.json()),
-      fetch('/admin/api/plugins/economy/currencies').then(r => r.json())
-    ]);
-
-    // Map the response to the expected structure
-    // The API now returns { balances: [users...] } because 'balanceRoutes.js' maps 'users' from service to 'balances' in response
-    // Wait, let's verify what balanceRoutes.js returns.
-    // In Step 123 (balanceRoutes.js), it returns: { balances: balances.users, ... }
-    // So 'balancesResponse.balances' IS the array of users.
-    const mappedUsers = (balancesResponse.balances || []).map(u => ({
-      ...u,
-      // Ensure keys match what View expects
-      id: u.user_id || u.id,
-      // Calculate status from last_login (Active if < 30 days)
-      status: u.status || (u.last_login && (Date.now() - new Date(u.last_login).getTime() < 30 * 24 * 60 * 60 * 1000) ? 'active' : 'inactive') || 'inactive',
-      // Ensure balances object exists
-      balances: u.balances || {},
-      // Ensure dates exist
-      last_updated: u.updated_at || u.last_login || new Date().toISOString(),
-      email: u.email || 'N/A'
-    }));
-
-    simpleController.users = mappedUsers;
-    simpleController.filteredUsers = [...mappedUsers];
-    simpleController.currencies = currenciesResponse.currencies || currenciesResponse;
-
-    // Render the view
-    const view = new BalanceManagerView(container, simpleController);
-    simpleController.view = view; // Link view to controller
-    view.render();
-
-    console.log('✅ Economy Plugin UI loaded successfully with User data');
-  } catch (error) {
-    console.error('❌ Failed to load Economy plugin:', error);
-    container.innerHTML = `
-      <div class="error-message">
-        <h3>Failed to load Economy Plugin</h3>
-        <p>${error.message}</p>
-        <button onclick="location.reload()" class="btn btn-primary">Reload Page</button>
-      </div>
-    `;
+      console.log(`✅ ${pluginId} UI rendered successfully`);
+    } catch (err) {
+      console.error(`❌ Error rendering ${pluginId} UI:`, err);
+      container.innerHTML = `<div class="error-message"><p>Error rendering plugin: ${err.message}</p></div>`;
+    }
+    return;
   }
+
+  // No fallback needed anymore as all core plugins use PluginView pattern
+  console.warn(`⚠️ No generic PluginView found for ${pluginId}.`);
+  container.innerHTML = `<div class="info-message"><p>Plugin ${pluginId} loaded but has no dynamic UI components recognized.</p></div>`;
+}
+
+/**
+ * Show Missing Plugin Queue - Process missing plugins one at a time
+ */
+function showMissingPluginQueue() {
+  if (!window.missingPlugins || window.missingPlugins.length === 0) {
+    return;
+  }
+
+  // Create a copy of the queue
+  const queue = [...window.missingPlugins];
+  let currentIndex = 0;
+
+  function showNextModal() {
+    if (currentIndex >= queue.length) {
+      console.log('✅ All missing plugins processed');
+      return;
+    }
+
+    const plugin = queue[currentIndex];
+    showMissingPluginModal(plugin, () => {
+      currentIndex++;
+      showNextModal();
+    });
+  }
+
+  showNextModal();
+}
+
+/**
+ * Show Missing Plugin Modal
+ */
+function showMissingPluginModal(plugin, onComplete) {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2>⚠️ Plugin Not Found</h2>
+      </div>
+      <div class="modal-body">
+        <p>The plugin <strong>${plugin.name}</strong> (ID: <code>${plugin.id}</code>) was previously installed but is no longer found in the filesystem.</p>
+        <p class="error-message" style="font-size: 0.9em; margin-top: 1em;">${plugin.error}</p>
+        <p style="margin-top: 1.5em;">What would you like to do?</p>
+      </div>
+      <div class="modal-footer" style="display: flex; gap: 1em; justify-content: flex-end;">
+        <button class="btn btn-secondary" id="deactivate-plugin-btn">
+          🔇 Deactivate
+        </button>
+        <button class="btn btn-danger" id="delete-plugin-btn">
+          🗑️ Delete
+        </button>
+        <button class="btn btn-primary" id="cancel-modal-btn">
+          Cancel
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const closeAndProceed = () => {
+    modal.remove();
+    if (onComplete) onComplete();
+  };
+
+  // Handle Delete
+  modal.querySelector('#delete-plugin-btn').addEventListener('click', async () => {
+    try {
+      const response = await fetch(`/admin/api/plugins/${plugin.id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        console.log(`✅ Plugin ${plugin.id} purged successfully`);
+        closeAndProceed();
+        // Reload plugin registry after all modals are processed
+      } else {
+        alert(`Failed to delete plugin: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error deleting plugin:', error);
+      alert('Failed to delete plugin. Check console for details.');
+    }
+  });
+
+  // Handle Deactivate
+  modal.querySelector('#deactivate-plugin-btn').addEventListener('click', async () => {
+    try {
+      const response = await fetch(`/admin/api/plugins/${plugin.id}/suppress`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        console.log(`✅ Plugin ${plugin.id} suppressed successfully`);
+        closeAndProceed();
+        // Reload plugin registry after all modals are processed
+      } else {
+        alert(`Failed to deactivate plugin: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error deactivating plugin:', error);
+      alert('Failed to deactivate plugin. Check console for details.');
+    }
+  });
+
+  // Handle Cancel
+  modal.querySelector('#cancel-modal-btn').addEventListener('click', () => {
+    closeAndProceed();
+  });
+
+  // Close on overlay click
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      closeAndProceed();
+    }
+  });
 }
 
 /**
@@ -885,7 +883,7 @@ function showCoreDashboard() {
 
   // Clear active tabs
   const tabs = document.querySelectorAll('.plugin-tab');
-  tabs.forEach(tab => tab.classList.remove('plugin-tab--active'));
+  tabs.forEach(tab => tab.classList.remove('active'));
 
   // Show core dashboard
   const coreDashboard = document.getElementById('core-dashboard-content');

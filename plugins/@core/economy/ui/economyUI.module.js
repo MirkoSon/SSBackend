@@ -7,14 +7,15 @@
 // Import the new MVC components - only View, controller is created inline
 import { economyApi } from '/plugins/@core/economy/ui/components/BalanceManager/api/economyApi.js';
 import { BalanceManagerView } from '/plugins/@core/economy/ui/components/BalanceManager/BalanceManagerView.js';
+import { PluginView } from './PluginView.js';
 
 console.log('💰 Loading Improved Economy Plugin UI Module...');
 
 // Make components globally available
 window.EconomyModules = {
   economyApi,
-  BalanceManagerView
-  // Note: Controller is created inline in admin-dashboard-integration.js
+  BalanceManagerView,
+  PluginView
 };
 
 // Global utilities with enhanced functionality
@@ -28,7 +29,7 @@ window.EconomyPluginUI = {
       maximumFractionDigits: 2
     }).format(amount);
   },
-  
+
   // Enhanced date formatting
   formatDate: (dateString) => {
     if (!dateString) return 'N/A';
@@ -40,7 +41,7 @@ window.EconomyPluginUI = {
       minute: '2-digit'
     });
   },
-  
+
   // Enhanced notification system
   showNotification: (message, type = 'info', duration = 5000) => {
     if (window.showNotification) {
@@ -51,7 +52,7 @@ window.EconomyPluginUI = {
       this.showToast(message, type, duration);
     }
   },
-  
+
   // Toast notification fallback
   showToast: (message, type = 'info', duration = 5000) => {
     const toast = document.createElement('div');
@@ -60,15 +61,15 @@ window.EconomyPluginUI = {
       <span class="toast-icon">${this.getToastIcon(type)}</span>
       <span class="toast-message">${message}</span>
     `;
-    
+
     document.body.appendChild(toast);
-    
+
     setTimeout(() => {
       toast.classList.add('toast-fade-out');
       setTimeout(() => toast.remove(), 300);
     }, duration);
   },
-  
+
   getToastIcon: (type) => {
     const icons = {
       success: '✓',
@@ -78,7 +79,7 @@ window.EconomyPluginUI = {
     };
     return icons[type] || icons.info;
   },
-  
+
   // Enhanced API methods
   api: {
     async get(endpoint) {
@@ -88,7 +89,7 @@ window.EconomyPluginUI = {
       if (!r.ok) throw new Error(`API failed: ${r.status}`);
       return r.json();
     },
-    
+
     async post(endpoint, data) {
       const r = await fetch(`/admin/api/plugins/economy${endpoint}`, {
         method: 'POST',
@@ -98,7 +99,7 @@ window.EconomyPluginUI = {
       if (!r.ok) throw new Error(`API failed: ${r.status}`);
       return r.json();
     },
-    
+
     async put(endpoint, data) {
       const r = await fetch(`/admin/api/plugins/economy${endpoint}`, {
         method: 'PUT',
@@ -108,7 +109,7 @@ window.EconomyPluginUI = {
       if (!r.ok) throw new Error(`API failed: ${r.status}`);
       return r.json();
     },
-    
+
     async delete(endpoint) {
       const r = await fetch(`/admin/api/plugins/economy${endpoint}`, {
         method: 'DELETE',
@@ -118,20 +119,20 @@ window.EconomyPluginUI = {
       return r.json();
     }
   },
-  
+
   // Utility to create Balance Manager instance
   createBalanceManager: (container) => {
     const controller = new BalanceManagerController();
     const view = new BalanceManagerView(container, controller);
     return { controller, view };
   },
-  
+
   // Data export utilities
   exportToCSV: (data, filename) => {
     const csvContent = this.convertToCSV(data);
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
-    
+
     if (link.download !== undefined) {
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
@@ -142,13 +143,13 @@ window.EconomyPluginUI = {
       document.body.removeChild(link);
     }
   },
-  
+
   convertToCSV: (data) => {
     if (!data || data.length === 0) return '';
-    
+
     const headers = Object.keys(data[0]);
     const csvRows = [headers.join(',')];
-    
+
     data.forEach(row => {
       const values = headers.map(header => {
         const value = row[header];
@@ -160,11 +161,11 @@ window.EconomyPluginUI = {
       });
       csvRows.push(values.join(','));
     });
-    
+
     return csvRows.join('\n');
   }
 };
 
 console.log('✅ Improved Economy Plugin UI Module loaded successfully');
 
-export { economyApi, BalanceManagerView };
+export { economyApi, BalanceManagerView, PluginView };
