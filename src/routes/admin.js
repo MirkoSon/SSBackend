@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const { getDatabase } = require('../db/database');
 
 const router = express.Router();
@@ -66,7 +67,7 @@ router.get('/status', (req, res) => {
 router.get('/api/users', adminAuth, (req, res) => {
   try {
     const db = getDatabase();
-    
+
     const query = `
       SELECT 
         id, 
@@ -77,7 +78,7 @@ router.get('/api/users', adminAuth, (req, res) => {
       FROM users 
       ORDER BY created_at DESC
     `;
-    
+
     db.all(query, (err, users) => {
       if (err) {
         console.error('Error fetching users:', err.message);
@@ -108,7 +109,7 @@ router.get('/api/users/:id', adminAuth, (req, res) => {
     if (isNaN(userId)) {
       return res.status(400).json({ error: 'Invalid user ID' });
     }
-    
+
     const userQuery = `
       SELECT 
         id, 
@@ -119,7 +120,7 @@ router.get('/api/users/:id', adminAuth, (req, res) => {
       FROM users 
       WHERE id = ?
     `;
-    
+
     db.get(userQuery, [userId], (err, user) => {
       if (err) {
         console.error('Error fetching user:', err.message);
@@ -148,7 +149,7 @@ router.get('/api/users/:id', adminAuth, (req, res) => {
 router.get('/api/saves', adminAuth, (req, res) => {
   try {
     const db = getDatabase();
-    
+
     const query = `
       SELECT 
         s.id,
@@ -159,7 +160,7 @@ router.get('/api/saves', adminAuth, (req, res) => {
       FROM saves s
       ORDER BY s.updated_at DESC
     `;
-    
+
     db.all(query, (err, saves) => {
       if (err) {
         console.error('Error fetching saves:', err.message);
@@ -171,7 +172,7 @@ router.get('/api/saves', adminAuth, (req, res) => {
         let dataPreview = 'No data';
         let dataStructure = {};
         let username = 'Unknown'; // We don't have user relationship in saves
-        
+
         try {
           if (save.data) {
             const parsed = JSON.parse(save.data);
@@ -217,7 +218,7 @@ router.get('/api/saves/:id', adminAuth, (req, res) => {
   try {
     const db = getDatabase();
     const saveId = req.params.id;
-    
+
     const query = `
       SELECT 
         s.id,
@@ -227,7 +228,7 @@ router.get('/api/saves/:id', adminAuth, (req, res) => {
       FROM saves s
       WHERE s.id = ?
     `;
-    
+
     db.get(query, [saveId], (err, save) => {
       if (err) {
         console.error('Error fetching save:', err.message);
@@ -272,7 +273,7 @@ router.get('/api/saves/:id', adminAuth, (req, res) => {
 router.get('/api/inventories', adminAuth, (req, res) => {
   try {
     const db = getDatabase();
-    
+
     const query = `
       SELECT 
         i.user_id,
@@ -285,7 +286,7 @@ router.get('/api/inventories', adminAuth, (req, res) => {
       LEFT JOIN users u ON i.user_id = u.id
       ORDER BY u.username, i.item_id
     `;
-    
+
     db.all(query, (err, inventoryItems) => {
       if (err) {
         console.error('Error fetching inventories:', err.message);
@@ -304,17 +305,17 @@ router.get('/api/inventories', adminAuth, (req, res) => {
             total_quantity: 0
           };
         }
-        
+
         acc[userId].items.push({
           item_id: item.item_id,
           quantity: item.quantity,
           created_at: item.created_at,
           updated_at: item.updated_at
         });
-        
+
         acc[userId].total_items += 1;
         acc[userId].total_quantity += item.quantity;
-        
+
         return acc;
       }, {});
 
@@ -340,7 +341,7 @@ router.get('/api/inventories', adminAuth, (req, res) => {
 router.get('/api/progress', adminAuth, (req, res) => {
   try {
     const db = getDatabase();
-    
+
     // Query progress data from the character_progress table
     const progressQuery = `
       SELECT 
@@ -354,7 +355,7 @@ router.get('/api/progress', adminAuth, (req, res) => {
       LEFT JOIN users u ON p.user_id = u.id
       ORDER BY p.user_id, p.metric_name
     `;
-    
+
     db.all(progressQuery, (err, progressData) => {
       if (err) {
         console.error('Error fetching progress:', err.message);
@@ -375,7 +376,7 @@ router.get('/api/progress', adminAuth, (req, res) => {
         LEFT JOIN achievements a ON ua.achievement_id = a.id
         ORDER BY u.username, ua.unlocked_at DESC
       `;
-      
+
       db.all(achievementsQuery, (err, achievementsData) => {
         if (err) {
           console.error('Error fetching achievements:', err.message);
@@ -397,16 +398,16 @@ router.get('/api/progress', adminAuth, (req, res) => {
               last_active: null
             };
           }
-          
+
           // Store all metrics
           acc[userId].metrics[progress.metric_name] = {
             current_value: progress.current_value,
             max_value: progress.max_value,
             updated_at: progress.updated_at
           };
-          
+
           // Map common metric names to expected fields
-          switch(progress.metric_name) {
+          switch (progress.metric_name) {
             case 'level':
               acc[userId].level = progress.current_value;
               break;
@@ -417,12 +418,12 @@ router.get('/api/progress', adminAuth, (req, res) => {
               acc[userId].play_time = progress.current_value;
               break;
           }
-          
+
           // Update last_active to the most recent update
           if (!acc[userId].last_active || progress.updated_at > acc[userId].last_active) {
             acc[userId].last_active = progress.updated_at;
           }
-          
+
           return acc;
         }, {});
 
@@ -432,14 +433,14 @@ router.get('/api/progress', adminAuth, (req, res) => {
           if (!acc[userId]) {
             acc[userId] = [];
           }
-          
+
           acc[userId].push({
             achievement_name: achievement.achievement_name,
             description: achievement.description,
             unlocked_at: achievement.unlocked_at,
             progress_value: achievement.progress_value
           });
-          
+
           return acc;
         }, {});
 
@@ -475,7 +476,7 @@ router.get('/api/export/:type', adminAuth, (req, res) => {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 
     let query, filename;
-    
+
     switch (exportType) {
       case 'users':
         query = `
@@ -484,7 +485,7 @@ router.get('/api/export/:type', adminAuth, (req, res) => {
         `;
         filename = `users-export-${timestamp}.json`;
         break;
-        
+
       case 'saves':
         query = `
           SELECT id, data, created_at, updated_at
@@ -492,7 +493,7 @@ router.get('/api/export/:type', adminAuth, (req, res) => {
         `;
         filename = `saves-export-${timestamp}.json`;
         break;
-        
+
       case 'inventories':
         query = `
           SELECT i.user_id, u.username, i.item_id, i.quantity, i.created_at, i.updated_at
@@ -501,7 +502,7 @@ router.get('/api/export/:type', adminAuth, (req, res) => {
         `;
         filename = `inventories-export-${timestamp}.json`;
         break;
-        
+
       case 'progress':
         query = `
           SELECT p.user_id, u.username, p.metric_name, p.current_value, p.max_value, p.updated_at
@@ -510,7 +511,7 @@ router.get('/api/export/:type', adminAuth, (req, res) => {
         `;
         filename = `progress-export-${timestamp}.json`;
         break;
-        
+
       case 'achievements':
         query = `
           SELECT ua.user_id, u.username, a.name as achievement_name, a.description, ua.unlocked_at, ua.progress_value
@@ -521,7 +522,7 @@ router.get('/api/export/:type', adminAuth, (req, res) => {
         `;
         filename = `achievements-export-${timestamp}.json`;
         break;
-        
+
       case 'all':
         // For 'all' export, we'll return a comprehensive data dump
         const allQueries = [
@@ -532,13 +533,13 @@ router.get('/api/export/:type', adminAuth, (req, res) => {
           { name: 'achievements', query: 'SELECT * FROM achievements ORDER BY id' },
           { name: 'user_achievements', query: 'SELECT * FROM user_achievements ORDER BY user_id, unlocked_at DESC' }
         ];
-        
-        const allData = { 
+
+        const allData = {
           export_timestamp: new Date().toISOString(),
           export_type: 'complete_database_dump'
         };
         let completedQueries = 0;
-        
+
         allQueries.forEach(({ name, query }) => {
           db.all(query, (err, rows) => {
             if (err) {
@@ -547,7 +548,7 @@ router.get('/api/export/:type', adminAuth, (req, res) => {
             } else {
               allData[name] = rows;
             }
-            
+
             completedQueries++;
             if (completedQueries === allQueries.length) {
               res.setHeader('Content-Disposition', `attachment; filename="complete-export-${timestamp}.json"`);
@@ -557,11 +558,11 @@ router.get('/api/export/:type', adminAuth, (req, res) => {
           });
         });
         return; // Exit early for 'all' case
-        
+
       default:
         return res.status(400).json({ error: 'Invalid export type' });
     }
-    
+
     db.all(query, (err, rows) => {
       if (err) {
         console.error('Error exporting data:', err.message);
@@ -582,6 +583,36 @@ router.get('/api/export/:type', adminAuth, (req, res) => {
 
   } catch (error) {
     console.error('Error in export endpoint:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /admin/api/docs/:filename - Get a documentation file as Markdown
+ */
+router.get('/api/docs/:filename', adminAuth, (req, res) => {
+  try {
+    const filename = req.params.filename;
+
+    // Security: Validate filename to prevent path traversal
+    // Only allow alphanumeric characters, dashes, underscores and a single .md extension
+    if (!/^[a-zA-Z0-9\-_]+\.md$/.test(filename)) {
+      return res.status(400).json({ error: 'Invalid documentation filename' });
+    }
+
+    const docsPath = path.join(__dirname, '..', '..', 'docs', filename);
+
+    if (!fs.existsSync(docsPath)) {
+      return res.status(404).json({ error: 'Documentation file not found' });
+    }
+
+    const content = fs.readFileSync(docsPath, 'utf8');
+    res.json({
+      filename: filename,
+      content: content
+    });
+  } catch (error) {
+    console.error('Error serving documentation:', error.message);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

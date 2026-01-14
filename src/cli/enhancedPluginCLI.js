@@ -1,3 +1,5 @@
+const path = require('path');
+const fs = require('fs');
 const PluginManagementAPIClient = require('./apiClient');
 
 /**
@@ -56,7 +58,7 @@ class EnhancedPluginCLI {
           await this.showPluginInfo(args[2]);
           break;
         case 'validate':
-          await this.validatePluginSystem();
+          await this.validatePluginSystem(args[2]);
           break;
         case 'install':
           await this.installPlugin(args[2]);
@@ -70,7 +72,7 @@ class EnhancedPluginCLI {
       }
     } catch (error) {
       console.error(`${this.colorize('❌', 'red')} Plugin command failed:`, error.message);
-      
+
       if (error.message.includes('authentication required')) {
         console.log(`${this.colorize('💡', 'blue')} Tip: Please authenticate as admin via the web interface first.`);
         console.log(`${this.colorize('🌐', 'blue')} Visit: http://localhost:${this.apiClient.config.port || 3000}/admin`);
@@ -85,10 +87,10 @@ class EnhancedPluginCLI {
   async listPlugins(args) {
     try {
       console.log(`${this.colorize('🔄', 'blue')} Fetching plugin status...`);
-      
+
       const response = await this.apiClient.listPlugins();
       const { plugins, systemHealth } = response.data;
-      
+
       if (!plugins || plugins.length === 0) {
         console.log(`${this.colorize('📋', 'yellow')} No plugins found`);
         return;
@@ -96,7 +98,7 @@ class EnhancedPluginCLI {
 
       const verbose = args.includes('--verbose') || args.includes('-v');
       console.log(`\n${this.colorize('📦', 'cyan')} SSBackend Plugin Status\n`);
-      
+
       const internalPlugins = plugins.filter(p => p.type === 'internal');
       const externalPlugins = plugins.filter(p => p.type === 'external');
 
@@ -112,15 +114,15 @@ class EnhancedPluginCLI {
 
       const enabledCount = plugins.filter(p => p.enabled).length;
       const totalCount = plugins.length;
-      
+
       console.log(`\n${this.colorize('Plugin Summary:', 'bright')} ${enabledCount}/${totalCount} enabled, ${totalCount - enabledCount} disabled`);
-      
+
       if (systemHealth && !systemHealth.healthy) {
         console.log(`${this.colorize('⚠️', 'yellow')} System health: Issues detected`);
       }
-      
+
       console.log(`${this.colorize('💡', 'blue')} Use '${this.colorize('ssbackend plugins info <n>', 'cyan')}' for detailed information`);
-      
+
     } catch (error) {
       throw new Error(`Failed to list plugins: ${error.message}`);
     }
@@ -131,12 +133,12 @@ class EnhancedPluginCLI {
    */
   displayPluginList(plugins, verbose = false) {
     plugins.forEach((plugin, index) => {
-      const status = plugin.enabled ? 
-        `${this.colorize('✅', 'green')} Active` : 
+      const status = plugin.enabled ?
+        `${this.colorize('✅', 'green')} Active` :
         `${this.colorize('❌', 'red')} Inactive`;
-      
+
       console.log(`  ${status} ${this.colorize(plugin.name, 'bright')}      v${plugin.version}  ${plugin.description}`);
-      
+
       if (verbose) {
         if (plugin.dependencies && plugin.dependencies.length > 0) {
           console.log(`      ${this.colorize('Dependencies:', 'cyan')} ${plugin.dependencies.join(', ')}`);
@@ -164,15 +166,15 @@ class EnhancedPluginCLI {
       if (!pluginName) return;
 
       console.log(`${this.colorize('🔄', 'blue')} Enabling plugin ${this.colorize(pluginName, 'bright')}...`);
-      
+
       const response = await this.apiClient.enablePlugin(pluginName);
-      
+
       console.log(`${this.colorize('✅', 'green')} Plugin "${pluginName}" enabled successfully`);
-      
+
       if (response.data && response.data.routes) {
         console.log(`${this.colorize('🌐', 'blue')} Plugin routes available at:`, response.data.routes.join(', '));
       }
-      
+
     } catch (error) {
       console.log(`${this.colorize('❌', 'red')} Failed to enable plugin "${identifier}":`, error.message);
     }
@@ -194,15 +196,15 @@ class EnhancedPluginCLI {
       if (!pluginName) return;
 
       console.log(`${this.colorize('🔄', 'blue')} Disabling plugin ${this.colorize(pluginName, 'bright')}...`);
-      
+
       const response = await this.apiClient.disablePlugin(pluginName);
-      
+
       console.log(`${this.colorize('⏹️', 'yellow')} Plugin "${pluginName}" disabled successfully`);
-      
+
       if (response.data && response.data.warning) {
         console.log(`${this.colorize('⚠️', 'yellow')} Warning:`, response.data.warning);
       }
-      
+
     } catch (error) {
       console.log(`${this.colorize('❌', 'red')} Failed to disable plugin "${identifier}":`, error.message);
     }
@@ -224,26 +226,26 @@ class EnhancedPluginCLI {
       if (!pluginName) return;
 
       console.log(`${this.colorize('🔄', 'blue')} Fetching detailed information for ${this.colorize(pluginName, 'bright')}...`);
-      
+
       const response = await this.apiClient.getPluginInfo(pluginName);
       const { plugin, configuration } = response.data;
-      
+
       console.log(`\n${this.colorize('📋', 'cyan')} Plugin Information: ${this.colorize(plugin.name, 'bright')}\n`);
-      
+
       // Basic information
       console.log(`${this.colorize('Name:', 'bright')}           ${plugin.name}`);
       console.log(`${this.colorize('Version:', 'bright')}        ${plugin.version}`);
       console.log(`${this.colorize('Description:', 'bright')}    ${plugin.description}`);
       console.log(`${this.colorize('Type:', 'bright')}           ${plugin.type}`);
-      console.log(`${this.colorize('Status:', 'bright')}         ${plugin.enabled ? 
-        this.colorize('✅ Enabled', 'green') : 
+      console.log(`${this.colorize('Status:', 'bright')}         ${plugin.enabled ?
+        this.colorize('✅ Enabled', 'green') :
         this.colorize('❌ Disabled', 'red')}`);
-      
+
       // Dependencies
       if (plugin.dependencies && plugin.dependencies.length > 0) {
         console.log(`${this.colorize('Dependencies:', 'bright')}  ${plugin.dependencies.join(', ')}`);
       }
-      
+
       // Routes
       if (plugin.routes && plugin.routes.length > 0) {
         console.log(`\n${this.colorize('API Routes:', 'bright')}`);
@@ -251,7 +253,7 @@ class EnhancedPluginCLI {
           console.log(`  ${this.colorize('•', 'cyan')} ${route}`);
         });
       }
-      
+
       // Configuration
       if (configuration && Object.keys(configuration).length > 0) {
         console.log(`\n${this.colorize('Configuration:', 'bright')}`);
@@ -261,7 +263,7 @@ class EnhancedPluginCLI {
           }
         });
       }
-      
+
       // Additional metadata
       if (plugin.author) {
         console.log(`\n${this.colorize('Author:', 'bright')}        ${plugin.author}`);
@@ -269,32 +271,66 @@ class EnhancedPluginCLI {
       if (plugin.license) {
         console.log(`${this.colorize('License:', 'bright')}       ${plugin.license}`);
       }
-      
+
     } catch (error) {
       console.log(`${this.colorize('❌', 'red')} Failed to get plugin information for "${identifier}":`, error.message);
     }
   }
 
   /**
-   * Validate the entire plugin system
+   * Validate the plugin system or a specific plugin
    * AC 4: Plugin Validation Command
    */
-  async validatePluginSystem() {
+  async validatePluginSystem(pluginName) {
     try {
-      console.log(`${this.colorize('🔍', 'blue')} Validating plugin system...`);
-      
+      if (pluginName) {
+        console.log(`${this.colorize('🔍', 'blue')} Validating plugin: ${this.colorize(pluginName, 'bright')}...`);
+
+        const PluginValidator = require('../plugins/PluginValidator');
+        const pluginsDir = path.join(process.cwd(), 'plugins');
+        const pluginPath = path.join(pluginsDir, pluginName);
+
+        if (!fs.existsSync(pluginPath)) {
+          console.log(`${this.colorize('❌', 'red')} Plugin directory not found: ${pluginPath}`);
+          return;
+        }
+
+        const indexPath = path.join(pluginPath, 'index.js');
+        const pluginJsPath = path.join(pluginPath, 'plugin.js');
+        let entryPoint = null;
+
+        if (fs.existsSync(indexPath)) entryPoint = indexPath;
+        else if (fs.existsSync(pluginJsPath)) entryPoint = pluginJsPath;
+
+        if (!entryPoint) {
+          console.log(`${this.colorize('❌', 'red')} Plugin entry point (index.js or plugin.js) not found in ${pluginName}`);
+          return;
+        }
+
+        // Clear cache to ensure fresh validation
+        delete require.cache[require.resolve(entryPoint)];
+        const plugin = require(entryPoint);
+        const validator = new PluginValidator();
+        const result = validator.validate(plugin, pluginName, pluginPath);
+
+        console.log(`\n${PluginValidator.formatResult(result, pluginName)}\n`);
+        return;
+      }
+
+      console.log(`${this.colorize('🔍', 'blue')} Validating plugin system health...`);
+
       const response = await this.apiClient.validatePluginSystem();
       const validation = response.data;
-      
+
       console.log(`\n${this.colorize('🔍', 'cyan')} Plugin System Validation Report\n`);
-      
+
       // Overall status
       if (validation.valid) {
         console.log(`${this.colorize('✅', 'green')} Overall Status: ${this.colorize('PASSED', 'green')}`);
       } else {
         console.log(`${this.colorize('❌', 'red')} Overall Status: ${this.colorize('FAILED', 'red')}`);
       }
-      
+
       // Summary
       if (validation.summary) {
         console.log(`\n${this.colorize('Summary:', 'bright')}`);
@@ -303,7 +339,7 @@ class EnhancedPluginCLI {
         console.log(`  Issues Found: ${validation.summary.issuesFound || 0}`);
         console.log(`  Warnings: ${validation.summary.warningsFound || 0}`);
       }
-      
+
       // Issues
       if (validation.issues && validation.issues.length > 0) {
         console.log(`\n${this.colorize('Issues Found:', 'red')}`);
@@ -317,7 +353,7 @@ class EnhancedPluginCLI {
           }
         });
       }
-      
+
       // Warnings
       if (validation.warnings && validation.warnings.length > 0) {
         console.log(`\n${this.colorize('Warnings:', 'yellow')}`);
@@ -325,7 +361,7 @@ class EnhancedPluginCLI {
           console.log(`  ${index + 1}. ${this.colorize('⚠️', 'yellow')} ${warning.message || warning}`);
         });
       }
-      
+
       // Recommendations
       if (validation.recommendations && validation.recommendations.length > 0) {
         console.log(`\n${this.colorize('Recommendations:', 'blue')}`);
@@ -333,10 +369,9 @@ class EnhancedPluginCLI {
           console.log(`  ${index + 1}. ${this.colorize('💡', 'blue')} ${rec}`);
         });
       }
-      
+
     } catch (error) {
       if (error.message.includes('Plugin system validation found issues')) {
-        // This is expected for failed validation - the error contains the validation data
         return;
       }
       console.log(`${this.colorize('❌', 'red')} Failed to validate plugin system:`, error.message);
@@ -350,31 +385,31 @@ class EnhancedPluginCLI {
   async installPlugin(pluginPath) {
     if (!pluginPath) {
       console.log(`${this.colorize('❌', 'red')} Plugin path required`);
-      console.log(`${this.colorize('Usage:', 'blue')} ssbackend plugins install <path>`);
-      console.log(`${this.colorize('Examples:', 'blue')}`);
-      console.log(`  ssbackend plugins install ./my-plugin/`);
-      console.log(`  ssbackend plugins install my-plugin.ssb-plugin`);
+      console.log(`${this.colorize('Usage:', 'blue')} ssbackend plugins install < path > `);
+      console.log(`${this.colorize('Examples:', 'blue')} `);
+      console.log(`  ssbackend plugins install./ my - plugin / `);
+      console.log(`  ssbackend plugins install my - plugin.ssb - plugin`);
       return;
     }
 
     try {
       console.log(`${this.colorize('📦', 'blue')} Installing plugin from ${this.colorize(pluginPath, 'bright')}...`);
-      
+
       // For now, this is a placeholder implementation
       // In a full implementation, this would:
       // 1. Validate plugin structure
       // 2. Copy files to plugins directory
       // 3. Install dependencies if needed
       // 4. Register with plugin system
-      
+
       console.log(`${this.colorize('⚠️', 'yellow')} Plugin installation feature is not yet implemented.`);
-      console.log(`${this.colorize('💡', 'blue')} Manual installation:`);
-      console.log(`  1. Copy plugin to src/plugins/ directory`);
+      console.log(`${this.colorize('💡', 'blue')} Manual installation: `);
+      console.log(`  1. Copy plugin to src / plugins / directory`);
       console.log(`  2. Restart SSBackend server`);
-      console.log(`  3. Enable plugin with: ssbackend plugins enable <plugin-name>`);
-      
+      console.log(`  3. Enable plugin with: ssbackend plugins enable < plugin - name > `);
+
     } catch (error) {
-      console.log(`${this.colorize('❌', 'red')} Failed to install plugin from "${pluginPath}":`, error.message);
+      console.log(`${this.colorize('❌', 'red')} Failed to install plugin from "${pluginPath}": `, error.message);
     }
   }
 
@@ -385,7 +420,7 @@ class EnhancedPluginCLI {
   async removePlugin(identifier) {
     if (!identifier) {
       console.log(`${this.colorize('❌', 'red')} Plugin identifier required`);
-      console.log(`${this.colorize('Usage:', 'blue')} ssbackend plugins remove <name|number>`);
+      console.log(`${this.colorize('Usage:', 'blue')} ssbackend plugins remove < name | number > `);
       return;
     }
 
@@ -396,12 +431,12 @@ class EnhancedPluginCLI {
       // Check if it's an internal plugin (protect from removal)
       const listResponse = await this.apiClient.listPlugins();
       const plugin = listResponse.data.plugins.find(p => p.id === pluginName || p.name === pluginName);
-      
+
       if (!plugin) {
         console.log(`${this.colorize('❌', 'red')} Plugin "${pluginName}" not found`);
         return;
       }
-      
+
       if (plugin.type === 'internal') {
         console.log(`${this.colorize('❌', 'red')} Cannot remove internal plugin "${pluginName}"`);
         console.log(`${this.colorize('💡', 'blue')} Internal plugins can only be disabled, not removed`);
@@ -409,16 +444,16 @@ class EnhancedPluginCLI {
       }
 
       console.log(`${this.colorize('🗑️', 'blue')} Removing external plugin ${this.colorize(pluginName, 'bright')}...`);
-      
+
       // For now, this is a placeholder implementation
       console.log(`${this.colorize('⚠️', 'yellow')} Plugin removal feature is not yet implemented.`);
-      console.log(`${this.colorize('💡', 'blue')} Manual removal:`);
-      console.log(`  1. Disable plugin first: ssbackend plugins disable ${pluginName}`);
-      console.log(`  2. Remove plugin directory from src/plugins/`);
+      console.log(`${this.colorize('💡', 'blue')} Manual removal: `);
+      console.log(`  1. Disable plugin first: ssbackend plugins disable ${pluginName} `);
+      console.log(`  2. Remove plugin directory from src / plugins / `);
       console.log(`  3. Restart SSBackend server`);
-      
+
     } catch (error) {
-      console.log(`${this.colorize('❌', 'red')} Failed to remove plugin "${identifier}":`, error.message);
+      console.log(`${this.colorize('❌', 'red')} Failed to remove plugin "${identifier}": `, error.message);
     }
   }
 
@@ -429,29 +464,29 @@ class EnhancedPluginCLI {
     try {
       const response = await this.apiClient.listPlugins();
       const plugins = response.data.plugins;
-      
+
       // Check if it's a number
       const num = parseInt(identifier);
       if (!isNaN(num)) {
         if (num < 1 || num > plugins.length) {
-          console.log(`${this.colorize('❌', 'red')} Plugin number ${num} out of range (1-${plugins.length})`);
+          console.log(`${this.colorize('❌', 'red')} Plugin number ${num} out of range(1 - ${plugins.length})`);
           return null;
         }
         return plugins[num - 1].id || plugins[num - 1].name;
       }
-      
+
       // Check if it's a name or ID
       const plugin = plugins.find(p => p.name === identifier || p.id === identifier);
       if (!plugin) {
         console.log(`${this.colorize('❌', 'red')} Plugin "${identifier}" not found`);
-        console.log(`${this.colorize('Available plugins:', 'blue')}`);
-        plugins.forEach((p, i) => console.log(`  ${i + 1}. ${p.name}`));
+        console.log(`${this.colorize('Available plugins:', 'blue')} `);
+        plugins.forEach((p, i) => console.log(`  ${i + 1}. ${p.name} `));
         return null;
       }
-      
+
       return plugin.id || plugin.name;
     } catch (error) {
-      throw new Error(`Failed to resolve plugin name: ${error.message}`);
+      throw new Error(`Failed to resolve plugin name: ${error.message} `);
     }
   }
 
@@ -464,18 +499,18 @@ class EnhancedPluginCLI {
 ${this.colorize('🔌', 'cyan')} Plugin Management Commands
 
 ${this.colorize('Usage:', 'bright')}
-  ssbackend plugins <command> [options]
+  ssbackend plugins < command > [options]
 
 ${this.colorize('Commands:', 'bright')}
   ${this.colorize('list', 'green')} [--verbose]            List all available plugins with status
-  ${this.colorize('enable', 'green')} <name|number>        Enable a plugin by name or list number
-  ${this.colorize('disable', 'green')} <name|number>       Disable a plugin by name or list number
-  ${this.colorize('info', 'green')} <name|number>          Show detailed plugin information
+  ${this.colorize('enable', 'green')} <name| number > Enable a plugin by name or list number
+  ${this.colorize('disable', 'green')} <name| number > Disable a plugin by name or list number
+  ${this.colorize('info', 'green')} <name| number > Show detailed plugin information
   ${this.colorize('validate', 'green')}                    Validate plugin system health and configuration
   ${this.colorize('install', 'green')} <path>              Install external plugin from path
   ${this.colorize('remove', 'green')} <name|number>        Remove external plugin (internal plugins protected)
 
-${this.colorize('Examples:', 'bright')}
+  ${this.colorize('Examples:', 'bright')}
   ssbackend plugins list                    # Show all plugins
   ssbackend plugins list --verbose          # Show plugins with detailed information
   ssbackend plugins enable achievements     # Enable achievements plugin
@@ -485,17 +520,17 @@ ${this.colorize('Examples:', 'bright')}
   ssbackend plugins validate               # Check plugin system health
   ssbackend plugins install ./my-plugin/   # Install plugin from directory
 
-${this.colorize('Notes:', 'bright')}
+  ${this.colorize('Notes:', 'bright')}
   ${this.colorize('•', 'blue')} Plugin changes are applied immediately via backend APIs
   ${this.colorize('•', 'blue')} All operations require SSBackend server to be running
   ${this.colorize('•', 'blue')} CLI uses same backend APIs as web admin interface
   ${this.colorize('•', 'blue')} Internal plugins can be disabled but not removed
   ${this.colorize('•', 'blue')} Use ${this.colorize('--verbose', 'cyan')} flag with list for detailed output
 
-${this.colorize('Authentication:', 'bright')}
+  ${this.colorize('Authentication:', 'bright')}
   ${this.colorize('•', 'blue')} CLI operations require admin authentication
   ${this.colorize('•', 'blue')} Please authenticate via web interface first: ${this.colorize('http://localhost:3000/admin', 'cyan')}
-`);
+  `);
   }
 }
 

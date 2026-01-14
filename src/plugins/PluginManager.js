@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const chokidar = require('chokidar');
 const { getConfigValue, updateConfig } = require('../utils/config');
 const PluginValidator = require('./PluginValidator');
 
@@ -25,15 +26,24 @@ class PluginManager {
   async initialize(app, db) {
     this.app = app;
     this.db = db;
-    
+
     console.log('🔌 Initializing Plugin System...');
-    
-    // Discover and auto-register external plugins
-    await this.discoverExternalPlugins();
-    
+
+    // Discover and auto-register external plugins if enabled
+    const autoDiscover = getConfigValue('plugins.auto_discover', true);
+    if (autoDiscover) {
+      await this.discoverExternalPlugins();
+    }
+
     // Load and activate configured plugins
     await this.loadConfiguredPlugins();
-    
+
+    // Start file watcher for hot-adding if configured
+    const watchForChanges = getConfigValue('plugins.watch_for_changes', false);
+    if (watchForChanges) {
+      this.startWatcher();
+    }
+
     console.log(`✅ Plugin System initialized. ${this.activePlugins.size} plugins active.`);
   }
 
@@ -50,20 +60,45 @@ class PluginManager {
       return;
     }
 
-    try {
-      const pluginDirs = fs.readdirSync(pluginsDir, { withFileTypes: true })
-        .filter(dirent => dirent.isDirectory())
-        .filter(dirent => !dirent.name.startsWith('@')) // Skip @core, @examples
-        .filter(dirent => !dirent.name.startsWith('.')) // Skip hidden folders
-        .map(dirent => dirent.name);
+    console.log('🔍 Scanning for external plugins...');
 
-      for (const pluginDir of pluginDirs) {
-        const pluginPath = path.join(pluginsDir, pluginDir);
+    try {
+      const dirents = fs.readdirSync(pluginsDir, { withFileTypes: true });
+
+      const processDir = async (dirName, basePath) => {
+        const pluginPath = path.join(basePath, dirName);
+
+        // Skip hidden and internal-looking directories
+        if (dirName.startsWith('.') || (dirName.startsWith('@core') && basePath === pluginsDir)) return;
+
+        // Recurse into scoped directories (starting with @)
+        if (dirName.startsWith('@')) {
+          try {
+            const subDirents = fs.readdirSync(pluginPath, { withFileTypes: true })
+              .filter(d => d.isDirectory() && !d.name.startsWith('.'));
+
+            for (const subD of subDirents) {
+              await processDir(subD.name, pluginPath);
+            }
+          } catch (e) {
+            console.error(`❌ Error scanning scoped directory ${dirName}:`, e.message);
+          }
+          return;
+        }
+
+        // Check for manifest or entry points
         const hasIndex = fs.existsSync(path.join(pluginPath, 'index.js'));
         const hasPluginJs = fs.existsSync(path.join(pluginPath, 'plugin.js'));
+        const hasManifest = fs.existsSync(path.join(pluginPath, 'plugin.json'));
 
-        if (hasIndex || hasPluginJs) {
-          await this.registerExternalPlugin(pluginDir, pluginPath);
+        if (hasIndex || hasPluginJs || hasManifest) {
+          await this.registerExternalPlugin(dirName, pluginPath);
+        }
+      };
+
+      for (const dirent of dirents) {
+        if (dirent.isDirectory()) {
+          await processDir(dirent.name, pluginsDir);
         }
       }
     } catch (error) {
@@ -76,20 +111,110 @@ class PluginManager {
    */
   async registerExternalPlugin(pluginName, pluginPath) {
     const pluginConfig = getConfigValue('plugins', {});
-    
+
     if (!pluginConfig[pluginName]) {
       console.log(`🆕 Discovered new external plugin: ${pluginName}`);
-      
-      // Auto-add to config as enabled
-      pluginConfig[pluginName] = {
-        enabled: true,
-        type: 'external',
-        path: pluginPath
-      };
-      
-      // Update config
-      updateConfig('plugins', pluginConfig);
-      console.log(`✅ Auto-registered external plugin: ${pluginName}`);
+
+      // Basic Validation before registration
+      try {
+        const validator = new PluginValidator();
+        const hasIndex = fs.existsSync(path.join(pluginPath, 'index.js'));
+        const hasPluginJs = fs.existsSync(path.join(pluginPath, 'plugin.js'));
+        const entryPath = hasIndex ? path.join(pluginPath, 'index.js') : (hasPluginJs ? path.join(pluginPath, 'plugin.js') : null);
+
+        if (!entryPath) {
+          console.warn(`⚠️  Skipping registration for ${pluginName}: No entry point found.`);
+          return;
+        }
+
+        // We only do a shallow require to check manifest
+        const plugin = require(entryPath);
+        const result = validator.validate(plugin, pluginName, pluginPath);
+
+        if (!result.valid) {
+          console.warn(`⚠️  Skipping registration for ${pluginName}: Basic validation failed.`);
+          return;
+        }
+
+        const autoEnable = getConfigValue('plugins.auto_enable_discovered', true);
+
+        // Auto-add to config
+        pluginConfig[pluginName] = {
+          enabled: autoEnable,
+          type: 'external',
+          path: pluginPath
+        };
+
+        // Update config
+        updateConfig('plugins', pluginConfig);
+        console.log(`✅ Auto-registered external plugin: ${pluginName} (Enabled: ${autoEnable})`);
+      } catch (e) {
+        console.error(`❌ Registration failed for ${pluginName}:`, e.message);
+      }
+    }
+  }
+
+  /**
+   * Start watching the plugins directory for changes (Hot-Add)
+   */
+  startWatcher() {
+    const pluginsDir = path.join(process.cwd(), 'plugins');
+    console.log('👁️  Starting plugin directory watcher...');
+
+    this.watcher = chokidar.watch(pluginsDir, {
+      ignored: [
+        /(^|[\/\\])\../, // ignore dotfiles
+        'node_modules',
+        '**/.git',
+        path.join(pluginsDir, '@core') // ignore internal core plugins
+      ],
+      persistent: true,
+      depth: 2, // Allow scoped plugins @scope/plugin
+      ignoreInitial: true // Don't trigger 'add' on startup discovery
+    });
+
+    this.watcher.on('addDir', (dirPath) => {
+      const dirName = path.basename(dirPath);
+      // Skip if it's the plugins root or a scoped directory itself
+      if (dirPath === pluginsDir || dirName.startsWith('@') || dirName.startsWith('.')) return;
+
+      console.log(`📂 Directory added: ${dirName}`);
+      this.hotAddPlugin(dirName, dirPath);
+    });
+  }
+
+  /**
+   * Handle hot-adding a plugin without restart
+   */
+  async hotAddPlugin(pluginName, pluginPath) {
+    console.log(`🔥 Hot-adding plugin: ${pluginName}...`);
+
+    // Wait a bit to ensure files are written (common issue with file watchers)
+    await new Promise(r => setTimeout(r, 500));
+
+    const hasIndex = fs.existsSync(path.join(pluginPath, 'index.js'));
+    const hasPluginJs = fs.existsSync(path.join(pluginPath, 'plugin.js'));
+    const hasManifest = fs.existsSync(path.join(pluginPath, 'plugin.json'));
+
+    if (hasIndex || hasPluginJs || hasManifest) {
+      // Register (takes care of config)
+      await this.registerExternalPlugin(pluginName, pluginPath);
+
+      const pluginConfig = getConfigValue('plugins', {});
+      const config = pluginConfig[pluginName];
+
+      if (config && config.enabled) {
+        try {
+          // Mark as discovered
+          this.discoveredPlugins.set(pluginName, { config, discoveredAt: new Date() });
+
+          // Load and Activate
+          await this.loadPlugin(pluginName, config, true); // true = auto-activate
+          console.log(`🔥 Plugin ${pluginName} hot-added successfully!`);
+        } catch (error) {
+          console.error(`❌ Hot-add failed for ${pluginName}:`, error.message);
+        }
+      }
     }
   }
 
@@ -98,7 +223,7 @@ class PluginManager {
    */
   async loadConfiguredPlugins() {
     const pluginConfig = getConfigValue('plugins', {});
-    
+
     // Skip if plugins system is disabled
     if (pluginConfig.enabled === false) {
       console.log('🔌 Plugin system disabled in configuration');
@@ -311,7 +436,7 @@ class PluginManager {
 
     // Remove from active plugins
     this.activePlugins.delete(pluginName);
-    
+
     // Note: Routes can't be dynamically removed from Express easily
     // This would require a more complex routing system for hot reload
     console.log(`⏹️  Deactivated plugin: ${pluginName}`);
@@ -365,18 +490,18 @@ class PluginManager {
   resolveHandler(handler, pluginPath) {
     console.log(`🔍 Resolving handler:`, typeof handler, handler);
     console.log(`🔍 Plugin path:`, pluginPath);
-    
+
     if (typeof handler === 'function') {
       return handler;
     }
-    
+
     if (typeof handler === 'string') {
       const handlerPath = path.resolve(pluginPath, handler);
       console.log(`🔍 Handler file path:`, handlerPath);
       console.log(`🔍 File exists:`, fs.existsSync(handlerPath));
       return require(handlerPath);
     }
-    
+
     throw new Error('Invalid handler type');
   }
 
@@ -385,14 +510,14 @@ class PluginManager {
    */
   resolveMiddleware(middlewareNames) {
     const middleware = [];
-    
+
     for (const name of middlewareNames) {
       if (name === 'auth') {
         middleware.push(require('../middleware/auth').authenticateToken);
       }
       // Add more middleware mappings as needed
     }
-    
+
     return middleware;
   }
 
@@ -402,8 +527,8 @@ class PluginManager {
   async createPluginSchema(schema, pluginName) {
     return new Promise((resolve, reject) => {
       // Add plugin prefix if not already present
-      const tableName = schema.table.startsWith('plugin_') 
-        ? schema.table 
+      const tableName = schema.table.startsWith('plugin_')
+        ? schema.table
         : `plugin_${schema.table}`;
 
       let schemaSql = schema.definition;
@@ -493,7 +618,7 @@ class PluginManager {
    */
   async enablePlugin(pluginName) {
     const pluginConfig = getConfigValue('plugins', {});
-    
+
     if (!pluginConfig[pluginName]) {
       throw new Error(`Plugin not found: ${pluginName}`);
     }
@@ -516,7 +641,7 @@ class PluginManager {
    */
   async disablePlugin(pluginName) {
     const pluginConfig = getConfigValue('plugins', {});
-    
+
     if (!pluginConfig[pluginName]) {
       throw new Error(`Plugin not found: ${pluginName}`);
     }

@@ -25,7 +25,7 @@ class PluginManagementService {
     if (this.initialized) {
       return;
     }
-    
+
     try {
       this.db = getDatabase();
       this.initialized = true;
@@ -64,7 +64,7 @@ class PluginManagementService {
    */
   async getAllPluginsStatus() {
     await this.ensureInitialized();
-    
+
     try {
       const config = getConfigValue('plugins', {});
       const result = {
@@ -82,7 +82,7 @@ class PluginManagementService {
       // Get internal plugins
       const internalPluginsPath = path.join(process.cwd(), 'src', 'plugins', 'internal');
       const internalPlugins = await this.discoverInternalPlugins(internalPluginsPath);
-      
+
       // Get external plugins
       const externalPluginsPath = path.join(process.cwd(), 'plugins');
       const externalPlugins = await this.discoverExternalPlugins(externalPluginsPath);
@@ -111,13 +111,13 @@ class PluginManagementService {
 
         result.plugins.push(pluginStatus);
         result.summary.total++;
-        
+
         if (pluginStatus.enabled) {
           result.summary.enabled++;
         } else {
           result.summary.disabled++;
         }
-        
+
         if (pluginStatus.type === 'internal') {
           result.summary.internal++;
         } else {
@@ -137,7 +137,7 @@ class PluginManagementService {
    */
   async discoverInternalPlugins(internalPath) {
     const plugins = [];
-    
+
     if (!fs.existsSync(internalPath)) {
       return plugins;
     }
@@ -150,13 +150,13 @@ class PluginManagementService {
       for (const pluginName of pluginDirs) {
         const pluginPath = path.join(internalPath, pluginName);
         const indexPath = path.join(pluginPath, 'index.js');
-        
+
         if (fs.existsSync(indexPath)) {
           try {
             // Clear require cache to get fresh data
             delete require.cache[require.resolve(indexPath)];
             const pluginModule = require(indexPath);
-            
+
             plugins.push({
               name: pluginName,
               type: 'internal',
@@ -202,56 +202,74 @@ class PluginManagementService {
    */
   async discoverExternalPlugins(externalPath) {
     const plugins = [];
-    
+
     if (!fs.existsSync(externalPath)) {
       return plugins;
     }
 
     try {
-      const pluginDirs = fs.readdirSync(externalPath, { withFileTypes: true })
-        .filter(dirent => dirent.isDirectory())
-        .map(dirent => dirent.name);
+      const dirents = fs.readdirSync(externalPath, { withFileTypes: true });
 
-      for (const pluginName of pluginDirs) {
-        const pluginPath = path.join(externalPath, pluginName);
+      const processDir = async (dirName, basePath) => {
+        const pluginPath = path.join(basePath, dirName);
         const manifestPath = path.join(pluginPath, 'plugin.json');
-        
-        if (fs.existsSync(manifestPath)) {
+        const indexPath = path.join(pluginPath, 'index.js');
+        const pluginJsPath = path.join(pluginPath, 'plugin.js');
+
+        if (fs.existsSync(manifestPath) || fs.existsSync(indexPath) || fs.existsSync(pluginJsPath)) {
           try {
-            const manifestData = fs.readFileSync(manifestPath, 'utf8');
-            const manifest = JSON.parse(manifestData);
-            
+            let manifest = {};
+            if (fs.existsSync(manifestPath)) {
+              const manifestData = fs.readFileSync(manifestPath, 'utf8');
+              manifest = JSON.parse(manifestData);
+            } else {
+              // Try to load from index.js/plugin.js manifest property
+              try {
+                const entryPoint = fs.existsSync(indexPath) ? indexPath : pluginJsPath;
+                delete require.cache[require.resolve(entryPoint)];
+                const pluginModule = require(entryPoint);
+                manifest = pluginModule.manifest || {};
+              } catch (e) {
+                // Ignore load errors for manifest extraction
+              }
+            }
+
             plugins.push({
-              name: manifest.name || pluginName,
+              name: manifest.name || dirName,
               type: 'external',
               path: pluginPath,
               manifestPath: manifestPath,
               version: manifest.version || '1.0.0',
-              description: manifest.description || `External ${pluginName} plugin`,
+              description: manifest.description || `External ${dirName} plugin`,
               author: manifest.author || 'Unknown',
               dependencies: manifest.dependencies || [],
               adminUI: manifest.adminUI || null,
-              hasRoutes: manifest.routes !== undefined,
-              hasSchemas: manifest.schemas !== undefined
+              hasRoutes: manifest.routes !== undefined || fs.existsSync(path.join(pluginPath, 'routes')),
+              hasSchemas: manifest.schemas !== undefined || fs.existsSync(path.join(pluginPath, 'schemas'))
             });
           } catch (error) {
-            console.warn(`⚠️ Failed to load external plugin ${pluginName}:`, error.message);
-            // Add as discovered but with error state
+            console.warn(`⚠️ Failed to load external plugin ${dirName}:`, error.message);
             plugins.push({
-              name: pluginName,
+              name: dirName,
               type: 'external',
               path: pluginPath,
-              manifestPath: manifestPath,
-              version: 'unknown',
-              description: `Plugin failed to load: ${error.message}`,
-              author: 'Unknown',
-              dependencies: [],
-              adminUI: null,
-              hasRoutes: false,
-              hasSchemas: false,
               error: error.message
             });
           }
+        } else if (dirName.startsWith('@')) {
+          // Recurse into scoped directories
+          const subDirents = fs.readdirSync(pluginPath, { withFileTypes: true })
+            .filter(d => d.isDirectory() && !d.name.startsWith('.'));
+
+          for (const subD of subDirents) {
+            await processDir(subD.name, pluginPath);
+          }
+        }
+      };
+
+      for (const dirent of dirents) {
+        if (dirent.isDirectory() && !dirent.name.startsWith('.')) {
+          await processDir(dirent.name, externalPath);
         }
       }
     } catch (error) {
@@ -268,11 +286,11 @@ class PluginManagementService {
    */
   async getPluginConfiguration(pluginId) {
     await this.ensureInitialized();
-    
+
     try {
       const config = getConfigValue('plugins', {});
       const pluginConfig = config[pluginId] || {};
-      
+
       return {
         pluginId: pluginId,
         enabled: pluginConfig.enabled || false,
@@ -293,11 +311,11 @@ class PluginManagementService {
    */
   async updatePluginConfiguration(pluginId, newConfig) {
     await this.ensureInitialized();
-    
+
     try {
       // Get current configuration
       const currentConfig = getConfigValue('plugins', {});
-      
+
       // Update the specific plugin configuration
       const updatedPluginConfig = {
         ...currentConfig[pluginId],
@@ -338,15 +356,15 @@ class PluginManagementService {
    */
   async enablePlugin(pluginId) {
     await this.ensureInitialized();
-    
+
     try {
       // Get current configuration
       const config = getConfigValue('plugins', {});
-      
+
       // Check if plugin exists
       const allPlugins = await this.getAllPluginsStatus();
       const targetPlugin = allPlugins.plugins.find(p => p.id === pluginId);
-      
+
       if (!targetPlugin) {
         throw new Error(`Plugin '${pluginId}' not found`);
       }
@@ -363,7 +381,7 @@ class PluginManagementService {
 
       // Check and resolve dependencies
       const dependencyCheck = await this.resolveDependencies(pluginId, 'enable');
-      
+
       if (!dependencyCheck.canEnable) {
         throw new Error(`Cannot enable plugin: ${dependencyCheck.reason}`);
       }
@@ -417,15 +435,15 @@ class PluginManagementService {
    */
   async disablePlugin(pluginId) {
     await this.ensureInitialized();
-    
+
     try {
       // Get current configuration
       const config = getConfigValue('plugins', {});
-      
+
       // Check if plugin exists
       const allPlugins = await this.getAllPluginsStatus();
       const targetPlugin = allPlugins.plugins.find(p => p.id === pluginId);
-      
+
       if (!targetPlugin) {
         throw new Error(`Plugin '${pluginId}' not found`);
       }
@@ -442,7 +460,7 @@ class PluginManagementService {
 
       // Check for dependent plugins
       const dependentCheck = await this.analyzeDependents(pluginId);
-      
+
       if (dependentCheck.hasEnabledDependents) {
         // For now, we'll warn but allow disabling
         // In a more advanced implementation, we might force disable dependents
@@ -490,24 +508,24 @@ class PluginManagementService {
   async resolveDependencies(pluginId, action) {
     const allPlugins = await this.getAllPluginsStatus();
     const targetPlugin = allPlugins.plugins.find(p => p.id === pluginId);
-    
+
     if (!targetPlugin) {
       return { canEnable: false, reason: 'Plugin not found' };
     }
 
     const dependencies = targetPlugin.dependencies || [];
     const dependenciesToEnable = [];
-    
+
     for (const depName of dependencies) {
       const depPlugin = allPlugins.plugins.find(p => p.id === depName);
-      
+
       if (!depPlugin) {
-        return { 
-          canEnable: false, 
-          reason: `Required dependency '${depName}' not found` 
+        return {
+          canEnable: false,
+          reason: `Required dependency '${depName}' not found`
         };
       }
-      
+
       if (!depPlugin.enabled) {
         dependenciesToEnable.push(depName);
       }
@@ -529,7 +547,7 @@ class PluginManagementService {
     const allPlugins = await this.getAllPluginsStatus();
     const enabledDependents = [];
     const allDependents = [];
-    
+
     for (const plugin of allPlugins.plugins) {
       if (plugin.dependencies && plugin.dependencies.includes(pluginId)) {
         allDependents.push(plugin.id);
@@ -552,7 +570,7 @@ class PluginManagementService {
    */
   async validatePluginSystem() {
     await this.ensureInitialized();
-    
+
     try {
       const validation = {
         valid: true,
@@ -586,7 +604,7 @@ class PluginManagementService {
         if (plugin.enabled && plugin.dependencies) {
           for (const depName of plugin.dependencies) {
             const depPlugin = allPlugins.plugins.find(p => p.id === depName);
-            
+
             if (!depPlugin) {
               validation.issues.push({
                 type: 'missing_dependency',
@@ -654,7 +672,7 @@ class PluginManagementService {
           this.db.run(
             `INSERT INTO plugin_audit_log (action, plugin_name, admin_user, details) VALUES (?, ?, ?, ?)`,
             [logEntry.action, logEntry.plugin_name, logEntry.admin_user, logEntry.details],
-            function(err) {
+            function (err) {
               if (err) {
                 // Table might not exist yet, that's OK for now
                 console.log('📝 Plugin audit log saved to console only (database table not ready)');
