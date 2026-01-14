@@ -1,6 +1,15 @@
 const express = require('express');
 const { getDatabase } = require('../db/database');
 
+/**
+ * TODO [EPIC 7 - Multi-Project Support]:
+ * Save routes need to be project-aware.
+ * Current: GET/POST /api/save
+ * Future:  GET/POST /api/project/:projectId/save
+ * Use req.db from project context middleware instead of getDatabase()
+ * See: docs/multi-project-architecture-design.md, Story 7.2.1
+ */
+
 const router = express.Router();
 
 /**

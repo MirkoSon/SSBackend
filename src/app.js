@@ -18,6 +18,8 @@ let customPort = null;
 // Parse command-line arguments
 const EnhancedPluginCLI = require('./cli/enhancedPluginCLI');
 const pluginCLI = new EnhancedPluginCLI();
+const DatabaseCLI = require('./cli/dbCLI');
+const dbCLI = new DatabaseCLI();
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--port' && args[i + 1]) {
@@ -32,6 +34,15 @@ for (let i = 0; i < args.length; i++) {
       process.exit(1);
     });
     return; // Exit early for plugin commands
+  } else if (args[i] === 'db') {
+    // Handle database commands
+    dbCLI.handleDbCommand(args.slice(i)).then(() => {
+      process.exit(0);
+    }).catch(error => {
+      console.error('❌ Database command failed:', error.message);
+      process.exit(1);
+    });
+    return; // Exit early for database commands
   } else if (args[i] === '--help' || args[i] === '-h') {
     console.log(`
 🎮 Stupid Simple Backend
@@ -39,10 +50,18 @@ for (let i = 0; i < args.length; i++) {
 Usage:
   ssbackend [options]
   ssbackend plugins <command> [options]
+  ssbackend db <command> [options]
 
 Options:
   --port <number>    Set custom port (default: 3000)
   --help, -h         Show this help message
+
+Database Commands:
+  db migrate                   Run all pending core migrations
+  db status                    Show migration status
+  db rollback [steps]          Rollback last N migrations
+  db plugin:migrate <name>     Run migrations for specific plugin
+  db plugin:status <name>      Show plugin migration status
 
 Plugin Commands:
   plugins list [--verbose]         List all available plugins with status
@@ -98,8 +117,6 @@ const adminRoutes = require('./routes/admin');
 
 // Import database initialization
 const { initializeDatabase } = require('./db/database');
-const { initializeEpic4Database } = require('./db/migrations/epic4-tables');
-const { initializeEpic4EconomyDatabase } = require('./db/migrations/epic4-economy-tables.js');
 
 // Import plugin system
 const PluginManager = require('./plugins/PluginManager');
@@ -203,13 +220,9 @@ app.get('/health/plugins', (req, res) => {
 // Initialize database and start server
 async function startServer() {
   try {
-    // Initialize database
+    // Initialize database (runs migrations automatically)
     await initializeDatabase();
     console.log('Database initialized successfully');
-
-    // Initialize Epic 4 database features
-    await initializeEpic4Database();
-    await initializeEpic4EconomyDatabase();
 
     // Get database instance
     const { getDatabase } = require('./db/database');
@@ -218,6 +231,10 @@ async function startServer() {
     // Initialize plugin system BEFORE middleware setup
     console.log('🔌 Initializing Plugin System...');
     const pluginManager = new PluginManager();
+    // TODO [EPIC 7 - Multi-Project Support]:
+    // Remove this global singleton. Each ProjectContext should have its own PluginManager.
+    // Replace with: projectManager.getProject(projectId).pluginManager
+    // See: docs/multi-project-architecture-design.md, Story 7.2.2
     global.pluginManager = pluginManager; // Store globally for health endpoint
     await pluginManager.initialize(app, db);
 

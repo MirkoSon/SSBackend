@@ -6,6 +6,18 @@ const PluginValidator = require('./PluginValidator');
 
 /**
  * Plugin Manager for handling plugin lifecycle, discovery, and configuration
+ *
+ * TODO [EPIC 7 - Multi-Project Support]:
+ * PluginManager is currently used as a global singleton (global.pluginManager).
+ * For multi-project support:
+ * 1. Remove global.pluginManager - each ProjectContext should have its own instance
+ * 2. Constructor should accept projectId and project-specific config
+ * 3. Plugin routes should be scoped: /api/project/{projectId}/{pluginRoute}
+ * 4. Plugin data isolation: each project's plugins use project-specific database
+ * 5. CLI commands need --project flag to specify which project's plugins to manage
+ *
+ * See: docs/multi-project-architecture-design.md
+ * Related Stories: Epic 7.2.2
  */
 class PluginManager {
   constructor() {

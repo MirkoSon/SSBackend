@@ -1,14 +1,28 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
-const { 
-  SAVES_TABLE, 
-  USERS_TABLE, 
-  INVENTORY_TABLE, 
+const MigrationManager = require('./migrations/MigrationManager');
+
+/**
+ * TODO [EPIC 7 - Multi-Project Support]:
+ * This database module currently manages a single database connection.
+ * For multi-project support, this will need to:
+ * 1. Support multiple database connections (one per project)
+ * 2. Become a DatabaseManager factory: getDatabaseForProject(projectId)
+ * 3. Remove hardcoded DB_PATH in favor of project-specific paths
+ * 4. Handle connection pooling and LRU eviction for many projects
+ *
+ * See: docs/multi-project-architecture-design.md
+ * Related Stories: Epic 7.1.1, Epic 7.2.1
+ */
+const {
+  SAVES_TABLE,
+  USERS_TABLE,
+  INVENTORY_TABLE,
   CHARACTER_PROGRESS_TABLE,
   ACHIEVEMENTS_TABLE,
   USER_ACHIEVEMENTS_TABLE,
   USERS_MIGRATION,
-  SAMPLE_ACHIEVEMENTS 
+  SAMPLE_ACHIEVEMENTS
 } = require('./schema');
 
 // Database path - create in current working directory for packaged executable compatibility
@@ -125,80 +139,33 @@ async function seedAchievements() {
 
 /**
  * Initialize SQLite database connection and create tables
+ * Now using the new migration system
  */
 async function initializeDatabase() {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     // Create database connection
-    db = new sqlite3.Database(DB_PATH, (err) => {
+    db = new sqlite3.Database(DB_PATH, async (err) => {
       if (err) {
         console.error('Error opening database:', err.message);
         reject(err);
         return;
       }
       console.log('Connected to SQLite database:', DB_PATH);
-    });
 
-    // Create tables in order of dependencies
-    db.exec(SAVES_TABLE, (err) => {
-      if (err) {
-        console.error('Error creating saves table:', err.message);
-        reject(err);
-        return;
+      try {
+        // Run migrations using new MigrationManager
+        const migrationManager = new MigrationManager(db);
+        await migrationManager.migrate();
+
+        // Seed sample achievements if needed (TODO: move to migration)
+        await seedAchievements();
+
+        console.log('Database initialization complete');
+        resolve();
+      } catch (error) {
+        console.error('Database initialization failed:', error.message);
+        reject(error);
       }
-      
-      // Create users table
-      db.exec(USERS_TABLE, async (err) => {
-        if (err) {
-          console.error('Error creating users table:', err.message);
-          reject(err);
-          return;
-        }
-        
-        // Migrate users table to add new columns if they don't exist
-        await migrateUsersTable();
-        
-        // Create inventory table (depends on users)
-        db.exec(INVENTORY_TABLE, (err) => {
-          if (err) {
-            console.error('Error creating inventory table:', err.message);
-            reject(err);
-            return;
-          }
-          
-          // Create character progress table (depends on users)
-          db.exec(CHARACTER_PROGRESS_TABLE, (err) => {
-            if (err) {
-              console.error('Error creating character_progress table:', err.message);
-              reject(err);
-              return;
-            }
-            
-            // Create achievements table
-            db.exec(ACHIEVEMENTS_TABLE, (err) => {
-              if (err) {
-                console.error('Error creating achievements table:', err.message);
-                reject(err);
-                return;
-              }
-              
-              // Create user_achievements table (depends on users and achievements)
-              db.exec(USER_ACHIEVEMENTS_TABLE, async (err) => {
-                if (err) {
-                  console.error('Error creating user_achievements table:', err.message);
-                  reject(err);
-                  return;
-                }
-                
-                // Seed sample achievements
-                await seedAchievements();
-                
-                console.log('Database tables created/verified successfully');
-                resolve();
-              });
-            });
-          });
-        });
-      });
     });
   });
 }

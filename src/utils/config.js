@@ -3,6 +3,28 @@ const path = require('path');
 const crypto = require('crypto');
 const yaml = require('js-yaml');
 
+/**
+ * TODO [EPIC 7 - Multi-Project Support]:
+ * Config format will need to support multiple projects.
+ * New structure:
+ * ```yaml
+ * server:
+ *   port: 3000
+ *   default_project: default
+ * projects:
+ *   - id: default
+ *     name: "Default Project"
+ *     database: "./projects/default.db"
+ *     plugins: {...}
+ *   - id: game-rpg
+ *     name: "RPG Game"
+ *     database: "./projects/game-rpg.db"
+ *     plugins: {...}
+ * ```
+ * Auto-migration needed to convert existing single-project configs.
+ * See: docs/multi-project-architecture-design.md, Story 7.1.2
+ */
+
 const CONFIG_FILE = 'config.yml';
 let currentConfig = null;
 
