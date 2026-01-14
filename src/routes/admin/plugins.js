@@ -1,5 +1,7 @@
-const express = require('express');
-const PluginManagementService = require('../../services/pluginManagementService');
+const { getDatabase } = require('../../db/database');
+const PluginDiscoveryService = require('../../services/plugins/PluginDiscoveryService');
+const PluginLifecycleService = require('../../services/plugins/PluginLifecycleService');
+const PluginConfigService = require('../../services/plugins/PluginConfigService');
 
 const router = express.Router();
 
@@ -20,13 +22,17 @@ const adminAuth = (req, res, next) => {
   next();
 };
 
-// Lazy initialize plugin management service
-let pluginService = null;
-const getPluginService = () => {
-  if (!pluginService) {
-    pluginService = new PluginManagementService();
+// Initialize services
+let discoveryService = new PluginDiscoveryService();
+let lifecycleService = null;
+let configService = null;
+
+const ensureServices = async () => {
+  if (!lifecycleService || !configService) {
+    const db = getDatabase();
+    lifecycleService = new PluginLifecycleService(db, discoveryService);
+    configService = new PluginConfigService(discoveryService, lifecycleService);
   }
-  return pluginService;
 };
 
 /**
@@ -64,8 +70,8 @@ router.get('/plugins', adminAuth, async (req, res) => {
   try {
     console.log('📋 Admin request: Get all plugins status');
 
-    const service = getPluginService();
-    const pluginStatus = await service.getAllPluginsStatus();
+    await ensureServices();
+    const pluginStatus = await discoveryService.getSystemStatus();
 
     res.json({
       success: true,
@@ -95,11 +101,8 @@ router.post('/plugins/:id/enable', adminAuth, async (req, res) => {
 
     console.log(`🔌 Admin request: Enable plugin ${pluginId} by ${adminUser}`);
 
-    const service = getPluginService();
-    const result = await service.enablePlugin(pluginId);
-
-    // Log the action with admin user context
-    await service.logPluginAction('enable', pluginId, result, adminUser);
+    await ensureServices();
+    const result = await lifecycleService.enablePlugin(pluginId, adminUser);
 
     res.json({
       success: true,
@@ -130,11 +133,8 @@ router.post('/plugins/:id/disable', adminAuth, async (req, res) => {
 
     console.log(`🔌 Admin request: Disable plugin ${pluginId} by ${adminUser}`);
 
-    const service = getPluginService();
-    const result = await service.disablePlugin(pluginId);
-
-    // Log the action with admin user context
-    await service.logPluginAction('disable', pluginId, result, adminUser);
+    await ensureServices();
+    const result = await lifecycleService.disablePlugin(pluginId, adminUser);
 
     res.json({
       success: true,
@@ -165,31 +165,8 @@ router.post('/plugins/:id/toggle', adminAuth, async (req, res) => {
 
     console.log(`🔄 Admin request: Toggle plugin ${pluginId} by ${adminUser}`);
 
-    const service = getPluginService();
-
-    // First get current status
-    const currentStatus = await service.getAllPluginsStatus();
-    const targetPlugin = currentStatus.plugins.find(p => p.id === pluginId);
-
-    if (!targetPlugin) {
-      return res.status(404).json({
-        success: false,
-        error: 'Plugin not found',
-        pluginId: pluginId,
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    // Toggle based on current state
-    let result;
-    if (targetPlugin.enabled) {
-      result = await service.disablePlugin(pluginId);
-    } else {
-      result = await service.enablePlugin(pluginId);
-    }
-
-    // Log the action
-    await service.logPluginAction('toggle', pluginId, result, adminUser);
+    await ensureServices();
+    const result = await lifecycleService.togglePlugin(pluginId, adminUser);
 
     res.json({
       success: true,
@@ -219,8 +196,8 @@ router.get('/plugins/:id/config', adminAuth, async (req, res) => {
 
     console.log(`⚙️ Admin request: Get configuration for plugin ${pluginId}`);
 
-    const service = getPluginService();
-    const config = await service.getPluginConfiguration(pluginId);
+    await ensureServices();
+    const config = await configService.getPluginConfig(pluginId);
 
     res.json({
       success: true,
@@ -252,13 +229,8 @@ router.put('/plugins/:id/config', adminAuth, async (req, res) => {
 
     console.log(`⚙️ Admin request: Update configuration for plugin ${pluginId} by ${adminUser}`);
 
-    const service = getPluginService();
-    const result = await service.updatePluginConfiguration(pluginId, newConfig);
-
-    // Log the configuration change
-    await service.logPluginAction('configure', pluginId, {
-      configurationUpdated: result.configuration
-    }, adminUser);
+    await ensureServices();
+    const result = await configService.updatePluginConfig(pluginId, newConfig, adminUser);
 
     res.json({
       success: true,
@@ -288,15 +260,8 @@ router.post('/plugins/validate', adminAuth, async (req, res) => {
 
     console.log(`🔍 Admin request: Validate plugin system by ${adminUser}`);
 
-    const service = getPluginService();
-    const validation = await service.validatePluginSystem();
-
-    // Log the validation action
-    await service.logPluginAction('validate', 'system', {
-      validationResult: validation.valid,
-      issuesFound: validation.summary.issuesFound,
-      warningsFound: validation.summary.warningsFound
-    }, adminUser);
+    await ensureServices();
+    const validation = await discoveryService.validatePluginSystem();
 
     // Return appropriate status code based on validation result
     const statusCode = validation.valid ? 200 : 400;
@@ -328,8 +293,8 @@ router.get('/plugins/:id', adminAuth, async (req, res) => {
 
     console.log(`📋 Admin request: Get detailed info for plugin ${pluginId}`);
 
-    const service = getPluginService();
-    const allPlugins = await service.getAllPluginsStatus();
+    await ensureServices();
+    const allPlugins = await discoveryService.getSystemStatus();
     const targetPlugin = allPlugins.plugins.find(p => p.id === pluginId);
 
     if (!targetPlugin) {
@@ -342,7 +307,7 @@ router.get('/plugins/:id', adminAuth, async (req, res) => {
     }
 
     // Get plugin configuration as well
-    const config = await service.getPluginConfiguration(pluginId);
+    const config = await configService.getPluginConfig(pluginId);
 
     res.json({
       success: true,
