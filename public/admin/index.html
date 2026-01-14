@@ -60,6 +60,9 @@
         </div>
 
         <div class="top-nav__actions">
+            <button id="helpButton" class="btn btn-info btn-help-hint">
+                <span>❓</span> Help
+            </button>
             <button id="refreshButton" class="btn btn-secondary">
                 <span>🔄</span> Refresh
             </button>
@@ -149,9 +152,17 @@
     <script type="module" src="/plugins/@core/leaderboards/ui/leaderboardsUI.module.js"></script>
     <script type="module">
         import ActionRegistry from '@ui/ActionRegistry';
+        import { HelpCenter } from './ui/components/HelpCenter.js';
+
         window.PluginFramework = window.PluginFramework || {};
         window.PluginFramework.components = window.PluginFramework.components || {};
         window.PluginFramework.components.ActionRegistry = ActionRegistry;
+
+        // Initialize Help Center
+        window.helpCenter = new HelpCenter({
+            onClose: () => console.log('Help Center closed')
+        });
+        document.body.appendChild(window.helpCenter.render());
     </script>
     <script src="script.js"></script>
     <script src="admin-dashboard-integration.js"></script>

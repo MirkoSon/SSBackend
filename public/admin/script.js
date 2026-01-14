@@ -137,6 +137,16 @@ class AdminDashboard {
       this.toggleAutoRefresh();
     });
 
+    // Help button
+    const helpButton = document.getElementById('helpButton');
+    if (helpButton) {
+      helpButton.addEventListener('click', () => {
+        if (window.helpCenter) {
+          window.helpCenter.toggle(true);
+        }
+      });
+    }
+
     // Modal close
     document.querySelector('.modal-close').addEventListener('click', () => {
       this.closeModal();
