@@ -310,6 +310,10 @@ const routes = [
 ];
 /**
  * Database schema definitions
+ * 
+ * NOTE: This plugin now uses migrations (see migrations/ directory).
+ * The schemas below are kept for backward compatibility only.
+ * New schema changes should be added as migration files.
  */
 const schemas = [
   {

@@ -18,6 +18,27 @@ class MigrationManager {
   }
 
   /**
+   * Helper to find a plugin's migrations directory across standard locations
+   * @private
+   */
+  _findPluginMigrationsPath(pluginName) {
+    // Standard locations to search
+    const searchPaths = [
+      path.join(this.pluginBasePath, pluginName, 'migrations'),
+      path.join(this.pluginBasePath, '@core', pluginName, 'migrations'),
+      path.join(this.pluginBasePath, '@examples', pluginName, 'migrations')
+    ];
+
+    for (const p of searchPaths) {
+      if (fs.existsSync(p)) {
+        return p;
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * Initialize migration tracking tables
    * @private
    */
@@ -374,9 +395,9 @@ class MigrationManager {
     await this._initializeTables();
 
     // Find plugin migrations directory
-    const pluginMigrationsPath = path.join(this.pluginBasePath, pluginName, 'migrations');
+    const pluginMigrationsPath = this._findPluginMigrationsPath(pluginName);
 
-    if (!fs.existsSync(pluginMigrationsPath)) {
+    if (!pluginMigrationsPath) {
       console.log(`  ℹ️  No migrations directory found for plugin: ${pluginName}`);
       return { applied: 0, migrations: [] };
     }
@@ -455,6 +476,96 @@ class MigrationManager {
   }
 
   /**
+   * Run all pending migrations for a plugin from a specific path
+   * @param {string} pluginName - Name of the plugin
+   * @param {string} migrationsPath - Absolute path to the plugin's migrations directory
+   * @returns {Promise<Object>} Result object
+   */
+  async migratePluginFromPath(pluginName, migrationsPath) {
+    console.log(`🔄 Running migrations for plugin: ${pluginName}...`);
+
+    await this._initializeTables();
+
+    if (!fs.existsSync(migrationsPath)) {
+      console.log(`  ℹ️  No migrations directory found for plugin: ${pluginName}`);
+      return { applied: 0, migrations: [] };
+    }
+
+    // Discover plugin migrations
+    const allMigrations = await this._discoverMigrations(migrationsPath);
+
+    // Get applied plugin migrations
+    const appliedVersions = await new Promise((resolve, reject) => {
+      this.db.all(
+        'SELECT version FROM plugin_migrations WHERE plugin_name = ? ORDER BY version ASC',
+        [pluginName],
+        (err, rows) => {
+          if (err) return reject(err);
+          resolve(rows.map(row => row.version));
+        }
+      );
+    });
+
+    const pending = allMigrations.filter(m => !appliedVersions.includes(m.version));
+
+    if (pending.length === 0) {
+      console.log(`  ✅ No pending migrations for plugin: ${pluginName}`);
+      return { applied: 0, migrations: [] };
+    }
+
+    console.log(`  📋 Found ${pending.length} pending migration(s) for ${pluginName}`);
+
+    const results = [];
+
+    for (const migration of pending) {
+      try {
+        console.log(`    🔄 Applying ${migration.version}: ${migration.name}...`);
+
+        const executionTime = await this._executeMigration(migration, 'up');
+
+        // Record plugin migration
+        await new Promise((resolve, reject) => {
+          this.db.run(
+            `INSERT INTO plugin_migrations (plugin_name, version, name, description, execution_time_ms)
+             VALUES (?, ?, ?, ?, ?)`,
+            [pluginName, migration.version, migration.name, migration.description, executionTime],
+            (err) => {
+              if (err) return reject(err);
+              resolve();
+            }
+          );
+        });
+
+        console.log(`    ✅ Applied ${migration.version} (${executionTime}ms)`);
+        results.push({
+          version: migration.version,
+          name: migration.name,
+          status: 'success',
+          executionTime
+        });
+
+      } catch (error) {
+        console.error(`    ❌ Plugin migration ${migration.version} failed:`, error.message);
+
+        results.push({
+          version: migration.version,
+          name: migration.name,
+          status: 'failed',
+          error: error.message
+        });
+
+        throw new Error(
+          `Plugin ${pluginName} migration ${migration.version} failed: ${error.message}`
+        );
+      }
+    }
+
+    console.log(`  ✅ Applied ${results.length} migration(s) for ${pluginName}`);
+    return { applied: results.length, migrations: results };
+  }
+
+
+  /**
    * Get plugin migration status
    * @param {string} pluginName - Name of the plugin
    * @returns {Promise<Object>} Status object
@@ -462,9 +573,9 @@ class MigrationManager {
   async statusPlugin(pluginName) {
     await this._initializeTables();
 
-    const pluginMigrationsPath = path.join(this.pluginBasePath, pluginName, 'migrations');
+    const pluginMigrationsPath = this._findPluginMigrationsPath(pluginName);
 
-    if (!fs.existsSync(pluginMigrationsPath)) {
+    if (!pluginMigrationsPath) {
       return {
         plugin: pluginName,
         current_version: 0,

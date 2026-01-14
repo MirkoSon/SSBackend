@@ -229,7 +229,6 @@ async function startServer() {
     const db = getDatabase();
 
     // Initialize plugin system BEFORE middleware setup
-    console.log('🔌 Initializing Plugin System...');
     const pluginManager = new PluginManager();
     // TODO [EPIC 7 - Multi-Project Support]:
     // Remove this global singleton. Each ProjectContext should have its own PluginManager.

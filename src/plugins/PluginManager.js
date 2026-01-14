@@ -3,6 +3,7 @@ const path = require('path');
 const chokidar = require('chokidar');
 const { getConfigValue, updateConfig } = require('../utils/config');
 const PluginValidator = require('./PluginValidator');
+const PluginDiscoveryService = require('../services/plugins/PluginDiscoveryService');
 
 /**
  * Plugin Manager for handling plugin lifecycle, discovery, and configuration
@@ -26,9 +27,9 @@ class PluginManager {
     this.failedPlugins = new Map();
     this.disabledPlugins = new Map();
     this.discoveredPlugins = new Map();
-    this.missingPlugins = new Map();
     this.pluginRoutes = [];
     this.pluginSchemas = [];
+    this.discoveryService = new PluginDiscoveryService();
   }
 
   /**
@@ -40,16 +41,14 @@ class PluginManager {
     this.app = app;
     this.db = db;
 
-    console.log('🔌 Initializing Plugin System...');
-
     // Discover and auto-register external plugins if enabled
     const autoDiscover = getConfigValue('plugins.auto_discover', true);
     if (autoDiscover) {
-      await this.discoverExternalPlugins();
+      await this.discoveryService.registerNewPlugins();
     }
 
     // Check for reinstalled suppressed plugins and unsuppress them
-    await this.checkSuppressedPlugins();
+    await this.discoveryService.checkSuppressedPlugins();
 
     // Load and activate configured plugins
     await this.loadConfiguredPlugins();
@@ -63,112 +62,6 @@ class PluginManager {
     console.log(`✅ Plugin System initialized. ${this.activePlugins.size} plugins active.`);
   }
 
-  /**
-   * Discover external plugins in the plugins/ directory
-   * Skips @core and @examples directories (reserved for built-in/example plugins)
-   */
-  async discoverExternalPlugins() {
-    const pluginsDir = path.join(process.cwd(), 'plugins');
-
-    if (!fs.existsSync(pluginsDir)) {
-      console.log('📂 Creating plugins directory...');
-      fs.mkdirSync(pluginsDir, { recursive: true });
-      return;
-    }
-
-    console.log('🔍 Scanning for external plugins...');
-
-    try {
-      const dirents = fs.readdirSync(pluginsDir, { withFileTypes: true });
-
-      const processDir = async (dirName, basePath) => {
-        const pluginPath = path.join(basePath, dirName);
-
-        // Skip hidden and internal-looking directories
-        if (dirName.startsWith('.') || (dirName.startsWith('@core') && basePath === pluginsDir)) return;
-
-        // Recurse into scoped directories (starting with @)
-        if (dirName.startsWith('@')) {
-          try {
-            const subDirents = fs.readdirSync(pluginPath, { withFileTypes: true })
-              .filter(d => d.isDirectory() && !d.name.startsWith('.'));
-
-            for (const subD of subDirents) {
-              await processDir(subD.name, pluginPath);
-            }
-          } catch (e) {
-            console.error(`❌ Error scanning scoped directory ${dirName}:`, e.message);
-          }
-          return;
-        }
-
-        // Check for manifest or entry points
-        const hasIndex = fs.existsSync(path.join(pluginPath, 'index.js'));
-        const hasPluginJs = fs.existsSync(path.join(pluginPath, 'plugin.js'));
-        const hasManifest = fs.existsSync(path.join(pluginPath, 'plugin.json'));
-
-        if (hasIndex || hasPluginJs || hasManifest) {
-          await this.registerExternalPlugin(dirName, pluginPath);
-        }
-      };
-
-      for (const dirent of dirents) {
-        if (dirent.isDirectory()) {
-          await processDir(dirent.name, pluginsDir);
-        }
-      }
-    } catch (error) {
-      console.error('❌ Error discovering external plugins:', error.message);
-    }
-  }
-
-  /**
-   * Register an external plugin in the config if not already present
-   */
-  async registerExternalPlugin(pluginName, pluginPath) {
-    const pluginConfig = getConfigValue('plugins', {});
-
-    if (!pluginConfig[pluginName]) {
-      console.log(`🆕 Discovered new external plugin: ${pluginName}`);
-
-      // Basic Validation before registration
-      try {
-        const validator = new PluginValidator();
-        const hasIndex = fs.existsSync(path.join(pluginPath, 'index.js'));
-        const hasPluginJs = fs.existsSync(path.join(pluginPath, 'plugin.js'));
-        const entryPath = hasIndex ? path.join(pluginPath, 'index.js') : (hasPluginJs ? path.join(pluginPath, 'plugin.js') : null);
-
-        if (!entryPath) {
-          console.warn(`⚠️  Skipping registration for ${pluginName}: No entry point found.`);
-          return;
-        }
-
-        // We only do a shallow require to check manifest
-        const plugin = require(entryPath);
-        const result = validator.validate(plugin, pluginName, pluginPath);
-
-        if (!result.valid) {
-          console.warn(`⚠️  Skipping registration for ${pluginName}: Basic validation failed.`);
-          return;
-        }
-
-        const autoEnable = getConfigValue('plugins.auto_enable_discovered', true);
-
-        // Auto-add to config
-        pluginConfig[pluginName] = {
-          enabled: autoEnable,
-          type: 'external',
-          path: pluginPath
-        };
-
-        // Update config
-        updateConfig('plugins', pluginConfig);
-        console.log(`✅ Auto-registered external plugin: ${pluginName} (Enabled: ${autoEnable})`);
-      } catch (e) {
-        console.error(`❌ Registration failed for ${pluginName}:`, e.message);
-      }
-    }
-  }
 
   /**
    * Start watching the plugins directory for changes (Hot-Add)
@@ -213,8 +106,24 @@ class PluginManager {
     const hasManifest = fs.existsSync(path.join(pluginPath, 'plugin.json'));
 
     if (hasIndex || hasPluginJs || hasManifest) {
-      // Register (takes care of config)
-      await this.registerExternalPlugin(pluginName, pluginPath);
+      // Register (takes care of config) using specialized service
+      const externalPlugins = await this.discoveryService.discoverExternalPlugins();
+      const pluginMeta = externalPlugins.find(p => p.name === pluginName || p.path === pluginPath);
+
+      if (pluginMeta) {
+        // Register it
+        const pluginConfig = getConfigValue('plugins', {});
+        if (!pluginConfig[pluginName]) {
+          const autoEnable = getConfigValue('plugins.auto_enable_discovered', true);
+          pluginConfig[pluginName] = {
+            enabled: autoEnable,
+            type: 'external',
+            path: pluginPath
+          };
+          updateConfig('plugins', pluginConfig);
+          console.log(`✅ Auto-registered hot-added plugin: ${pluginName}`);
+        }
+      }
 
       const pluginConfig = getConfigValue('plugins', {});
       const config = pluginConfig[pluginName];
@@ -390,8 +299,26 @@ class PluginManager {
     const { plugin, config, path: pluginPath } = pluginData;
 
     try {
-      // Setup database schemas FIRST before calling onActivate
-      if (plugin.schemas) {
+      // Check for plugin migrations and run them FIRST before schemas
+      const migrationsPath = path.join(pluginPath, 'migrations');
+      const hasMigrations = fs.existsSync(migrationsPath);
+
+      if (hasMigrations) {
+        console.log(`📦 Plugin ${pluginName} has migrations directory, running migrations...`);
+        const MigrationManager = require('../db/migrations/MigrationManager');
+        const migrationManager = new MigrationManager(this.db);
+
+        try {
+          await migrationManager.migratePluginFromPath(pluginName, migrationsPath);
+        } catch (error) {
+          console.error(`❌ Plugin migration failed for ${pluginName}:`, error.message);
+          throw new Error(`Plugin ${pluginName} migration failed: ${error.message}`);
+        }
+      }
+
+      // Setup database schemas (backward compatibility for plugins without migrations)
+      // Skip if migrations exist to avoid conflicts
+      if (plugin.schemas && !hasMigrations) {
         for (const schema of plugin.schemas) {
           try {
             await this.createPluginSchema(schema, pluginName);
@@ -400,7 +327,11 @@ class PluginManager {
             throw new Error(`Schema creation failed: ${error.message}`);
           }
         }
+      } else if (plugin.schemas && hasMigrations) {
+        console.log(`  ℹ️  Skipping schema creation for ${pluginName} (using migrations instead)`);
       }
+
+
 
       // Call onActivate hook
       const activationContext = {
@@ -530,17 +461,12 @@ class PluginManager {
    * Resolve plugin handler from path or direct function
    */
   resolveHandler(handler, pluginPath) {
-    console.log(`🔍 Resolving handler:`, typeof handler, handler);
-    console.log(`🔍 Plugin path:`, pluginPath);
-
     if (typeof handler === 'function') {
       return handler;
     }
 
     if (typeof handler === 'string') {
       const handlerPath = path.resolve(pluginPath, handler);
-      console.log(`🔍 Handler file path:`, handlerPath);
-      console.log(`🔍 File exists:`, fs.existsSync(handlerPath));
       return require(handlerPath);
     }
 
@@ -771,13 +697,7 @@ class PluginManager {
           phase: data.phase,
           group: getGroupForPlugin(name)
         })),
-        missing: Array.from(this.missingPlugins.entries()).map(([name, data]) => ({
-          name,
-          error: data.error,
-          timestamp: data.timestamp,
-          config: data.config,
-          group: getGroupForPlugin(name)
-        })),
+        missing: [], // Handled by discovery service in higher layers
         disabled: Array.from(this.disabledPlugins.keys()).map(name => ({
           name,
           group: getGroupForPlugin(name)
@@ -847,7 +767,6 @@ class PluginManager {
     }
 
     // Remove from all internal maps
-    this.missingPlugins.delete(pluginName);
     this.failedPlugins.delete(pluginName);
     this.loadedPlugins.delete(pluginName);
     this.activePlugins.delete(pluginName);
@@ -860,42 +779,6 @@ class PluginManager {
     console.log(`🗑️  Purged plugin: ${pluginName}`);
   }
 
-  /**
-   * Check for reinstalled suppressed plugins and unsuppress them
-   */
-  async checkSuppressedPlugins() {
-    const pluginConfig = getConfigValue('plugins', {});
-    const SETTING_KEYS = ['enabled', 'auto_discover', 'auto_enable_discovered', 'watch_for_changes'];
-
-    for (const [pluginName, config] of Object.entries(pluginConfig)) {
-      // Skip settings
-      if (SETTING_KEYS.includes(pluginName)) continue;
-      if (typeof config !== 'object' || config === null) continue;
-
-      // Check if plugin is suppressed
-      if (config.suppressed === true) {
-        // Check if plugin files exist
-        let pluginPath;
-        if (config.type === 'external') {
-          pluginPath = config.path;
-        } else {
-          pluginPath = path.join(process.cwd(), 'plugins', '@core', pluginName);
-        }
-
-        const indexPath = path.join(pluginPath, 'index.js');
-        const pluginJsPath = path.join(pluginPath, 'plugin.js');
-
-        if (fs.existsSync(indexPath) || fs.existsSync(pluginJsPath)) {
-          console.log(`🔄 Plugin ${pluginName} has been reinstalled, unsuppressing...`);
-
-          // Unsuppress the plugin
-          pluginConfig[pluginName].suppressed = false;
-          pluginConfig[pluginName].enabled = true;
-          updateConfig('plugins', pluginConfig);
-        }
-      }
-    }
-  }
 
   /**
    * Suppress a plugin (hide from UI but keep config)
@@ -913,7 +796,6 @@ class PluginManager {
     updateConfig('plugins', pluginConfig);
 
     // Remove from internal maps
-    this.missingPlugins.delete(pluginName);
     this.failedPlugins.delete(pluginName);
 
     console.log(`🔇 Suppressed plugin: ${pluginName}`);

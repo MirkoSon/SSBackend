@@ -107,6 +107,9 @@ const routes = [
 ];
 
 // Database schema definitions - Aligned with Achievement_Design.md
+// NOTE: This plugin now uses migrations (see migrations/ directory).
+// The schemas below are kept for backward compatibility only.
+// New schema changes should be added as migration files.
 const schemas = [
   {
     table: 'plugin_achievements',
@@ -169,9 +172,6 @@ async function onActivate(context) {
     console.warn('  - Failed to mount admin routes:', err.message);
   }
 
-  // Force strict schema alignment (Drop & Recreate)
-  await performSchemaReset(context.db);
-
   // Seed default achievements if none exist
   await seedDefaultAchievements(context.db);
 
@@ -182,35 +182,6 @@ async function onDeactivate(context) {
   console.log('🏆 Deactivating Achievements plugin...');
 }
 
-/**
- * RESET Tables to match new design (Authorized by user)
- */
-async function performSchemaReset(db) {
-  return new Promise((resolve, reject) => {
-    // Check if we need to reset (check for 'code' column existence)
-    db.get("PRAGMA table_info(plugin_achievements)", [], (err, rows) => {
-      // Simple heuristic: If table exists but triggers schema error or missing 'code', reset.
-      // For simplicity in this step, we'll just check if it exists and DROP it to be safe 
-      // as requested by "erase old columns".
-
-      console.log('♻️  Resetting Achievements Tables to align with Design...');
-
-      db.serialize(() => {
-        db.run("DROP TABLE IF EXISTS plugin_user_achievements");
-        db.run("DROP TABLE IF EXISTS plugin_achievements");
-
-        // Re-create tables
-        schemas.forEach(schema => {
-          db.run(schema.definition, (err) => {
-            if (err) console.error(`Failed to create ${schema.table}:`, err);
-            else console.log(`   - Created ${schema.table}`);
-          });
-        });
-        resolve();
-      });
-    });
-  });
-}
 
 /**
  * Seed default achievements if none exist
