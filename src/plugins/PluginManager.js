@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { getConfigValue, updateConfig } = require('../utils/config');
+const PluginValidator = require('./PluginValidator');
 
 /**
  * Plugin Manager for handling plugin lifecycle, discovery, and configuration
@@ -9,6 +10,9 @@ class PluginManager {
   constructor() {
     this.loadedPlugins = new Map();
     this.activePlugins = new Map();
+    this.failedPlugins = new Map();
+    this.disabledPlugins = new Map();
+    this.discoveredPlugins = new Map();
     this.pluginRoutes = [];
     this.pluginSchemas = [];
   }
@@ -35,10 +39,11 @@ class PluginManager {
 
   /**
    * Discover external plugins in the plugins/ directory
+   * Skips @core and @examples directories (reserved for built-in/example plugins)
    */
   async discoverExternalPlugins() {
     const pluginsDir = path.join(process.cwd(), 'plugins');
-    
+
     if (!fs.existsSync(pluginsDir)) {
       console.log('📂 Creating plugins directory...');
       fs.mkdirSync(pluginsDir, { recursive: true });
@@ -48,13 +53,16 @@ class PluginManager {
     try {
       const pluginDirs = fs.readdirSync(pluginsDir, { withFileTypes: true })
         .filter(dirent => dirent.isDirectory())
+        .filter(dirent => !dirent.name.startsWith('@')) // Skip @core, @examples
+        .filter(dirent => !dirent.name.startsWith('.')) // Skip hidden folders
         .map(dirent => dirent.name);
 
       for (const pluginDir of pluginDirs) {
         const pluginPath = path.join(pluginsDir, pluginDir);
-        const manifestPath = path.join(pluginPath, 'plugin.js');
-        
-        if (fs.existsSync(manifestPath)) {
+        const hasIndex = fs.existsSync(path.join(pluginPath, 'index.js'));
+        const hasPluginJs = fs.existsSync(path.join(pluginPath, 'plugin.js'));
+
+        if (hasIndex || hasPluginJs) {
           await this.registerExternalPlugin(pluginDir, pluginPath);
         }
       }
@@ -99,17 +107,27 @@ class PluginManager {
 
     for (const [pluginName, config] of Object.entries(pluginConfig)) {
       if (pluginName === 'enabled') continue; // Skip the global enabled flag
-      
+
       try {
+        // Mark as discovered
+        this.discoveredPlugins.set(pluginName, { config, discoveredAt: new Date() });
+
         // Load the plugin (but don't activate it yet)
         await this.loadPlugin(pluginName, config, false); // false = don't auto-activate
-        
+
         // Only activate if enabled
         if (config.enabled) {
           await this.activatePlugin(pluginName);
         }
       } catch (error) {
         console.error(`❌ Failed to load plugin ${pluginName}:`, error.message);
+        this.failedPlugins.set(pluginName, {
+          error: error.message,
+          stack: error.stack,
+          timestamp: new Date(),
+          phase: 'load',
+          config
+        });
       }
     }
   }
@@ -125,16 +143,21 @@ class PluginManager {
     let pluginPath;
 
     if (config.type === 'external') {
-      // External plugin
+      // External plugin - support both index.js and plugin.js (index.js preferred)
       pluginPath = config.path;
-      const manifestPath = path.join(pluginPath, 'plugin.js');
-      if (!fs.existsSync(manifestPath)) {
-        throw new Error(`Plugin manifest not found: ${manifestPath}`);
+      const indexPath = path.join(pluginPath, 'index.js');
+      const pluginJsPath = path.join(pluginPath, 'plugin.js');
+
+      if (fs.existsSync(indexPath)) {
+        plugin = require(indexPath);
+      } else if (fs.existsSync(pluginJsPath)) {
+        plugin = require(pluginJsPath);
+      } else {
+        throw new Error(`Plugin entry point not found: ${pluginPath} (looked for index.js or plugin.js)`);
       }
-      plugin = require(manifestPath);
     } else {
-      // Internal plugin
-      pluginPath = path.join(__dirname, 'internal', pluginName);
+      // Internal plugin (from plugins/@core/)
+      pluginPath = path.join(process.cwd(), 'plugins', '@core', pluginName);
       if (!fs.existsSync(path.join(pluginPath, 'index.js'))) {
         throw new Error(`Internal plugin not found: ${pluginName}`);
       }
@@ -142,8 +165,21 @@ class PluginManager {
     }
 
     // Validate plugin structure
-    if (!plugin.manifest) {
-      throw new Error(`Plugin ${pluginName} missing manifest`);
+    const validator = new PluginValidator();
+    const validationResult = validator.validate(plugin, pluginName, pluginPath);
+
+    if (!validationResult.valid) {
+      const errorMessage = PluginValidator.formatResult(validationResult, pluginName);
+      console.error(errorMessage);
+      throw new Error(`Plugin ${pluginName} failed validation (${validationResult.errors.length} errors)`);
+    }
+
+    // Log warnings if any
+    if (validationResult.warnings.length > 0) {
+      console.warn(`⚠️  Plugin ${pluginName} has ${validationResult.warnings.length} validation warnings:`);
+      validationResult.warnings.forEach((warning, i) => {
+        console.warn(`   ${i + 1}. ${warning}`);
+      });
     }
 
     // Store plugin
@@ -155,11 +191,16 @@ class PluginManager {
 
     // Call onLoad hook
     if (plugin.onLoad) {
-      await plugin.onLoad({
-        app: this.app,
-        db: this.db,
-        config: config.settings || {}
-      });
+      try {
+        await plugin.onLoad({
+          app: this.app,
+          db: this.db,
+          config: config.settings || {}
+        });
+      } catch (error) {
+        console.error(`❌ Error in onLoad hook for plugin ${pluginName}:`, error.message);
+        throw new Error(`Plugin ${pluginName} onLoad failed: ${error.message}`);
+      }
     }
 
     // Only activate if requested
@@ -181,49 +222,71 @@ class PluginManager {
 
     const { plugin, config, path: pluginPath } = pluginData;
 
-    // Setup database schemas FIRST before calling onActivate
-    if (plugin.schemas) {
-      for (const schema of plugin.schemas) {
-        await this.createPluginSchema(schema, pluginName);
+    try {
+      // Setup database schemas FIRST before calling onActivate
+      if (plugin.schemas) {
+        for (const schema of plugin.schemas) {
+          try {
+            await this.createPluginSchema(schema, pluginName);
+          } catch (error) {
+            console.error(`❌ Failed to create schema for plugin ${pluginName}:`, error.message);
+            throw new Error(`Schema creation failed: ${error.message}`);
+          }
+        }
       }
-    }
 
-    // Call onActivate hook
-    const activationContext = {
-      app: this.app,
-      db: this.db,
-      config: config.settings || {}
-    };
-    
-    if (plugin.onActivate) {
-      await plugin.onActivate(activationContext);
-    }
+      // Call onActivate hook
+      const activationContext = {
+        app: this.app,
+        db: this.db,
+        config: config.settings || {}
+      };
 
-    // Store the activation context for use in routes
-    pluginData.context = activationContext;
-
-    // Register routes
-    if (plugin.routes) {
-      for (const route of plugin.routes) {
-        console.log(`📍 Registering route: ${route.method} ${route.path}`);
-        const handler = this.resolveHandler(route.handler, pluginPath);
-        const middleware = this.resolveMiddleware(route.middleware || []);
-        
-        // Create a wrapped handler that includes plugin context
-        const wrappedHandler = this.createContextualHandler(handler, pluginName, pluginData);
-        
-        this.app[route.method.toLowerCase()](route.path, ...middleware, wrappedHandler);
-        this.pluginRoutes.push({
-          plugin: pluginName,
-          method: route.method,
-          path: route.path
-        });
-        console.log(`✅ Route registered: ${route.method} ${route.path}`);
+      if (plugin.onActivate) {
+        try {
+          await plugin.onActivate(activationContext);
+        } catch (error) {
+          console.error(`❌ Error in onActivate hook for plugin ${pluginName}:`, error.message);
+          throw new Error(`Plugin ${pluginName} onActivate failed: ${error.message}`);
+        }
       }
-    }
 
-    this.activePlugins.set(pluginName, pluginData);
-    console.log(`🚀 Activated plugin: ${pluginName}`);
+      // Store the activation context for use in routes
+      pluginData.context = activationContext;
+
+      // Register routes
+      if (plugin.routes) {
+        for (const route of plugin.routes) {
+          console.log(`📍 Registering route: ${route.method} ${route.path}`);
+          const handler = this.resolveHandler(route.handler, pluginPath);
+          const middleware = this.resolveMiddleware(route.middleware || []);
+
+          // Create a wrapped handler that includes plugin context
+          const wrappedHandler = this.createContextualHandler(handler, pluginName, pluginData);
+
+          this.app[route.method.toLowerCase()](route.path, ...middleware, wrappedHandler);
+          this.pluginRoutes.push({
+            plugin: pluginName,
+            method: route.method,
+            path: route.path
+          });
+          console.log(`✅ Route registered: ${route.method} ${route.path}`);
+        }
+      }
+
+      this.activePlugins.set(pluginName, pluginData);
+      console.log(`🚀 Activated plugin: ${pluginName}`);
+    } catch (error) {
+      // Mark plugin as failed
+      this.failedPlugins.set(pluginName, {
+        error: error.message,
+        stack: error.stack,
+        timestamp: new Date(),
+        phase: 'activate',
+        config
+      });
+      throw error; // Re-throw to be caught by caller
+    }
   }
 
   /**
@@ -255,29 +318,44 @@ class PluginManager {
   }
 
   /**
-   * Create a contextual handler that includes plugin context
+   * Create a contextual handler that includes plugin context and error handling
    */
   createContextualHandler(handler, pluginName, pluginData) {
-    return (req, res, next) => {
-      // Create plugin context with services and utilities
-      const pluginContext = {
-        pluginName,
-        config: pluginData.config.settings || {},
-        db: this.db,
-        app: this.app
-      };
+    return async (req, res, next) => {
+      try {
+        // Create plugin context with services and utilities
+        const pluginContext = {
+          pluginName,
+          config: pluginData.config.settings || {},
+          db: this.db,
+          app: this.app
+        };
 
-      // Add plugin-specific services to context
-      const activePlugin = this.activePlugins.get(pluginName);
-      if (activePlugin && activePlugin.context) {
-        Object.assign(pluginContext, activePlugin.context);
+        // Add plugin-specific services to context
+        const activePlugin = this.activePlugins.get(pluginName);
+        if (activePlugin && activePlugin.context) {
+          Object.assign(pluginContext, activePlugin.context);
+        }
+
+        // Inject context into request
+        req.pluginContext = pluginContext;
+
+        // Call the original handler
+        return await handler(req, res, next);
+      } catch (error) {
+        console.error(`❌ Error in plugin ${pluginName} route handler:`, error.message);
+        console.error(error.stack);
+
+        // Return 500 error instead of crashing
+        if (!res.headersSent) {
+          res.status(500).json({
+            error: 'Plugin error',
+            plugin: pluginName,
+            message: error.message,
+            path: req.path
+          });
+        }
       }
-
-      // Inject context into request
-      req.pluginContext = pluginContext;
-      
-      // Call the original handler
-      return handler(req, res, next);
     };
   }
 
@@ -364,6 +442,50 @@ class PluginManager {
    */
   getActivePlugins() {
     return Array.from(this.activePlugins.keys());
+  }
+
+  /**
+   * Get plugin health status
+   * @returns {Object} Status of all plugins by state
+   */
+  getPluginStatus() {
+    return {
+      active: Array.from(this.activePlugins.keys()),
+      loaded: Array.from(this.loadedPlugins.keys()).filter(name => !this.activePlugins.has(name)),
+      failed: Array.from(this.failedPlugins.entries()).map(([name, data]) => ({
+        name,
+        error: data.error,
+        timestamp: data.timestamp,
+        phase: data.phase
+      })),
+      disabled: Array.from(this.disabledPlugins.keys()),
+      discovered: Array.from(this.discoveredPlugins.keys()).filter(name =>
+        !this.loadedPlugins.has(name) && !this.failedPlugins.has(name)
+      )
+    };
+  }
+
+  /**
+   * Get detailed status for all plugins
+   */
+  getPluginHealthStatus() {
+    return {
+      status: this.failedPlugins.size > 0 ? 'degraded' : 'ok',
+      plugins: {
+        active: Array.from(this.activePlugins.keys()),
+        failed: Array.from(this.failedPlugins.entries()).map(([name, data]) => ({
+          name,
+          error: data.error,
+          timestamp: data.timestamp,
+          phase: data.phase
+        })),
+        disabled: Array.from(this.disabledPlugins.keys()),
+        loaded: Array.from(this.loadedPlugins.keys()).filter(
+          name => !this.activePlugins.has(name) && !this.failedPlugins.has(name)
+        )
+      },
+      timestamp: new Date().toISOString()
+    };
   }
 
   /**

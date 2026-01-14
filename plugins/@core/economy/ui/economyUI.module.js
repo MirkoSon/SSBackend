@@ -5,8 +5,8 @@
  */
 
 // Import the new MVC components - only View, controller is created inline
-import { economyApi } from '/plugins/internal/economy/ui/components/BalanceManager/api/economyApi.js';
-import { BalanceManagerView } from '/plugins/internal/economy/ui/components/BalanceManager/BalanceManagerView.js';
+import { economyApi } from '/plugins/@core/economy/ui/components/BalanceManager/api/economyApi.js';
+import { BalanceManagerView } from '/plugins/@core/economy/ui/components/BalanceManager/BalanceManagerView.js';
 
 console.log('💰 Loading Improved Economy Plugin UI Module...');
 

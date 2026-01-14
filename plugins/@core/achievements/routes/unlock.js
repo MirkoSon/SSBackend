@@ -1,4 +1,4 @@
-const { getDatabase } = require('../../../../db/database');
+const { getDatabase } = require('../../../../src/db/database');
 const AchievementService = require('../services/AchievementService');
 
 /**

@@ -1,4 +1,4 @@
-const { getDatabase } = require('../../../../db/database');
+const { getDatabase } = require('../../../../src/db/database');
 
 /**
  * Score Service - Handles score submission, validation, and management

@@ -1,4 +1,4 @@
-const { getDatabase } = require('../../../../db/database');
+const { getDatabase } = require('../../../../src/db/database');
 
 /**
  * GET /achievements/:userId/progress - Get achievement progress for user

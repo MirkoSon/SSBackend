@@ -25,37 +25,84 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 /**
- * Initialize Plugin Registry with available plugins
+ * Initialize Plugin Registry with available plugins from API
  */
 async function initializePluginRegistry() {
-  // For now, hardcode economy plugin
-  // In future, this will query the plugin API
-  window.availablePlugins = [
-    {
-      id: 'economy',
-      name: 'Economy',
-      icon: '💰',
-      enabled: true,
-      displayOrder: 1,
-      description: 'Manage virtual economy, balances, and transactions'
-    },
-    {
-      id: 'achievements',
-      name: 'Achievements',
-      icon: '🏆',
-      enabled: true,
-      displayOrder: 2,
-      description: 'Manage achievements and user progress'
-    },
-    {
-      id: 'leaderboards',
-      name: 'Leaderboards',
-      icon: '🏆',
-      enabled: true,
-      displayOrder: 3,
-      description: 'Competitive ranking and scoring system'
-    }
-  ];
+  // Plugin metadata (icons, descriptions) for known plugins
+  const pluginMeta = {
+    economy: { icon: '💰', name: 'Economy', displayOrder: 1, description: 'Manage virtual economy, balances, and transactions' },
+    achievements: { icon: '🏆', name: 'Achievements', displayOrder: 2, description: 'Manage achievements and user progress' },
+    leaderboards: { icon: '📊', name: 'Leaderboards', displayOrder: 3, description: 'Competitive ranking and scoring system' }
+  };
+
+  try {
+    // Fetch plugin health status from API
+    const response = await fetch('/health/plugins');
+    const healthData = await response.json();
+
+    window.pluginHealthStatus = healthData;
+    window.availablePlugins = [];
+    window.failedPlugins = [];
+
+    // Add active plugins
+    (healthData.plugins?.active || []).forEach((id, index) => {
+      const meta = pluginMeta[id] || { icon: '🧩', name: id, displayOrder: 100 + index, description: 'Plugin' };
+      window.availablePlugins.push({
+        id,
+        name: meta.name,
+        icon: meta.icon,
+        enabled: true,
+        status: 'active',
+        displayOrder: meta.displayOrder,
+        description: meta.description
+      });
+    });
+
+    // Add failed plugins
+    (healthData.plugins?.failed || []).forEach((failedPlugin, index) => {
+      const id = failedPlugin.name;
+      const meta = pluginMeta[id] || { icon: '🧩', name: id, displayOrder: 200 + index, description: 'Plugin' };
+      window.failedPlugins.push({
+        id,
+        name: meta.name,
+        icon: meta.icon,
+        enabled: false,
+        status: 'failed',
+        displayOrder: meta.displayOrder,
+        description: meta.description,
+        error: failedPlugin.error,
+        errorPhase: failedPlugin.phase,
+        errorTimestamp: failedPlugin.timestamp
+      });
+    });
+
+    // Add disabled plugins
+    (healthData.plugins?.disabled || []).forEach((id, index) => {
+      const meta = pluginMeta[id] || { icon: '🧩', name: id, displayOrder: 300 + index, description: 'Plugin' };
+      window.availablePlugins.push({
+        id,
+        name: meta.name,
+        icon: meta.icon,
+        enabled: false,
+        status: 'disabled',
+        displayOrder: meta.displayOrder,
+        description: meta.description
+      });
+    });
+
+    console.log('📋 Active plugins:', window.availablePlugins.length);
+    console.log('❌ Failed plugins:', window.failedPlugins.length);
+
+  } catch (error) {
+    console.error('Failed to fetch plugin status, using defaults:', error);
+    // Fallback to hardcoded list
+    window.availablePlugins = [
+      { id: 'economy', name: 'Economy', icon: '💰', enabled: true, status: 'unknown', displayOrder: 1, description: 'Manage virtual economy' },
+      { id: 'achievements', name: 'Achievements', icon: '🏆', enabled: true, status: 'unknown', displayOrder: 2, description: 'Manage achievements' },
+      { id: 'leaderboards', name: 'Leaderboards', icon: '📊', enabled: true, status: 'unknown', displayOrder: 3, description: 'Ranking system' }
+    ];
+    window.failedPlugins = [];
+  }
 
   console.log('📋 Plugins registered:', window.availablePlugins);
 }
@@ -88,7 +135,7 @@ function setupPluginDropdown() {
   populatePluginDropdown();
 }
 /**
- * Populate Plugin Dropdown with available plugins
+ * Populate Plugin Dropdown with available and failed plugins
  */
 function populatePluginDropdown() {
   const menu = document.getElementById('pluginMenu');
@@ -99,29 +146,130 @@ function populatePluginDropdown() {
   menu.innerHTML = '';
   menu.appendChild(header);
 
-  // Add plugin items
-  window.availablePlugins.forEach(plugin => {
-    const item = document.createElement('div');
-    item.className = 'plugins-dropdown-item';
-    item.innerHTML = `
-      <div class="plugin-info">
-        <span>${plugin.icon}</span>
-        <span class="plugin-name">${plugin.name}</span>
-      </div>
-      <div class="toggle-switch ${plugin.enabled ? 'active' : ''}" 
-           data-plugin-id="${plugin.id}">
-      </div>
+  // Show system health status
+  const healthStatus = window.pluginHealthStatus;
+  if (healthStatus) {
+    const statusBanner = document.createElement('div');
+    statusBanner.className = `plugins-status-banner ${healthStatus.status === 'ok' ? 'status-ok' : 'status-degraded'}`;
+    statusBanner.innerHTML = `
+      <span class="status-indicator ${healthStatus.status === 'ok' ? 'indicator-ok' : 'indicator-warning'}"></span>
+      <span>System: ${healthStatus.status === 'ok' ? 'All plugins healthy' : 'Some plugins failed'}</span>
     `;
+    menu.appendChild(statusBanner);
+  }
 
-    // Handle toggle click
-    const toggle = item.querySelector('.toggle-switch');
-    toggle.addEventListener('click', (e) => {
-      e.stopPropagation();
-      togglePlugin(plugin.id);
+  // Add active plugins section
+  if (window.availablePlugins.length > 0) {
+    const activeSection = document.createElement('div');
+    activeSection.className = 'plugins-section';
+    activeSection.innerHTML = '<div class="plugins-section-title">Active Plugins</div>';
+    menu.appendChild(activeSection);
+
+    window.availablePlugins.forEach(plugin => {
+      const item = document.createElement('div');
+      item.className = 'plugins-dropdown-item';
+      item.innerHTML = `
+        <div class="plugin-info">
+          <span>${plugin.icon}</span>
+          <span class="plugin-name">${plugin.name}</span>
+          <span class="plugin-status-badge status-${plugin.status || 'active'}">
+            ${plugin.status === 'active' ? '✓' : plugin.status === 'disabled' ? '○' : '?'}
+          </span>
+        </div>
+        <div class="toggle-switch ${plugin.enabled ? 'active' : ''}"
+             data-plugin-id="${plugin.id}">
+        </div>
+      `;
+
+      // Handle toggle click
+      const toggle = item.querySelector('.toggle-switch');
+      toggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        togglePlugin(plugin.id);
+      });
+
+      menu.appendChild(item);
     });
+  }
 
-    menu.appendChild(item);
-  });
+  // Add failed plugins section if any
+  if (window.failedPlugins && window.failedPlugins.length > 0) {
+    const failedSection = document.createElement('div');
+    failedSection.className = 'plugins-section plugins-section-failed';
+    failedSection.innerHTML = '<div class="plugins-section-title plugins-section-title-failed">⚠️ Failed Plugins</div>';
+    menu.appendChild(failedSection);
+
+    window.failedPlugins.forEach(plugin => {
+      const item = document.createElement('div');
+      item.className = 'plugins-dropdown-item plugins-dropdown-item-failed';
+      item.innerHTML = `
+        <div class="plugin-info plugin-info-failed">
+          <span>${plugin.icon}</span>
+          <span class="plugin-name">${plugin.name}</span>
+          <span class="plugin-status-badge status-failed">✗</span>
+        </div>
+        <button class="btn-plugin-error-info" data-plugin-id="${plugin.id}" title="View error details">ℹ️</button>
+      `;
+
+      // Add error details tooltip/modal
+      const infoBtn = item.querySelector('.btn-plugin-error-info');
+      infoBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showPluginErrorDetails(plugin);
+      });
+
+      menu.appendChild(item);
+    });
+  }
+}
+
+/**
+ * Show plugin error details in a modal
+ */
+function showPluginErrorDetails(plugin) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+
+  const timestamp = plugin.errorTimestamp ? new Date(plugin.errorTimestamp).toLocaleString() : 'Unknown';
+
+  overlay.innerHTML = `
+    <div class="modal-container" style="max-width: 600px;">
+      <div class="modal-header" style="background: var(--color-error, #dc3545); color: white;">
+        <h3>⚠️ Plugin Error: ${plugin.name}</h3>
+        <button class="btn-close" style="color: white;">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="error-details">
+          <div class="error-detail-row">
+            <strong>Plugin:</strong> ${plugin.name} (${plugin.id})
+          </div>
+          <div class="error-detail-row">
+            <strong>Status:</strong> <span class="status-badge status-failed">Failed</span>
+          </div>
+          <div class="error-detail-row">
+            <strong>Failed Phase:</strong> ${plugin.errorPhase || 'Unknown'}
+          </div>
+          <div class="error-detail-row">
+            <strong>Timestamp:</strong> ${timestamp}
+          </div>
+          <div class="error-detail-row">
+            <strong>Error Message:</strong>
+            <pre class="error-message-box">${plugin.error || 'No error message available'}</pre>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-close-modal">Close</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  // Bind close events
+  const close = () => document.body.removeChild(overlay);
+  overlay.querySelectorAll('.btn-close, .btn-close-modal').forEach(btn => btn.onclick = close);
+  overlay.onclick = (e) => { if (e.target === overlay) close(); };
 }
 
 /**

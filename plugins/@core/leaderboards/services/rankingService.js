@@ -1,4 +1,4 @@
-const { getDatabase } = require('../../../../db/database');
+const { getDatabase } = require('../../../../src/db/database');
 
 /**
  * Ranking Service - Handles efficient ranking queries and position calculations

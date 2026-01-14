@@ -134,8 +134,8 @@ app.use(session({
 // Serve static files for admin dashboard
 app.use('/admin', express.static(path.join(__dirname, '..', 'public', 'admin')));
 
-// Serve static files for plugins (including internal plugin UI components)
-app.use('/plugins', express.static(path.join(__dirname, 'plugins')));
+// Serve static files for plugins (from project root plugins/ directory)
+app.use('/plugins', express.static(path.join(__dirname, '..', 'plugins')));
 
 // Serve UI components from src/ui for admin interface
 app.use('/ui', express.static(path.join(__dirname, 'ui')));
@@ -143,6 +143,11 @@ app.use('/ui', express.static(path.join(__dirname, 'ui')));
 // Admin dashboard route - serve index.html for /admin path
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'admin', 'index.html'));
+});
+
+// Serve favicon.ico from the root for browser convenience
+app.get('/favicon.ico', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'admin', 'favicon.ico'));
 });
 
 // Admin login page
@@ -171,29 +176,54 @@ app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Plugin health check endpoint
+app.get('/health/plugins', (req, res) => {
+  console.log('🔍 /health/plugins endpoint called');
+  try {
+    if (!global.pluginManager) {
+      console.error('❌ global.pluginManager is not set!');
+      return res.status(500).json({
+        status: 'error',
+        error: 'Plugin manager not initialized'
+      });
+    }
+    const pluginStatus = global.pluginManager.getPluginHealthStatus();
+    console.log('✅ Plugin status retrieved successfully');
+    res.json(pluginStatus);
+  } catch (error) {
+    console.error('❌ Error in /health/plugins:', error.message);
+    res.status(500).json({
+      status: 'error',
+      error: 'Failed to get plugin status',
+      message: error.message
+    });
+  }
+});
+
 // Initialize database and start server
 async function startServer() {
   try {
     // Initialize database
     await initializeDatabase();
     console.log('Database initialized successfully');
-    
+
     // Initialize Epic 4 database features
     await initializeEpic4Database();
     await initializeEpic4EconomyDatabase();
-    
+
     // Get database instance
     const { getDatabase } = require('./db/database');
     const db = getDatabase();
-    
+
     // Initialize plugin system BEFORE middleware setup
     console.log('🔌 Initializing Plugin System...');
     const pluginManager = new PluginManager();
+    global.pluginManager = pluginManager; // Store globally for health endpoint
     await pluginManager.initialize(app, db);
-    
+
     // Setup error handling and 404 after plugins are loaded
     setupFinalMiddleware();
-    
+
     app.listen(PORT, () => {
       console.log(`🎮 Stupid Simple Backend running on port ${PORT}`);
       console.log(`📡 Server URL: http://localhost:${PORT}`);

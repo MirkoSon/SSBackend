@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stupid Simple Backend - Admin Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="/admin/favicon.ico">
 
     <!-- Import Maps for Component Aliases -->
     <script type="importmap">
@@ -16,9 +17,10 @@
         "@ui/Button": "/ui/components/inputs/Button.js",
         "@ui/Pagination": "/ui/components/navigation/Pagination.js",
         "@ui/StatCard": "/ui/components/data-display/StatCard.js",
-        "@economy/": "/plugins/internal/economy/ui/",
-        "@achievements/": "/plugins/internal/achievements/ui/",
-        "@leaderboards/": "/plugins/internal/leaderboards/ui/"
+        "@ui/ActionRegistry": "/ui/components/ActionRegistry.js",
+        "@economy/": "/plugins/@core/economy/ui/",
+        "@achievements/": "/plugins/@core/achievements/ui/",
+        "@leaderboards/": "/plugins/@core/leaderboards/ui/"
       }
 
     }
@@ -38,8 +40,7 @@
     <!-- Top Navigation Bar -->
     <nav class="top-nav">
         <div class="top-nav__brand">
-            <span class="top-nav__icon">🎮</span>
-            <span class="top-nav__title">Stupid Simple Backend</span>
+            <img src="/admin/assets/SSBackend_title_logo.png" alt="Stupid Simple Backend" class="top-nav__logo">
         </div>
 
         <div class="top-nav__links">
@@ -143,9 +144,9 @@
         <div class="toast-content"><span id="toastMessage"></span></div>
     </div>
 
-    <script type="module" src="/plugins/internal/economy/ui/economyUI.module.js"></script>
-    <script type="module" src="/plugins/internal/achievements/ui/achievementsUI.module.js"></script>
-    <script type="module" src="/plugins/internal/leaderboards/ui/leaderboardsUI.module.js"></script>
+    <script type="module" src="/plugins/@core/economy/ui/economyUI.module.js"></script>
+    <script type="module" src="/plugins/@core/achievements/ui/achievementsUI.module.js"></script>
+    <script type="module" src="/plugins/@core/leaderboards/ui/leaderboardsUI.module.js"></script>
     <script type="module">
         import ActionRegistry from '@ui/ActionRegistry';
         window.PluginFramework = window.PluginFramework || {};
