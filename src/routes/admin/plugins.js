@@ -157,6 +157,51 @@ router.post('/plugins/:id/disable', adminAuth, async (req, res) => {
 });
 
 /**
+ * POST /admin/api/plugins/:id/reload - Hot-reload a plugin without server restart (Story 6.3)
+ */
+router.post('/plugins/:id/reload', adminAuth, async (req, res) => {
+  try {
+    const pluginId = req.params.id;
+    const adminUser = req.session?.adminUser || 'admin';
+
+    console.log(`🔄 Admin request: Reload plugin ${pluginId} by ${adminUser}`);
+
+    if (!global.pluginManager) {
+      throw new Error('Plugin manager not initialized');
+    }
+
+    const result = await global.pluginManager.reloadPlugin(pluginId);
+
+    if (result.success) {
+      res.json({
+        success: true,
+        data: result,
+        message: `Plugin ${pluginId} reloaded successfully`,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: 'Failed to reload plugin',
+        details: result.error,
+        pluginId: pluginId,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+  } catch (error) {
+    console.error(`❌ Error reloading plugin ${req.params.id}:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to reload plugin',
+      details: error.message,
+      pluginId: req.params.id,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+/**
  * POST /admin/api/plugins/:id/toggle - Toggle plugin state (enable/disable)
  */
 router.post('/plugins/:id/toggle', adminAuth, async (req, res) => {

@@ -38,12 +38,14 @@ agent-conversations/
 
 # All documentation (not functional code)
 /docs/*
-!/docs/api/
-!/docs/api/**
 /tests/*.md
 !README.md
 AGENTS.md
 CHANGELOG.md
+
+# Exclude API documentation for the Help Center
+!/docs/api/
+!/docs/api/**
 
 # Project planning files
 *.prd

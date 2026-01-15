@@ -54,6 +54,9 @@ class EnhancedPluginCLI {
         case 'disable':
           await this.disablePlugin(args[2]);
           break;
+        case 'reload':
+          await this.reloadPlugin(args[2]);
+          break;
         case 'info':
           await this.showPluginInfo(args[2]);
           break;
@@ -207,6 +210,39 @@ class EnhancedPluginCLI {
 
     } catch (error) {
       console.log(`${this.colorize('❌', 'red')} Failed to disable plugin "${identifier}":`, error.message);
+    }
+  }
+
+  /**
+   * Reload a plugin without server restart (Story 6.3 - Hot-Reload)
+   * AC 2: Plugin Control Commands (Hot-Reload)
+   */
+  async reloadPlugin(identifier) {
+    if (!identifier) {
+      console.log(`${this.colorize('❌', 'red')} Plugin identifier required`);
+      console.log(`${this.colorize('Usage:', 'blue')} ssbackend plugins reload <name|number>`);
+      return;
+    }
+
+    try {
+      const pluginName = await this.resolvePluginName(identifier);
+      if (!pluginName) return;
+
+      console.log(`${this.colorize('🔄', 'blue')} Reloading plugin ${this.colorize(pluginName, 'bright')}...`);
+
+      const response = await this.apiClient.reloadPlugin(pluginName);
+
+      if (response.data.success) {
+        console.log(`${this.colorize('✅', 'green')} Plugin "${pluginName}" reloaded successfully`);
+        console.log(`${this.colorize('📦', 'blue')} Version: ${response.data.plugin.version}`);
+        console.log(`${this.colorize('🌐', 'blue')} Routes: ${response.data.plugin.routes}`);
+      } else {
+        console.log(`${this.colorize('❌', 'red')} Failed to reload plugin "${pluginName}"`);
+        console.log(`${this.colorize('Error:', 'red')} ${response.data.error}`);
+      }
+
+    } catch (error) {
+      console.log(`${this.colorize('❌', 'red')} Failed to reload plugin "${identifier}":`, error.message);
     }
   }
 
@@ -503,9 +539,10 @@ ${this.colorize('Usage:', 'bright')}
 
 ${this.colorize('Commands:', 'bright')}
   ${this.colorize('list', 'green')} [--verbose]            List all available plugins with status
-  ${this.colorize('enable', 'green')} <name| number > Enable a plugin by name or list number
-  ${this.colorize('disable', 'green')} <name| number > Disable a plugin by name or list number
-  ${this.colorize('info', 'green')} <name| number > Show detailed plugin information
+  ${this.colorize('enable', 'green')} <name|number>         Enable a plugin by name or list number
+  ${this.colorize('disable', 'green')} <name|number>        Disable a plugin by name or list number
+  ${this.colorize('reload', 'green')} <name|number>         Hot-reload a plugin without server restart
+  ${this.colorize('info', 'green')} <name|number>           Show detailed plugin information
   ${this.colorize('validate', 'green')}                    Validate plugin system health and configuration
   ${this.colorize('install', 'green')} <path>              Install external plugin from path
   ${this.colorize('remove', 'green')} <name|number>        Remove external plugin (internal plugins protected)
@@ -516,6 +553,7 @@ ${this.colorize('Commands:', 'bright')}
   ssbackend plugins enable achievements     # Enable achievements plugin
   ssbackend plugins enable 1               # Enable first plugin in list
   ssbackend plugins disable 2              # Disable second plugin in list
+  ssbackend plugins reload economy         # Hot-reload economy plugin
   ssbackend plugins info economy           # Show detailed economy plugin information
   ssbackend plugins validate               # Check plugin system health
   ssbackend plugins install ./my-plugin/   # Install plugin from directory
@@ -525,6 +563,7 @@ ${this.colorize('Commands:', 'bright')}
   ${this.colorize('•', 'blue')} All operations require SSBackend server to be running
   ${this.colorize('•', 'blue')} CLI uses same backend APIs as web admin interface
   ${this.colorize('•', 'blue')} Internal plugins can be disabled but not removed
+  ${this.colorize('•', 'blue')} Use ${this.colorize('reload', 'cyan')} to apply code changes without server restart
   ${this.colorize('•', 'blue')} Use ${this.colorize('--verbose', 'cyan')} flag with list for detailed output
 
   ${this.colorize('Authentication:', 'bright')}

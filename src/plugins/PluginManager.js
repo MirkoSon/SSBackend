@@ -352,24 +352,79 @@ class PluginManager {
       // Store the activation context for use in routes
       pluginData.context = activationContext;
 
-      // Register routes
+      // Register routes using isolated router (Story 6.2 - Hot-Reload)
       if (plugin.routes) {
+        const express = require('express');
+        const pluginRouter = express.Router();
+
+        // Register all plugin routes to isolated router
         for (const route of plugin.routes) {
-          console.log(`📍 Registering route: ${route.method} ${route.path}`);
+          // Strip plugin name from route path if present (for backward compatibility)
+          // E.g., "/economy/balance" becomes "/balance" when mounting at "/api/economy"
+          let routePath = route.path;
+          const pluginPrefix = `/${pluginName}/`;
+          if (routePath.startsWith(pluginPrefix)) {
+            routePath = routePath.substring(pluginPrefix.length - 1); // Keep leading slash
+          } else if (routePath === `/${pluginName}`) {
+            routePath = '/';
+          }
+
           const handler = this.resolveHandler(route.handler, pluginPath);
           const middleware = this.resolveMiddleware(route.middleware || []);
 
           // Create a wrapped handler that includes plugin context
           const wrappedHandler = this.createContextualHandler(handler, pluginName, pluginData);
 
-          this.app[route.method.toLowerCase()](route.path, ...middleware, wrappedHandler);
+          pluginRouter[route.method.toLowerCase()](routePath, ...middleware, wrappedHandler);
           this.pluginRoutes.push({
             plugin: pluginName,
             method: route.method,
             path: route.path
           });
-          console.log(`✅ Route registered: ${route.method} ${route.path}`);
         }
+
+        // Track module paths for cache clearing during reload
+        // IMPORTANT: Must be done AFTER route registration so handler files are included
+        const pluginDir = path.resolve(pluginPath);
+        const modulePaths = Object.keys(require.cache).filter(key => key.startsWith(pluginDir));
+        pluginData.modulePaths = modulePaths;
+
+        // Check if plugin already has a router layer (from previous activation)
+        const existingLayerIndex = this.app._router.stack.findIndex(
+          layer => layer.pluginName === pluginName
+        );
+
+        if (existingLayerIndex !== -1) {
+          // Reuse existing layer, just replace the router handle
+          const existingLayer = this.app._router.stack[existingLayerIndex];
+          existingLayer.handle = pluginRouter;
+
+          // Store metadata
+          pluginData.router = pluginRouter;
+          pluginData.routerLayerIndex = existingLayerIndex;
+          pluginData.mountPath = `/api/${pluginName}`;
+
+          console.log(`✅ Plugin router reloaded at /api/${pluginName} (${plugin.routes.length} routes)`);
+        } else {
+          // First time activation - mount new router
+          const mountPath = `/api/${pluginName}`;
+          this.app.use(mountPath, pluginRouter);
+
+          // Tag the layer with metadata for easy identification (Tagged Layer Pattern)
+          const layerIndex = this.app._router.stack.length - 1;
+          const layer = this.app._router.stack[layerIndex];
+
+          layer.pluginName = pluginName;
+          layer.pluginMountPath = mountPath;
+
+          // Store router reference and metadata
+          pluginData.router = pluginRouter;
+          pluginData.routerLayerIndex = layerIndex;
+          pluginData.mountPath = mountPath;
+
+          console.log(`✅ Plugin router mounted at ${mountPath} (${plugin.routes.length} routes)`);
+        }
+
       }
 
       this.activePlugins.set(pluginName, pluginData);
@@ -399,20 +454,88 @@ class PluginManager {
 
     const { plugin } = pluginData;
 
-    // Call onDeactivate hook
+    // Call onDeactivate hook first (allow plugin to clean up)
     if (plugin.onDeactivate) {
-      await plugin.onDeactivate({
-        app: this.app,
-        db: this.db
+      try {
+        await plugin.onDeactivate({
+          app: this.app,
+          db: this.db
+        });
+      } catch (error) {
+        console.error(`⚠️  Error in onDeactivate hook for ${pluginName}:`, error.message);
+        // Continue with deactivation even if hook fails
+      }
+    }
+
+    // DON'T remove router from Express stack during reload
+    // The layer will be reused when the plugin is reactivated
+    // This preserves the Express stack integrity and avoids routing issues
+
+    // Clear require cache for plugin modules (Story 6.2 - Hot-Reload)
+    if (pluginData.modulePaths && pluginData.modulePaths.length > 0) {
+      pluginData.modulePaths.forEach(modulePath => {
+        if (require.cache[modulePath]) {
+          delete require.cache[modulePath];
+        }
       });
     }
 
     // Remove from active plugins
     this.activePlugins.delete(pluginName);
 
-    // Note: Routes can't be dynamically removed from Express easily
-    // This would require a more complex routing system for hot reload
     console.log(`⏹️  Deactivated plugin: ${pluginName}`);
+  }
+
+  /**
+   * Remove plugin router from Express stack (Story 6.2 - Hot-Reload)
+   * Uses Tagged Layer Pattern to safely identify and remove router
+   *
+   * @param {string} pluginName - Name of the plugin
+   * @param {Object} pluginData - Plugin data containing router metadata
+   * @returns {boolean} True if router was removed, false otherwise
+   */
+  removePluginRouter(pluginName, pluginData) {
+    if (!pluginData.router || !this.app._router || !this.app._router.stack) {
+      return false;
+    }
+
+    try {
+      // Find layer by plugin name tag (Tagged Layer Pattern)
+      const layerIndex = this.app._router.stack.findIndex(
+        layer => layer.pluginName === pluginName
+      );
+
+      if (layerIndex === -1) {
+        console.warn(`⚠️  Router layer not found for plugin: ${pluginName}`);
+        return false;
+      }
+
+      // Safety checks before removal
+      const layer = this.app._router.stack[layerIndex];
+
+      // Verify it's a router layer
+      if (layer.name !== 'router') {
+        console.error(`❌ Layer mismatch for ${pluginName}: expected 'router', got '${layer.name}'`);
+        return false;
+      }
+
+      // Verify mount path matches (extra safety)
+      if (pluginData.mountPath && !layer.regexp.test(pluginData.mountPath)) {
+        console.error(`❌ Mount path mismatch for ${pluginName}`);
+        return false;
+      }
+
+      // Safe to remove
+      this.app._router.stack.splice(layerIndex, 1);
+
+      // Clean up plugin routes tracking
+      this.pluginRoutes = this.pluginRoutes.filter(r => r.plugin !== pluginName);
+
+      return true;
+    } catch (error) {
+      console.error(`❌ Error removing router for ${pluginName}:`, error.message);
+      return false;
+    }
   }
 
   /**
@@ -763,6 +886,84 @@ class PluginManager {
     }
 
     console.log(`⏹️  Disabled plugin: ${pluginName}`);
+  }
+
+  /**
+   * Reload a plugin without server restart (Story 6.3 - Hot-Reload)
+   * 
+   * Process:
+   * 1. Deactivate plugin (removes routes, calls cleanup hooks)
+   * 2. Clear require cache for plugin modules
+   * 3. Reload plugin from disk
+   * 4. Validate reloaded plugin
+   * 5. Reactivate plugin (registers routes, calls activation hooks)
+   * 
+   * @param {string} pluginName - Name of the plugin to reload
+   * @returns {Promise<Object>} Result object with success status and plugin data
+   */
+  async reloadPlugin(pluginName) {
+    console.log(`🔄 [Hot-Reload] Starting reload of ${pluginName}...`);
+
+    try {
+      // 1. Verify plugin exists and is active
+      const pluginData = this.activePlugins.get(pluginName);
+      if (!pluginData) {
+        throw new Error(`Plugin ${pluginName} is not active. Use 'enable' command instead.`);
+      }
+
+      const { config, path: pluginPath } = pluginData;
+
+      // 2. Deactivate plugin (removes routes, clears cache, calls hooks)
+      console.log(`🔄 [Hot-Reload] Deactivating ${pluginName}...`);
+      await this.deactivatePlugin(pluginName);
+
+      // Also remove from loadedPlugins to force fresh load
+      this.loadedPlugins.delete(pluginName);
+
+      // 3. Reload plugin from disk
+      console.log(`🔄 [Hot-Reload] Reloading from disk...`);
+      await this.loadPlugin(pluginName, config, false); // false = don't auto-activate yet
+
+      // 4. Validate reloaded plugin
+      const reloadedPluginData = this.loadedPlugins.get(pluginName);
+      if (!reloadedPluginData) {
+        throw new Error(`Failed to reload plugin ${pluginName} from disk`);
+      }
+
+      // 5. Reactivate plugin
+      console.log(`🔄 [Hot-Reload] Reactivating ${pluginName}...`);
+      await this.activatePlugin(pluginName);
+
+      const reloadedPlugin = reloadedPluginData.plugin;
+      console.log(`✅ [Hot-Reload] ${pluginName} reloaded successfully`);
+      console.log(`   Version: ${reloadedPlugin.manifest.version}`);
+      console.log(`   Routes: ${reloadedPlugin.routes ? reloadedPlugin.routes.length : 0}`);
+
+      return {
+        success: true,
+        plugin: {
+          name: pluginName,
+          version: reloadedPlugin.manifest.version,
+          routes: reloadedPlugin.routes ? reloadedPlugin.routes.length : 0
+        }
+      };
+
+    } catch (error) {
+      console.error(`❌ [Hot-Reload] Failed to reload ${pluginName}:`, error.message);
+
+      // Mark as failed
+      this.failedPlugins.set(pluginName, {
+        error: error.message,
+        stack: error.stack,
+        timestamp: new Date(),
+        phase: 'reload'
+      });
+
+      return {
+        success: false,
+        error: error.message
+      };
+    }
   }
 
   /**
