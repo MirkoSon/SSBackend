@@ -37,7 +37,9 @@ agent-conversations/
 # ===================================
 
 # All documentation (not functional code)
-/docs/
+/docs/*
+!/docs/api/
+!/docs/api/**
 /tests/*.md
 !README.md
 AGENTS.md
