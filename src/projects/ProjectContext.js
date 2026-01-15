@@ -111,8 +111,8 @@ class ProjectContext {
      */
     async initializePlugins(app) {
         const PluginManager = require('../plugins/PluginManager');
-        this.pluginManager = new PluginManager();
-        await this.pluginManager.initialize(app, this.database);
+        this.pluginManager = new PluginManager(this.id);
+        await this.pluginManager.initialize(app, this.database, this.pluginConfig);
     }
 
     /**

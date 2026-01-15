@@ -44,6 +44,15 @@
             <img src="/admin/assets/SSBackend_title_logo.png" alt="Stupid Simple Backend" class="top-nav__logo">
         </div>
 
+        <div class="top-nav__projects">
+            <select id="projectSelector" class="project-selector">
+                <option value="default">Loading projects...</option>
+            </select>
+            <button id="manageProjectsButton" class="btn btn-secondary btn-manage-projects" title="Manage Projects">
+                <span>⚙️</span>
+            </button>
+        </div>
+
         <div class="top-nav__links">
             <a href="#users" class="top-nav__link top-nav__link--active" data-view="users">
                 <span>👥</span> Users
@@ -161,6 +170,19 @@
             onClose: () => console.log('Help Center closed')
         });
         document.body.appendChild(window.helpCenter.render());
+
+        /**
+         * Global helper to get project-scoped API path
+         */
+        window.getApiPath = function (path) {
+            const projectId = localStorage.getItem('ssbackend_current_project');
+            if (projectId && projectId !== 'default') {
+                if (path.startsWith('/project/')) return path;
+                const p = path.startsWith('/') ? path : `/${path}`;
+                return `/project/${projectId}${p}`;
+            }
+            return path;
+        };
     </script>
     <script src="script.js"></script>
     <script src="admin-dashboard-integration.js"></script>

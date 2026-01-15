@@ -62,6 +62,82 @@ router.get('/status', (req, res) => {
  */
 
 /**
+ * GET /admin/api/projects - List all projects
+ */
+router.get('/api/projects', adminAuth, (req, res) => {
+  try {
+    const projectManager = req.app.get('projectManager');
+    if (!projectManager) {
+      return res.status(500).json({ error: 'Project Manager not initialized' });
+    }
+
+    const projects = projectManager.listProjects();
+    res.json({
+      success: true,
+      projects: projects,
+      defaultProject: projectManager.config.server?.default_project || 'default'
+    });
+  } catch (error) {
+    console.error('Error listing projects:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /admin/api/projects - Create a new project
+ */
+router.post('/api/projects', adminAuth, async (req, res) => {
+  try {
+    const projectManager = req.app.get('projectManager');
+    const { id, name, description, database } = req.body;
+
+    if (!id || !name) {
+      return res.status(400).json({ error: 'Project ID and Name are required' });
+    }
+
+    const project = await projectManager.createProject({
+      id,
+      name,
+      description,
+      database
+    });
+
+    res.status(201).json({
+      success: true,
+      message: `Project ${name} created successfully`,
+      project: project.getMetadata()
+    });
+  } catch (error) {
+    console.error('Error creating project:', error.message);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+/**
+ * DELETE /admin/api/projects/:id - Delete a project
+ */
+router.delete('/api/projects/:id', adminAuth, async (req, res) => {
+  try {
+    const projectManager = req.app.get('projectManager');
+    const projectId = req.params.id;
+
+    if (!projectId) {
+      return res.status(400).json({ error: 'Project ID is required' });
+    }
+
+    await projectManager.deleteProject(projectId);
+
+    res.json({
+      success: true,
+      message: `Project ${projectId} deleted successfully`
+    });
+  } catch (error) {
+    console.error('Error deleting project:', error.message);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+/**
  * GET /admin/api/users - Get all users with metadata
  */
 router.get('/api/users', adminAuth, (req, res) => {

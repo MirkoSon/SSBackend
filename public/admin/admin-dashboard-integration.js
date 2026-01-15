@@ -21,6 +21,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Step 4: Setup Navigation Event Handlers
   setupNavigation();
 
+  // Step 5: Setup Project Selector (Story 7.3.1)
+  await setupProjectSelector();
+
   console.log('✅ Admin Dashboard Integration Complete');
 });
 
@@ -32,7 +35,7 @@ async function initializePluginRegistry() {
 
   try {
     // Step 1: Fetch UI modules metadata from the new endpoint
-    const uiResponse = await fetch('/admin/api/plugins/ui-modules');
+    const uiResponse = await fetch(window.getApiPath('/admin/api/plugins/ui-modules'));
     const uiData = await uiResponse.json();
 
     if (!uiData.success) {
@@ -64,7 +67,7 @@ async function initializePluginRegistry() {
     await Promise.all(loadPromises);
 
     // Step 3: Fetch health/status for the registry
-    const response = await fetch('/health/plugins');
+    const response = await fetch(window.getApiPath('/health/plugins'));
     const healthData = await response.json();
 
     window.pluginHealthStatus = healthData;
@@ -905,3 +908,77 @@ window.pluginFramework = {
 };
 
 console.log('✅ Admin Dashboard Integration loaded');
+/**
+ * Setup Project Selector in Top Navigation
+ */
+async function setupProjectSelector() {
+  const selector = document.getElementById('projectSelector');
+  const manageBtn = document.getElementById('manageProjectsButton');
+
+  if (!selector) return;
+
+  try {
+    // 1. Fetch available projects (these ARE global across admin, so no getApiPath for listing them)
+    const response = await fetch('/admin/api/projects');
+    const data = await response.json();
+
+    if (!data.success) throw new Error(data.error);
+
+    // 2. Populate selector
+    selector.innerHTML = '';
+    data.projects.forEach(project => {
+      const option = document.createElement('option');
+      option.value = project.id;
+      option.textContent = project.name;
+      if (project.id === data.defaultProject && project.id !== 'default') {
+        option.textContent += ' (Default)';
+      }
+      selector.appendChild(option);
+    });
+
+    // 3. Set current selection from localStorage
+    const currentProject = localStorage.getItem('ssbackend_current_project');
+    if (currentProject && data.projects.some(p => p.id === currentProject)) {
+      selector.value = currentProject;
+    } else {
+      selector.value = data.defaultProject;
+      localStorage.setItem('ssbackend_current_project', data.defaultProject);
+    }
+
+    // 4. Handle selection change
+    selector.addEventListener('change', () => {
+      const projectId = selector.value;
+      switchProject(projectId);
+    });
+
+    // 5. Handle manage button
+    if (manageBtn) {
+      manageBtn.onclick = () => {
+        showToast('Project Management UI coming soon!', 'info');
+        // TODO: showProjectManagementModal();
+      };
+    }
+
+  } catch (error) {
+    console.error('Failed to setup project selector:', error);
+    selector.innerHTML = '<option value="default">Default Project</option>';
+  }
+}
+
+/**
+ * Switch active project
+ */
+function switchProject(projectId) {
+  console.log(`🔌 Switching to project: ${projectId}`);
+  localStorage.setItem('ssbackend_current_project', projectId);
+
+  // Reload the page to reset all states with the new project context
+  window.location.reload();
+}
+
+/**
+ * Show a toast notification (redefined here if not available globally)
+ */
+if (typeof window.showToast !== 'function') {
+  window.showToast = showToast;
+}

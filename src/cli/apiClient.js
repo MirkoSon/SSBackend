@@ -10,14 +10,31 @@ const { loadConfig } = require('../utils/config');
 class PluginManagementAPIClient {
   constructor() {
     this.config = loadConfig();
+    this.projectId = 'default';
 
     // Determine base URL from config or defaults
     const port = this.config.port || this.config.server?.port || 3000;
-    this.baseURL = `http://localhost:${port}/admin/api`;
+    this.baseAdminURL = `http://localhost:${port}/admin/api`;
+    this.baseURL = this.baseAdminURL;
 
     // CLI authentication token (for now, we'll use a simple approach)
     this.authToken = null;
     this.sessionCookie = null;
+  }
+
+  /**
+   * Set project ID for subsequent requests
+   * @param {string} projectId 
+   */
+  setProject(projectId) {
+    this.projectId = projectId;
+    const port = this.config.port || this.config.server?.port || 3000;
+    // If not default, use project-scoped URL
+    if (projectId && projectId !== 'default') {
+      this.baseURL = `http://localhost:${port}/admin/api/project/${projectId}`;
+    } else {
+      this.baseURL = this.baseAdminURL;
+    }
   }
 
   /**

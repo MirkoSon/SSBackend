@@ -32,7 +32,18 @@ class EnhancedPluginCLI {
       return;
     }
 
-    const subcommand = args[1];
+    // Extract project ID if present
+    let projectId = 'default';
+    const projectIndex = args.indexOf('--project');
+    const filteredArgs = [...args];
+
+    if (projectIndex !== -1 && args[projectIndex + 1]) {
+      projectId = args[projectIndex + 1];
+      // Remove --project and its value from args we use for subcommand matching
+      filteredArgs.splice(projectIndex, 2);
+    }
+
+    const subcommand = filteredArgs[1];
 
     try {
       const serverRunning = await this.apiClient.checkServerHealth();
@@ -43,31 +54,36 @@ class EnhancedPluginCLI {
       }
 
       await this.apiClient.initialize();
+      this.apiClient.setProject(projectId);
+
+      if (projectId !== 'default') {
+        console.log(`${this.colorize('📁', 'blue')} Targeting project: ${this.colorize(projectId, 'bright')}`);
+      }
 
       switch (subcommand) {
         case 'list':
-          await this.listPlugins(args);
+          await this.listPlugins(filteredArgs);
           break;
         case 'enable':
-          await this.enablePlugin(args[2]);
+          await this.enablePlugin(filteredArgs[2]);
           break;
         case 'disable':
-          await this.disablePlugin(args[2]);
+          await this.disablePlugin(filteredArgs[2]);
           break;
         case 'reload':
-          await this.reloadPlugin(args[2]);
+          await this.reloadPlugin(filteredArgs[2]);
           break;
         case 'info':
-          await this.showPluginInfo(args[2]);
+          await this.showPluginInfo(filteredArgs[2]);
           break;
         case 'validate':
-          await this.validatePluginSystem(args[2]);
+          await this.validatePluginSystem(filteredArgs[2]);
           break;
         case 'install':
-          await this.installPlugin(args[2]);
+          await this.installPlugin(filteredArgs[2]);
           break;
         case 'remove':
-          await this.removePlugin(args[2]);
+          await this.removePlugin(filteredArgs[2]);
           break;
         default:
           console.log(`${this.colorize('❌', 'red')} Unknown plugin command: ${subcommand}`);
@@ -535,7 +551,10 @@ class EnhancedPluginCLI {
 ${this.colorize('🔌', 'cyan')} Plugin Management Commands
 
 ${this.colorize('Usage:', 'bright')}
-  ssbackend plugins < command > [options]
+  ssbackend plugins <command> [options]
+
+${this.colorize('Options:', 'bright')}
+  ${this.colorize('--project <id>', 'green')}            Target a specific project (default: 'default')
 
 ${this.colorize('Commands:', 'bright')}
   ${this.colorize('list', 'green')} [--verbose]            List all available plugins with status
@@ -550,9 +569,10 @@ ${this.colorize('Commands:', 'bright')}
   ${this.colorize('Examples:', 'bright')}
   ssbackend plugins list                    # Show all plugins
   ssbackend plugins list --verbose          # Show plugins with detailed information
+  ssbackend plugins list --project my-game  # Show plugins for specific project
   ssbackend plugins enable achievements     # Enable achievements plugin
   ssbackend plugins enable 1               # Enable first plugin in list
-  ssbackend plugins disable 2              # Disable second plugin in list
+  ssbackend plugins disable 2 --project my-game # Disable plugin in specific project
   ssbackend plugins reload economy         # Hot-reload economy plugin
   ssbackend plugins info economy           # Show detailed economy plugin information
   ssbackend plugins validate               # Check plugin system health

@@ -1,6 +1,7 @@
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 const MigrationManager = require('../db/migrations/MigrationManager');
+const { loadConfig } = require('../utils/config');
 
 /**
  * Database CLI Command Handler
@@ -17,6 +18,8 @@ class DatabaseCLI {
       blue: '\x1b[34m',
       cyan: '\x1b[36m'
     };
+    this.config = loadConfig();
+    this.projectId = 'default';
   }
 
   colorize(text, color) {
@@ -29,9 +32,22 @@ class DatabaseCLI {
    * @private
    */
   async _getDatabase() {
-    const DB_PATH = process.pkg
-      ? path.join(process.cwd(), 'game.db')
-      : path.join(__dirname, '../../game.db');
+    // Find project config
+    const project = this.config.projects?.find(p => p.id === this.projectId);
+    let dbFile = 'game.db';
+
+    if (project) {
+      dbFile = project.database;
+    } else if (this.projectId !== 'default') {
+      throw new Error(`Project "${this.projectId}" not found in configuration`);
+    } else {
+      // Fallback for default if not in projects array (shouldn't happen with auto-migration)
+      dbFile = this.config.database?.file || 'game.db';
+    }
+
+    const DB_PATH = path.isAbsolute(dbFile)
+      ? dbFile
+      : path.resolve(process.cwd(), dbFile);
 
     return new Promise((resolve, reject) => {
       const db = new sqlite3.Database(DB_PATH, (err) => {
@@ -53,7 +69,21 @@ class DatabaseCLI {
       return;
     }
 
-    const subcommand = args[1];
+    // Extract project ID if present
+    const projectIndex = args.indexOf('--project');
+    const filteredArgs = [...args];
+
+    if (projectIndex !== -1 && args[projectIndex + 1]) {
+      this.projectId = args[projectIndex + 1];
+      // Remove --project and its value from args we use for subcommand matching
+      filteredArgs.splice(projectIndex, 2);
+    }
+
+    const subcommand = filteredArgs[1];
+
+    if (this.projectId !== 'default') {
+      console.log(`${this.colorize('📁', 'blue')} Targeting project: ${this.colorize(this.projectId, 'bright')}`);
+    }
 
     try {
       switch (subcommand) {
@@ -64,14 +94,14 @@ class DatabaseCLI {
           await this.showMigrationStatus();
           break;
         case 'rollback':
-          const steps = parseInt(args[2]) || 1;
+          const steps = parseInt(filteredArgs[2]) || 1;
           await this.rollbackMigrations(steps);
           break;
         case 'plugin:migrate':
-          await this.migratePlugin(args[2]);
+          await this.migratePlugin(filteredArgs[2]);
           break;
         case 'plugin:status':
-          await this.pluginMigrationStatus(args[2]);
+          await this.pluginMigrationStatus(filteredArgs[2]);
           break;
         default:
           console.log(`${this.colorize('❌', 'red')} Unknown db command: ${subcommand}`);
@@ -261,6 +291,9 @@ ${this.colorize('SSBackend Database CLI', 'bright')}
 
 ${this.colorize('Usage:', 'cyan')}
   ssbackend db <command> [options]
+
+${this.colorize('Options:', 'cyan')}
+  ${this.colorize('--project <id>', 'green')}      Target a specific project (default: 'default')
 
 ${this.colorize('Commands:', 'cyan')}
   ${this.colorize('migrate', 'green')}              Run all pending core migrations

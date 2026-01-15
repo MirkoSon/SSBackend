@@ -186,34 +186,35 @@ app.use((req, res, next) => {
 // This middleware will be added after ProjectManager initialization in startServer()
 // It injects project context into all /api/* routes
 
-// Routes
-app.use('/save', saveRoutes);
-app.use('/auth', authRoutes);
-app.use('/inventory', inventoryRoutes);
-app.use('/progress', progressRoutes);
-// Note: /achievements routes are now handled by plugin system
-app.use('/admin', adminRoutes);
-app.use('/admin/api', require('./routes/admin/plugins')); // NEW: Plugin management API routes
-
-
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
 // Plugin health check endpoint
-app.get('/health/plugins', (req, res) => {
+app.get(['/health/plugins', '/project/:projectId/health/plugins'], (req, res) => {
   console.log('🔍 /health/plugins endpoint called');
   try {
-    if (!global.pluginManager) {
-      console.error('❌ global.pluginManager is not set!');
+    const projectManager = global.projectManager;
+    if (!projectManager) {
+      return res.status(500).json({
+        status: 'error',
+        error: 'Project Manager not initialized'
+      });
+    }
+
+    const projectId = req.params.projectId || config.server?.default_project || 'default';
+    const project = projectManager.getProject(projectId);
+
+    if (!project || !project.pluginManager) {
+      console.error(`❌ Plugin manager for project ${projectId} not found!`);
       return res.status(500).json({
         status: 'error',
         error: 'Plugin manager not initialized'
       });
     }
-    const pluginStatus = global.pluginManager.getPluginHealthStatus();
-    console.log('✅ Plugin status retrieved successfully');
+    const pluginStatus = project.pluginManager.getPluginHealthStatus();
+    console.log(`✅ Plugin status for ${projectId} retrieved successfully`);
     res.json(pluginStatus);
   } catch (error) {
     console.error('❌ Error in /health/plugins:', error.message);
@@ -238,28 +239,33 @@ async function startServer() {
     // Store globally for backward compatibility and health endpoints
     global.projectManager = projectManager;
 
-    // Get default project for backward compatibility
-    const defaultProject = projectManager.getProject(config.server?.default_project || 'default');
-    if (!defaultProject) {
-      throw new Error('Default project not found');
-    }
-
-    // Store default project's plugin manager globally for backward compatibility
-    // TODO [Story 7.2.2]: Remove this once all routes use req.pluginManager
-    global.pluginManager = defaultProject.pluginManager;
-
-    // Store config in app for middleware access
+    // Store config and projectManager in app for middleware and route access
     app.set('config', config);
+    app.set('projectManager', projectManager);
 
     // Add project context middleware for all API routes (Story 7.2.2)
     const projectMiddleware = createProjectMiddleware(projectManager);
 
-    // Apply middleware to all /api routes (backward compatible - uses default project)
-    app.use('/save', projectMiddleware);
-    app.use('/auth', projectMiddleware);
-    app.use('/inventory', projectMiddleware);
-    app.use('/progress', projectMiddleware);
-    app.use('/admin', projectMiddleware);
+    // Support for project-scoped routes: /project/:projectId/*
+    // Each route group is mounted both at root (default project) and under /project/:projectId
+    const scopedRouter = express.Router();
+
+    app.use('/project/:projectId/save', projectMiddleware, saveRoutes);
+    app.use('/project/:projectId/auth', projectMiddleware, authRoutes);
+    app.use('/project/:projectId/inventory', projectMiddleware, inventoryRoutes);
+    app.use('/project/:projectId/progress', projectMiddleware, progressRoutes);
+    app.use('/project/:projectId/admin', projectMiddleware, adminRoutes);
+
+    // Apply middleware to all root /api routes (backward compatible - uses default project)
+    app.use('/save', projectMiddleware, saveRoutes);
+    app.use('/auth', projectMiddleware, authRoutes);
+    app.use('/inventory', projectMiddleware, inventoryRoutes);
+    app.use('/progress', projectMiddleware, progressRoutes);
+    app.use('/admin', projectMiddleware, adminRoutes);
+
+    // Note: plugin management API routes also support scoping
+    app.use('/project/:projectId/admin/api/plugins', projectMiddleware, require('./routes/admin/plugins'));
+    app.use('/admin/api/plugins', projectMiddleware, require('./routes/admin/plugins'));
 
     console.log('✅ Project context middleware enabled for all routes');
 

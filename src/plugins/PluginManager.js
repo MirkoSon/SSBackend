@@ -21,28 +21,52 @@ const PluginDiscoveryService = require('../services/plugins/PluginDiscoveryServi
  * Related Stories: Epic 7.2.2
  */
 class PluginManager {
-  constructor() {
+  constructor(projectId = 'default') {
+    this.projectId = projectId;
     this.loadedPlugins = new Map();
     this.activePlugins = new Map();
     this.failedPlugins = new Map();
     this.disabledPlugins = new Map();
     this.discoveredPlugins = new Map();
+    this.missingPlugins = new Map();
     this.pluginRoutes = [];
     this.pluginSchemas = [];
     this.discoveryService = new PluginDiscoveryService();
   }
 
   /**
+   * Helper to get configuration value, preferring project-specific config if available
+   * @param {string} keyPath - Config key path (e.g. 'plugins.auto_discover')
+   * @param {*} defaultValue - Fallback value
+   */
+  getPluginConfigValue(keyPath, defaultValue) {
+    if (this.projectPluginConfig) {
+      const parts = keyPath.split('.');
+      if (parts[0] === 'plugins') {
+        if (parts.length === 1) return this.projectPluginConfig;
+
+        const subKey = parts.slice(1).join('.');
+        if (subKey in this.projectPluginConfig) {
+          return this.projectPluginConfig[subKey];
+        }
+      }
+    }
+    return getConfigValue(keyPath, defaultValue);
+  }
+
+  /**
    * Initialize the plugin system
    * @param {Object} app - Express app instance
    * @param {Object} db - Database instance
+   * @param {Object} projectPluginConfig - Optional project-specific plugin config
    */
-  async initialize(app, db) {
+  async initialize(app, db, projectPluginConfig = null) {
     this.app = app;
     this.db = db;
+    this.projectPluginConfig = projectPluginConfig;
 
     // Discover and auto-register external plugins if enabled
-    const autoDiscover = getConfigValue('plugins.auto_discover', true);
+    const autoDiscover = this.getPluginConfigValue('plugins.auto_discover', true);
     if (autoDiscover) {
       await this.discoveryService.registerNewPlugins();
     }
@@ -54,8 +78,8 @@ class PluginManager {
     await this.loadConfiguredPlugins();
 
     // Start file watcher for hot-adding if configured
-    const watchForChanges = getConfigValue('plugins.watch_for_changes', false);
-    if (watchForChanges) {
+    const watchForChanges = this.getPluginConfigValue('plugins.watch_for_changes', false);
+    if (watchForChanges && this.projectId === 'default') {
       this.startWatcher();
     }
 
@@ -389,9 +413,14 @@ class PluginManager {
         const modulePaths = Object.keys(require.cache).filter(key => key.startsWith(pluginDir));
         pluginData.modulePaths = modulePaths;
 
+        // Define mount path - include project ID if not default (Story 7.2.2)
+        const mountPath = this.projectId === 'default'
+          ? `/api/${pluginName}`
+          : `/project/${this.projectId}/api/${pluginName}`;
+
         // Check if plugin already has a router layer (from previous activation)
         const existingLayerIndex = this.app._router.stack.findIndex(
-          layer => layer.pluginName === pluginName
+          layer => layer.pluginName === pluginName && layer.pluginProjectId === this.projectId
         );
 
         if (existingLayerIndex !== -1) {
@@ -399,15 +428,19 @@ class PluginManager {
           const existingLayer = this.app._router.stack[existingLayerIndex];
           existingLayer.handle = pluginRouter;
 
-          // Store metadata
+          // Update metadata on the existing layer
+          existingLayer.pluginName = pluginName;
+          existingLayer.pluginProjectId = this.projectId;
+          existingLayer.pluginMountPath = mountPath;
+
+          // Store metadata in pluginData
           pluginData.router = pluginRouter;
           pluginData.routerLayerIndex = existingLayerIndex;
-          pluginData.mountPath = `/api/${pluginName}`;
+          pluginData.mountPath = mountPath;
 
-          console.log(`✅ Plugin router reloaded at /api/${pluginName} (${plugin.routes.length} routes)`);
+          console.log(`✅ Plugin router reloaded at ${mountPath} (${plugin.routes.length} routes)`);
         } else {
           // First time activation - mount new router
-          const mountPath = `/api/${pluginName}`;
           this.app.use(mountPath, pluginRouter);
 
           // Tag the layer with metadata for easy identification (Tagged Layer Pattern)
@@ -415,6 +448,7 @@ class PluginManager {
           const layer = this.app._router.stack[layerIndex];
 
           layer.pluginName = pluginName;
+          layer.pluginProjectId = this.projectId;
           layer.pluginMountPath = mountPath;
 
           // Store router reference and metadata

@@ -27,18 +27,39 @@ SSBackend follows a modular architecture:
 
 ---
 
-## API Categories
-
 | Category | Base Path | Description |
 |----------|-----------|-------------|
-| Authentication | `/api/auth` | User registration, login, session management |
-| Save/Load | `/api/save` | Game state persistence |
-| Inventory | `/api/inventory` | Item management |
-| Progress | `/api/progress` | Progress tracking and metrics |
+| Authentication | `/auth` | User registration, login, session management |
+| Save/Load | `/save` | Game state persistence |
+| Inventory | `/inventory` | Item management |
+| Progress | `/progress` | Progress tracking and metrics |
 | Economy | `/api/economy` | Virtual currency (plugin) |
 | Achievements | `/api/achievements` | Achievement system (plugin) |
 | Leaderboards | `/api/leaderboards` | Competitive rankings (plugin) |
-| Admin | `/api/admin` | Administrative operations |
+| Admin | `/admin/api` | Administrative operations |
+
+---
+
+## Multi-Project Support (Beta)
+
+SSBackend supports multiple isolated projects on a single server instance. Each project has its own:
+- **Database:** Isolated SQLite database file
+- **Configuration:** Project-specific settings and plugin states
+- **Plugins:** Independent plugin manager instance
+
+### Scoped Request Paths
+
+To access project-specific endpoints, use the `/project/:projectId` prefix before the base path:
+
+| Original Path | Scoped Path (Project-Specific) |
+|---------------|----------------------------------|
+| `/save` | `/project/:projectId/save` |
+| `/auth` | `/project/:projectId/auth` |
+| `/inventory` | `/project/:projectId/inventory` |
+| `/admin/api` | `/project/:projectId/admin/api` |
+| `/api/:plugin` | `/project/:projectId/api/:plugin` |
+
+**Note:** Requests without the `/project/:projectId` prefix are automatically routed to the **default project** (usually `default`).
 
 ---
 

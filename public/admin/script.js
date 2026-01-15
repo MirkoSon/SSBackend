@@ -17,6 +17,24 @@ class AdminDashboard {
     this.init();
   }
 
+  /**
+   * Helper to get project-scoped API path
+   * @param {string} path - Original API path (e.g., '/admin/api/users')
+   * @returns {string} Scoped API path
+   */
+  getApiPath(path) {
+    const projectId = localStorage.getItem('ssbackend_current_project');
+    if (projectId && projectId !== 'default') {
+      // Avoid doubling prefix if already present
+      if (path.startsWith('/project/')) return path;
+
+      // Ensure path starts with slash
+      const p = path.startsWith('/') ? path : `/${path}`;
+      return `/project/${projectId}${p}`;
+    }
+    return path;
+  }
+
   async init() {
     await this.checkAuthStatus();
     this.setupEventListeners();
@@ -225,7 +243,7 @@ class AdminDashboard {
   }
 
   async loadUsers() {
-    const response = await fetch('/admin/api/users');
+    const response = await fetch(this.getApiPath('/admin/api/users'));
     const data = await response.json();
 
     if (!response.ok) {
@@ -238,7 +256,7 @@ class AdminDashboard {
   }
 
   async loadSaves() {
-    const response = await fetch('/admin/api/saves');
+    const response = await fetch(this.getApiPath('/admin/api/saves'));
     const data = await response.json();
 
     if (!response.ok) {
@@ -251,7 +269,7 @@ class AdminDashboard {
   }
 
   async loadInventories() {
-    const response = await fetch('/admin/api/inventories');
+    const response = await fetch(this.getApiPath('/admin/api/inventories'));
     const data = await response.json();
 
     if (!response.ok) {
@@ -264,7 +282,7 @@ class AdminDashboard {
   }
 
   async loadProgress() {
-    const response = await fetch('/admin/api/progress');
+    const response = await fetch(this.getApiPath('/admin/api/progress'));
     const data = await response.json();
 
     if (!response.ok) {
@@ -534,7 +552,7 @@ class AdminDashboard {
 
   async viewUserDetails(userId) {
     try {
-      const response = await fetch(`/admin/api/users/${userId}`);
+      const response = await fetch(this.getApiPath(`/admin/api/users/${userId}`));
       const data = await response.json();
 
       if (!response.ok) {
@@ -568,7 +586,7 @@ class AdminDashboard {
 
   async viewSaveDetails(saveId) {
     try {
-      const response = await fetch(`/admin/api/saves/${saveId}`);
+      const response = await fetch(this.getApiPath(`/admin/api/saves/${saveId}`));
       const data = await response.json();
 
       if (!response.ok) {
@@ -679,7 +697,7 @@ class AdminDashboard {
     try {
       this.showToast(`Exporting ${type} data...`, 'info');
 
-      const response = await fetch(`/admin/api/export/${type}`);
+      const response = await fetch(this.getApiPath(`/admin/api/export/${type}`));
       if (!response.ok) {
         throw new Error('Export failed');
       }
