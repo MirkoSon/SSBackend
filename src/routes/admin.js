@@ -588,19 +588,41 @@ router.get('/api/export/:type', adminAuth, (req, res) => {
 });
 
 /**
- * GET /admin/api/docs/:filename - Get a documentation file as Markdown
+ * GET /admin/api/docs/:filename(*) - Get a documentation file as Markdown
+ * Supports subdirectories (e.g., api/core-endpoints.md, architecture/overview.md)
+ * Supports plugin docs (e.g., plugins/@core/economy/docs/api-reference.md)
  */
-router.get('/api/docs/:filename', adminAuth, (req, res) => {
+router.get('/api/docs/:filename(*)', adminAuth, (req, res) => {
   try {
     const filename = req.params.filename;
 
     // Security: Validate filename to prevent path traversal
-    // Only allow alphanumeric characters, dashes, underscores and a single .md extension
-    if (!/^[a-zA-Z0-9\-_]+\.md$/.test(filename)) {
+    // Allow subdirectories, alphanumeric characters, dashes, underscores, @, slashes, and .md extension
+    // Prevent .. (parent directory) and absolute paths
+    if (!/^[a-zA-Z0-9\-_@\/]+\.md$/.test(filename) || filename.includes('..')) {
       return res.status(400).json({ error: 'Invalid documentation filename' });
     }
 
-    const docsPath = path.join(__dirname, '..', '..', 'docs', filename);
+    let docsPath;
+    let allowedDir;
+
+    // Check if it's a plugin doc path
+    if (filename.startsWith('plugins/')) {
+      // Plugin documentation: plugins/@core/{pluginName}/docs/{docName}.md
+      docsPath = path.join(__dirname, '..', '..', filename);
+      allowedDir = path.join(__dirname, '..', '..', 'plugins');
+    } else {
+      // Regular documentation: docs/{path}/{docName}.md
+      docsPath = path.join(__dirname, '..', '..', 'docs', filename);
+      allowedDir = path.join(__dirname, '..', '..', 'docs');
+    }
+
+    // Security: Ensure resolved path is within allowed directory
+    const resolvedPath = path.resolve(docsPath);
+    const resolvedAllowedDir = path.resolve(allowedDir);
+    if (!resolvedPath.startsWith(resolvedAllowedDir)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
 
     if (!fs.existsSync(docsPath)) {
       return res.status(404).json({ error: 'Documentation file not found' });

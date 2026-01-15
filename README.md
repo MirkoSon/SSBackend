@@ -47,7 +47,28 @@ The backend now includes a built-in **Admin Dashboard** for managing users and g
   - View balances (Coins, Gems, etc.)
   - Adjust funds manually (Add/Subtract/Set)
   - View full Transaction History
-- **plugin Architecture**: Easily extensible for new game modules.
+- **Plugin Architecture**: Easily extensible for new game modules.
+
+---
+
+## 📚 API Documentation
+
+Complete API documentation is available through the **Help Center** in the admin dashboard.
+
+**Access:** Click the "❓ Help" button in the admin dashboard (`http://localhost:3000/admin`)
+
+### Available Documentation:
+- **API Overview** - Authentication, request/response formats, error handling
+- **Core Endpoints** - Save/Load, Auth, Inventory, Progress APIs
+- **Admin API** - Admin authentication, user management, data export
+- **Plugin APIs** - Economy, Achievements, Leaderboards (when enabled)
+
+### For Developers:
+- **Copy Integration Prompts** - Each plugin has an LLM-ready integration prompt for rapid game client development
+- **Complete Examples** - All endpoints include cURL and JavaScript examples
+- **Error Reference** - Comprehensive HTTP status codes and error formats
+
+For plugin developers, see [Plugin Development Guide](docs/plugin-development-guide.md) for information on adding documentation to your plugins.
 
 ---
 
@@ -198,6 +219,11 @@ git clone https://github.com/MirkoSon/SSBackend.git
 cd SSBackend
 npm install
 ```
+
+### Project Status
+
+Track project progress and epic completion status:
+- [Epic Status Tracker](docs/epic-status.md) - Complete overview of implemented features and roadmap
 
 ### Security Documentation
 

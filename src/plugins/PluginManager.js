@@ -578,6 +578,14 @@ class PluginManager {
           }
         }
 
+        // Include documentation metadata from manifest
+        const docs = manifest.docs || plugin.docs || {};
+        const docsMetadata = docs.apiReference ? {
+          path: `plugins/@core/${name}/${docs.apiReference.path}`,
+          title: docs.apiReference.title,
+          icon: docs.apiReference.icon
+        } : null;
+
         allPlugins.push({
           id: name,
           name: adminUI.navigation?.label || manifest.name || name,
@@ -585,6 +593,7 @@ class PluginManager {
           priority: adminUI.navigation?.priority || 100,
           uiModulePath: webPath,
           navigation: adminUI.navigation,
+          docs: docsMetadata,
           group: getGroup(config)
         });
       }

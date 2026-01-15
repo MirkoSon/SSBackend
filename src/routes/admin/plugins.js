@@ -1,3 +1,4 @@
+const express = require('express');
 const { getDatabase } = require('../../db/database');
 const PluginDiscoveryService = require('../../services/plugins/PluginDiscoveryService');
 const PluginLifecycleService = require('../../services/plugins/PluginLifecycleService');

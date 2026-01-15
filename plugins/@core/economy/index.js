@@ -120,6 +120,15 @@ const manifest = {
         permissions: ['admin']
       }
     ]
+  },
+
+  // Documentation Configuration (Story 5.2)
+  docs: {
+    apiReference: {
+      path: 'docs/api-reference.md',
+      title: 'Economy API',
+      icon: '💰'
+    }
   }
 };
 /**
