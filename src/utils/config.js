@@ -4,8 +4,11 @@ const crypto = require('crypto');
 const yaml = require('js-yaml');
 
 /**
- * TODO [EPIC 7 - Multi-Project Support]:
- * Config format will need to support multiple projects.
+ * Epic 7 - Multi-Project Support (Story 7.1.2)
+ * 
+ * Config format now supports multiple projects.
+ * Old single-project configs are automatically migrated.
+ * 
  * New structure:
  * ```yaml
  * server:
@@ -16,13 +19,7 @@ const yaml = require('js-yaml');
  *     name: "Default Project"
  *     database: "./projects/default.db"
  *     plugins: {...}
- *   - id: game-rpg
- *     name: "RPG Game"
- *     database: "./projects/game-rpg.db"
- *     plugins: {...}
  * ```
- * Auto-migration needed to convert existing single-project configs.
- * See: docs/multi-project-architecture-design.md, Story 7.1.2
  */
 
 const CONFIG_FILE = 'config.yml';
@@ -37,20 +34,20 @@ const DEFAULT_CONFIG = {
     port: 3000,                    // Default port for the API server
     host: 'localhost'              // Host to bind to
   },
-  
+
   // Database configuration
   database: {
     file: 'game.db',              // SQLite database file path
     init_on_startup: true        // Whether to initialize DB schema on startup
   },
-  
+
   // Authentication configuration
   auth: {
     jwt_secret: null,             // JWT signing secret (generated automatically)
     jwt_expires_in: '24h',        // JWT token expiration time
     session_secret: null          // Express session secret (generated automatically)
   },
-  
+
   // Development settings
   dev: {
     enable_logging: true,         // Enable request logging
@@ -108,58 +105,66 @@ dev:
 
 /**
  * Loads configuration from file or creates default if missing
+ * Auto-migrates old single-project format to new multi-project format
  * @param {string} configPath - Path to the configuration file (optional)
  * @returns {Object} Loaded configuration object
  */
 function loadConfig(configPath = CONFIG_FILE) {
   const fullPath = path.resolve(configPath);
-  
+
   try {
     // Check if config file exists
     if (!fs.existsSync(fullPath)) {
       console.log(`⚡ Configuration file not found: ${configPath}`);
       console.log('📝 Creating default configuration...');
-      
+
       // Create default config with secure secrets
       const config = JSON.parse(JSON.stringify(DEFAULT_CONFIG)); // Deep copy
       createConfigFile(config, fullPath);
-      
+
       console.log(`✅ Created configuration file: ${configPath}`);
       console.log('🔒 Generated secure JWT and session secrets');
       console.log('💡 You can edit this file to customize your settings');
-      
+
       currentConfig = config;
       return config;
     }
-    
+
     // Load existing config file
     console.log(`📋 Loading configuration from: ${configPath}`);
     const configData = fs.readFileSync(fullPath, 'utf8');
-    const config = yaml.load(configData);
-    
+    let config = yaml.load(configData);
+
+    // Auto-migrate old format to multi-project format (Story 7.1.2)
+    if (isOldConfigFormat(config)) {
+      console.log('⚠️  Old config format detected, migrating to multi-project format...');
+      config = migrateToMultiProject(config, fullPath);
+      console.log('✅ Config migrated successfully');
+    }
+
     // Validate required fields
     if (!config.auth || !config.auth.jwt_secret) {
       throw new Error('Invalid configuration: missing auth.jwt_secret');
     }
-    
+
     console.log('✅ Configuration loaded successfully');
     currentConfig = config;
     return config;
-    
+
   } catch (error) {
     console.error(`❌ Error loading configuration: ${error.message}`);
-    
+
     // If there's an error with the existing config, create a backup and generate new one
     if (fs.existsSync(fullPath)) {
       const backupPath = `${fullPath}.backup.${Date.now()}`;
       console.log(`📋 Backing up corrupted config to: ${backupPath}`);
       fs.copyFileSync(fullPath, backupPath);
     }
-    
+
     console.log('🔧 Generating new default configuration...');
     const config = JSON.parse(JSON.stringify(DEFAULT_CONFIG)); // Deep copy
     createConfigFile(config, fullPath);
-    
+
     console.log(`✅ Created new configuration file: ${configPath}`);
     currentConfig = config;
     return config;
@@ -176,10 +181,10 @@ function getConfigValue(key, defaultValue = null) {
   if (!currentConfig) {
     throw new Error('Configuration not loaded. Call loadConfig() first.');
   }
-  
+
   const keys = key.split('.');
   let value = currentConfig;
-  
+
   for (const k of keys) {
     if (value && typeof value === 'object' && k in value) {
       value = value[k];
@@ -187,7 +192,7 @@ function getConfigValue(key, defaultValue = null) {
       return defaultValue;
     }
   }
-  
+
   return value;
 }
 
@@ -204,7 +209,7 @@ function updateConfig(key, value, configPath = CONFIG_FILE) {
 
   const keys = key.split('.');
   let target = currentConfig;
-  
+
   // Navigate to the parent object
   for (let i = 0; i < keys.length - 1; i++) {
     const k = keys[i];
@@ -213,10 +218,10 @@ function updateConfig(key, value, configPath = CONFIG_FILE) {
     }
     target = target[k];
   }
-  
+
   // Set the final value
   target[keys[keys.length - 1]] = value;
-  
+
   // Save to file
   const fullPath = path.resolve(configPath);
   const configYaml = yaml.dump(currentConfig, {
@@ -226,13 +231,74 @@ function updateConfig(key, value, configPath = CONFIG_FILE) {
     skipInvalid: false,
     flowLevel: -1
   });
-  
+
   fs.writeFileSync(fullPath, configYaml, 'utf8');
+}
+
+/**
+ * Checks if config is in old single-project format
+ * @param {Object} config - Configuration object
+ * @returns {boolean} True if old format
+ */
+function isOldConfigFormat(config) {
+  // Old format has 'plugins' at root level, new format has 'projects' array
+  return !config.projects && config.plugins;
+}
+
+/**
+ * Migrates old single-project config to new multi-project format
+ * @param {Object} oldConfig - Old configuration object
+ * @param {string} configPath - Path to config file for backup
+ * @returns {Object} Migrated configuration
+ */
+function migrateToMultiProject(oldConfig, configPath) {
+  // Create backup before migration
+  const backupPath = `${configPath}.backup`;
+  console.log(`   📋 Creating backup: ${path.basename(backupPath)}`);
+  fs.writeFileSync(backupPath, yaml.dump(oldConfig), 'utf8');
+
+  // Build new config structure
+  const newConfig = {
+    server: {
+      port: oldConfig.server?.port || 3000,
+      host: oldConfig.server?.host || 'localhost',
+      default_project: 'default'
+    },
+    database: oldConfig.database, // Keep database config for backward compat
+    auth: oldConfig.auth,
+    dev: oldConfig.dev,
+    projects: [
+      {
+        id: 'default',
+        name: 'Default Project',
+        description: 'Auto-migrated from single-project config',
+        database: oldConfig.database?.file || './game.db',
+        created_at: new Date().toISOString(),
+        plugins: oldConfig.plugins || {
+          enabled: true,
+          auto_discover: true,
+          plugin_list: []
+        }
+      }
+    ]
+  };
+
+  // Save migrated config
+  console.log(`   💾 Saving migrated config...`);
+  fs.writeFileSync(configPath, yaml.dump(newConfig, {
+    indent: 2,
+    lineWidth: -1,
+    noArrayIndent: false
+  }), 'utf8');
+
+  return newConfig;
 }
 
 module.exports = {
   loadConfig,
   getConfigValue,
   updateConfig,
-  DEFAULT_CONFIG
+  DEFAULT_CONFIG,
+  isOldConfigFormat,
+  migrateToMultiProject
 };

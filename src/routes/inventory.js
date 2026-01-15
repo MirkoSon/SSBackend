@@ -53,7 +53,7 @@ router.post('/add', checkInventoryOwnership, (req, res) => {
   }
 
   try {
-    const db = getDatabase();
+    const db = req.db; // Use project-specific database
     
     // Check if item already exists for this user
     const checkQuery = 'SELECT quantity FROM inventory WHERE user_id = ? AND item_id = ?';
@@ -122,7 +122,7 @@ router.get('/:userId', checkInventoryOwnership, (req, res) => {
   const userId = parseInt(req.params.userId);
 
   try {
-    const db = getDatabase();
+    const db = req.db; // Use project-specific database
     
     // First verify user exists
     const userQuery = 'SELECT id FROM users WHERE id = ?';
@@ -183,7 +183,7 @@ router.delete('/:userId/:itemId', checkInventoryOwnership, (req, res) => {
   }
 
   try {
-    const db = getDatabase();
+    const db = req.db; // Use project-specific database
     
     // Check if item exists in user's inventory
     const checkQuery = 'SELECT quantity FROM inventory WHERE user_id = ? AND item_id = ?';

@@ -66,7 +66,7 @@ router.get('/status', (req, res) => {
  */
 router.get('/api/users', adminAuth, (req, res) => {
   try {
-    const db = getDatabase();
+    const db = req.db; // Use project-specific database
 
     const query = `
       SELECT 
@@ -103,7 +103,7 @@ router.get('/api/users', adminAuth, (req, res) => {
  */
 router.get('/api/users/:id', adminAuth, (req, res) => {
   try {
-    const db = getDatabase();
+    const db = req.db; // Use project-specific database
     const userId = parseInt(req.params.id);
 
     if (isNaN(userId)) {
@@ -148,7 +148,7 @@ router.get('/api/users/:id', adminAuth, (req, res) => {
  */
 router.get('/api/saves', adminAuth, (req, res) => {
   try {
-    const db = getDatabase();
+    const db = req.db; // Use project-specific database
 
     const query = `
       SELECT 
@@ -216,7 +216,7 @@ router.get('/api/saves', adminAuth, (req, res) => {
  */
 router.get('/api/saves/:id', adminAuth, (req, res) => {
   try {
-    const db = getDatabase();
+    const db = req.db; // Use project-specific database
     const saveId = req.params.id;
 
     const query = `
@@ -272,7 +272,7 @@ router.get('/api/saves/:id', adminAuth, (req, res) => {
  */
 router.get('/api/inventories', adminAuth, (req, res) => {
   try {
-    const db = getDatabase();
+    const db = req.db; // Use project-specific database
 
     const query = `
       SELECT 
@@ -340,7 +340,7 @@ router.get('/api/inventories', adminAuth, (req, res) => {
  */
 router.get('/api/progress', adminAuth, (req, res) => {
   try {
-    const db = getDatabase();
+    const db = req.db; // Use project-specific database
 
     // Query progress data from the character_progress table
     const progressQuery = `
@@ -471,7 +471,7 @@ router.get('/api/progress', adminAuth, (req, res) => {
  */
 router.get('/api/export/:type', adminAuth, (req, res) => {
   try {
-    const db = getDatabase();
+    const db = req.db; // Use project-specific database
     const exportType = req.params.type;
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 

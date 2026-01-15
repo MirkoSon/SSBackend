@@ -30,7 +30,7 @@ let configService = null;
 
 const ensureServices = async () => {
   if (!lifecycleService || !configService) {
-    const db = getDatabase();
+    const db = req.db; // Use project-specific database
     lifecycleService = new PluginLifecycleService(db, discoveryService);
     configService = new PluginConfigService(discoveryService, lifecycleService);
   }
@@ -41,11 +41,11 @@ const ensureServices = async () => {
  */
 router.get('/plugins/ui-modules', adminAuth, async (req, res) => {
   try {
-    if (!global.pluginManager) {
+    if (!req.pluginManager) {
       throw new Error('Plugin manager not initialized');
     }
 
-    const uiModules = await global.pluginManager.getPluginUIMetadata();
+    const uiModules = await req.pluginManager.getPluginUIMetadata();
 
     res.json({
       success: true,
@@ -166,11 +166,11 @@ router.post('/plugins/:id/reload', adminAuth, async (req, res) => {
 
     console.log(`🔄 Admin request: Reload plugin ${pluginId} by ${adminUser}`);
 
-    if (!global.pluginManager) {
+    if (!req.pluginManager) {
       throw new Error('Plugin manager not initialized');
     }
 
-    const result = await global.pluginManager.reloadPlugin(pluginId);
+    const result = await req.pluginManager.reloadPlugin(pluginId);
 
     if (result.success) {
       res.json({
@@ -388,11 +388,11 @@ router.delete('/plugins/:id', adminAuth, async (req, res) => {
 
     console.log(`🗑️ Admin request: Purge plugin ${pluginId} by ${adminUser}`);
 
-    if (!global.pluginManager) {
+    if (!req.pluginManager) {
       throw new Error('Plugin manager not initialized');
     }
 
-    await global.pluginManager.purgePlugin(pluginId);
+    await req.pluginManager.purgePlugin(pluginId);
 
     res.json({
       success: true,
@@ -422,11 +422,11 @@ router.post('/plugins/:id/suppress', adminAuth, async (req, res) => {
 
     console.log(`🔇 Admin request: Suppress plugin ${pluginId} by ${adminUser}`);
 
-    if (!global.pluginManager) {
+    if (!req.pluginManager) {
       throw new Error('Plugin manager not initialized');
     }
 
-    await global.pluginManager.suppressPlugin(pluginId);
+    await req.pluginManager.suppressPlugin(pluginId);
 
     res.json({
       success: true,

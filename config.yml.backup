@@ -1,0 +1,84 @@
+server:
+  port: 3012
+  host: localhost
+database:
+  file: game.db
+auth:
+  jwt_secret: custom-jwt-secret-for-testing-purposes-only-not-secure
+  jwt_expires_in: 1h
+  session_secret: custom-session-secret-for-testing
+dev:
+  enable_logging: false
+  enable_cors: true
+plugins:
+  enabled: true
+  auto_discover: true
+  auto_enable_discovered: true
+  watch_for_changes: true
+  achievements:
+    enabled: true
+    type: internal
+    settings:
+      autoCheck: true
+      cleanupOnDisable: false
+    disabledAt: '2025-09-23T08:37:01.329Z'
+    enabledAt: '2025-09-23T08:37:11.060Z'
+    autoCheck: true
+    lastModified: '2026-01-14T15:46:48.724Z'
+  leaderboards:
+    enabled: true
+    type: internal
+    settings:
+      maxEntriesPerBoard: 10000
+      defaultPageSize: 50
+      maxPageSize: 100
+      enableDailyBoards: true
+      enableWeeklyBoards: true
+      cleanupOldBoards: true
+    disabledAt: '2025-09-23T08:32:00.027Z'
+    enabledAt: '2025-09-23T08:32:00.275Z'
+  economy:
+    enabled: true
+    type: internal
+    settings:
+      default_currencies:
+        - id: coins
+          name: Coins
+          symbol: 🪙
+          decimal_places: 0
+          starting_balance: 100
+          transferable: true
+          max_balance: -1
+        - id: gems
+          name: Gems
+          symbol: 💎
+          decimal_places: 0
+          starting_balance: 5
+          transferable: true
+          max_balance: -1
+      transaction_limits:
+        max_amount: 1000000
+        daily_volume_limit: 10000000
+      analytics:
+        enabled: true
+        retention_days: 365
+      cache:
+        balance_ttl: 300
+        analytics_ttl: 3600
+    disabledAt: '2025-09-21T10:05:13.238Z'
+    enabledAt: '2025-09-23T05:30:00.182Z'
+  full-featured:
+    enabled: true
+    type: external
+    path: E:\GIT\SSBackend\plugins\@examples\full-featured
+  hello-world:
+    enabled: true
+    type: external
+    path: E:\GIT\SSBackend\plugins\@examples\hello-world
+    disabledAt: '2026-01-15T07:40:08.930Z'
+    enabledAt: '2026-01-15T08:07:11.723Z'
+  junkfest:
+    enabled: true
+    type: external
+    path: E:\GIT\SSBackend\plugins\junkfest
+    suppressed: false

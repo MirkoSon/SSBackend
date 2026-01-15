@@ -46,7 +46,7 @@ router.post('/register', (req, res) => {
   }
 
   try {
-    const db = getDatabase();
+    const db = req.db; // Use project-specific database
     
     // Check if username already exists
     const checkQuery = 'SELECT id FROM users WHERE username = ?';
@@ -113,7 +113,7 @@ router.post('/login', (req, res) => {
   }
 
   try {
-    const db = getDatabase();
+    const db = req.db; // Use project-specific database
     
     // Find user by username
     const query = 'SELECT id, username, password, created_at, last_login, login_count FROM users WHERE username = ?';
@@ -241,7 +241,7 @@ router.post('/logout', authenticateToken, (req, res) => {
  */
 router.get('/profile', authenticateToken, (req, res) => {
   try {
-    const db = getDatabase();
+    const db = req.db; // Use project-specific database
     
     // Get complete user information
     const query = `

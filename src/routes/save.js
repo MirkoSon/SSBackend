@@ -1,12 +1,9 @@
 const express = require('express');
-const { getDatabase } = require('../db/database');
 
 /**
- * TODO [EPIC 7 - Multi-Project Support]:
- * Save routes need to be project-aware.
- * Current: GET/POST /api/save
- * Future:  GET/POST /api/project/:projectId/save
- * Use req.db from project context middleware instead of getDatabase()
+ * Epic 7 - Multi-Project Support (Story 7.2.2)
+ * Routes now use req.db from project context middleware
+ * instead of getDatabase() singleton.
  * See: docs/multi-project-architecture-design.md, Story 7.2.1
  */
 
@@ -29,7 +26,7 @@ router.post('/', (req, res) => {
   }
 
   try {
-    const db = getDatabase();
+    const db = req.db; // Use project-specific database
     const dataString = JSON.stringify(data);
 
     // Insert or replace save data
@@ -38,14 +35,14 @@ router.post('/', (req, res) => {
       VALUES (?, ?, CURRENT_TIMESTAMP)
     `;
 
-    db.run(query, [id, dataString], function(err) {
+    db.run(query, [id, dataString], function (err) {
       if (err) {
         console.error('Database error saving data:', err.message);
         return res.status(500).json({ error: 'Failed to save data' });
       }
 
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         id: id,
         message: 'Data saved successfully'
       });
@@ -61,12 +58,12 @@ router.post('/', (req, res) => {
  * GET /save/:id - Load game data by ID
  */
 router.get('/:id', (req, res) => {
-  const { id } = req.params;  if (!id || typeof id !== 'string') {
+  const { id } = req.params; if (!id || typeof id !== 'string') {
     return res.status(400).json({ error: 'Invalid id parameter' });
   }
 
   try {
-    const db = getDatabase();
+    const db = req.db; // Use project-specific database
     const query = 'SELECT data, created_at, updated_at FROM saves WHERE id = ?';
 
     db.get(query, [id], (err, row) => {
@@ -104,7 +101,7 @@ router.get('/:id', (req, res) => {
  */
 router.get('/', (req, res) => {
   try {
-    const db = getDatabase();
+    const db = req.db; // Use project-specific database
     const query = 'SELECT id, created_at, updated_at FROM saves ORDER BY updated_at DESC';
 
     db.all(query, [], (err, rows) => {

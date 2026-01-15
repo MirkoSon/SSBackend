@@ -115,11 +115,15 @@ const progressRoutes = require('./routes/progress');
 // Note: achievements routes are now handled by plugin system
 const adminRoutes = require('./routes/admin');
 
-// Import database initialization
+// Import database initialization (legacy - kept for backward compat)
 const { initializeDatabase } = require('./db/database');
 
-// Import plugin system
+// Import plugin system (legacy - will be per-project in Phase 2)
 const PluginManager = require('./plugins/PluginManager');
+
+// Import ProjectManager for multi-project support (Epic 7)
+const ProjectManager = require('./projects/ProjectManager');
+const createProjectMiddleware = require('./middleware/projectContext');
 
 const app = express();
 
@@ -178,6 +182,10 @@ app.use((req, res, next) => {
   next();
 });
 
+// Epic 7 - Multi-Project Support (Story 7.2.2)
+// This middleware will be added after ProjectManager initialization in startServer()
+// It injects project context into all /api/* routes
+
 // Routes
 app.use('/save', saveRoutes);
 app.use('/auth', authRoutes);
@@ -220,24 +228,42 @@ app.get('/health/plugins', (req, res) => {
 // Initialize database and start server
 async function startServer() {
   try {
-    // Initialize database (runs migrations automatically)
-    await initializeDatabase();
-    console.log('Database initialized successfully');
+    // Epic 7 - Multi-Project Support (Story 7.2.1)
+    // Initialize ProjectManager instead of single database
+    console.log('\n🚀 Starting SSBackend with Multi-Project Support...');
 
-    // Get database instance
-    const { getDatabase } = require('./db/database');
-    const db = getDatabase();
+    const projectManager = new ProjectManager(config);
+    await projectManager.initialize(app);
 
-    // Initialize plugin system BEFORE middleware setup
-    const pluginManager = new PluginManager();
-    // TODO [EPIC 7 - Multi-Project Support]:
-    // Remove this global singleton. Each ProjectContext should have its own PluginManager.
-    // Replace with: projectManager.getProject(projectId).pluginManager
-    // See: docs/multi-project-architecture-design.md, Story 7.2.2
-    global.pluginManager = pluginManager; // Store globally for health endpoint
-    await pluginManager.initialize(app, db);
+    // Store globally for backward compatibility and health endpoints
+    global.projectManager = projectManager;
 
-    // Setup error handling and 404 after plugins are loaded
+    // Get default project for backward compatibility
+    const defaultProject = projectManager.getProject(config.server?.default_project || 'default');
+    if (!defaultProject) {
+      throw new Error('Default project not found');
+    }
+
+    // Store default project's plugin manager globally for backward compatibility
+    // TODO [Story 7.2.2]: Remove this once all routes use req.pluginManager
+    global.pluginManager = defaultProject.pluginManager;
+
+    // Store config in app for middleware access
+    app.set('config', config);
+
+    // Add project context middleware for all API routes (Story 7.2.2)
+    const projectMiddleware = createProjectMiddleware(projectManager);
+
+    // Apply middleware to all /api routes (backward compatible - uses default project)
+    app.use('/save', projectMiddleware);
+    app.use('/auth', projectMiddleware);
+    app.use('/inventory', projectMiddleware);
+    app.use('/progress', projectMiddleware);
+    app.use('/admin', projectMiddleware);
+
+    console.log('✅ Project context middleware enabled for all routes');
+
+    // Setup error handling and 404 after projects are loaded
     setupFinalMiddleware();
 
     app.listen(PORT, () => {

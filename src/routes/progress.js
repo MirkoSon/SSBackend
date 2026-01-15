@@ -29,7 +29,7 @@ router.post('/update', authenticateToken, async (req, res) => {
   }
 
   try {
-    const db = getDatabase();
+    const db = req.db; // Use project-specific database
 
     // Get current progress if it exists
     const currentQuery = `
@@ -74,8 +74,8 @@ router.post('/update', authenticateToken, async (req, res) => {
 
     // Check for new achievements via the plugin service if active
     let newAchievements = [];
-    if (global.pluginManager && global.pluginManager.activePlugins.has('achievements')) {
-      const achievementPlugin = global.pluginManager.activePlugins.get('achievements');
+    if (req.pluginManager && req.pluginManager.activePlugins.has('achievements')) {
+      const achievementPlugin = req.pluginManager.activePlugins.get('achievements');
       if (achievementPlugin.context && achievementPlugin.context.achievementService) {
         newAchievements = await achievementPlugin.context.achievementService.checkAchievements(userId, metric, newValue);
       }
@@ -119,7 +119,7 @@ router.get('/:userId', authenticateToken, async (req, res) => {
   }
 
   try {
-    const db = getDatabase();
+    const db = req.db; // Use project-specific database
 
     // Get all progress for user
     const progressQuery = `
@@ -180,7 +180,7 @@ router.get('/:userId/:metric', authenticateToken, async (req, res) => {
   }
 
   try {
-    const db = getDatabase();
+    const db = req.db; // Use project-specific database
 
     // Get specific metric progress
     const progressQuery = `
@@ -205,8 +205,8 @@ router.get('/:userId/:metric', authenticateToken, async (req, res) => {
 
     // Get achievement progress for this metric via the plugin service if active
     let achievementProgress = [];
-    if (global.pluginManager && global.pluginManager.activePlugins.has('achievements')) {
-      const achievementPlugin = global.pluginManager.activePlugins.get('achievements');
+    if (req.pluginManager && req.pluginManager.activePlugins.has('achievements')) {
+      const achievementPlugin = req.pluginManager.activePlugins.get('achievements');
       if (achievementPlugin.context && achievementPlugin.context.achievementService) {
         achievementProgress = await achievementPlugin.context.achievementService.getProgressTowardAchievements(targetUserId, metric);
       }
@@ -248,7 +248,7 @@ router.post('/set-max', authenticateToken, async (req, res) => {
   }
 
   try {
-    const db = getDatabase();
+    const db = req.db; // Use project-specific database
 
     // Insert or update max value for metric
     const upsertQuery = `
