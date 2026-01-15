@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const chokidar = require('chokidar');
-const { getConfigValue, updateConfig } = require('../utils/config');
+const { getConfigValue, updateConfig, updateProjectConfig } = require('../utils/config');
 const PluginValidator = require('./PluginValidator');
 const PluginDiscoveryService = require('../services/plugins/PluginDiscoveryService');
 
@@ -55,6 +55,29 @@ class PluginManager {
   }
 
   /**
+   * Helper to update configuration value, scoping to current project
+   * @param {string} keyPath - Config key path relative to project root (e.g. 'plugins.achievements.enabled')
+   * @param {*} value - New value
+   */
+  async updatePluginConfigValue(keyPath, value) {
+    if (this.projectId && this.projectId !== 'default') {
+      await updateProjectConfig(this.projectId, keyPath, value);
+    } else {
+      // Fallback for default project or if explicitly using global update
+      await updateConfig(keyPath, value);
+    }
+
+    // Refresh projectPluginConfig after update
+    if (this.projectId) {
+      const { getProjectConfig } = require('../utils/config');
+      const projectConfig = getProjectConfig(this.projectId);
+      if (projectConfig) {
+        this.projectPluginConfig = projectConfig.plugins;
+      }
+    }
+  }
+
+  /**
    * Initialize the plugin system
    * @param {Object} app - Express app instance
    * @param {Object} db - Database instance
@@ -68,11 +91,18 @@ class PluginManager {
     // Discover and auto-register external plugins if enabled
     const autoDiscover = this.getPluginConfigValue('plugins.auto_discover', true);
     if (autoDiscover) {
-      await this.discoveryService.registerNewPlugins();
+      // Pass the current project's plugin config to discovery service
+      const currentPlugins = this.getPluginConfigValue('plugins', {});
+      await this.discoveryService.registerNewPlugins(currentPlugins, async (newConfig) => {
+        await this.updatePluginConfigValue('plugins', newConfig);
+      });
     }
 
     // Check for reinstalled suppressed plugins and unsuppress them
-    await this.discoveryService.checkSuppressedPlugins();
+    const currentPlugins = this.getPluginConfigValue('plugins', {});
+    await this.discoveryService.checkSuppressedPlugins(currentPlugins, async (newConfig) => {
+      await this.updatePluginConfigValue('plugins', newConfig);
+    });
 
     // Load and activate configured plugins
     await this.loadConfiguredPlugins();
@@ -138,13 +168,13 @@ class PluginManager {
         // Register it
         const pluginConfig = getConfigValue('plugins', {});
         if (!pluginConfig[pluginName]) {
-          const autoEnable = getConfigValue('plugins.auto_enable_discovered', true);
+          const autoEnable = this.getPluginConfigValue('plugins.auto_enable_discovered', true);
           pluginConfig[pluginName] = {
             enabled: autoEnable,
             type: 'external',
             path: pluginPath
           };
-          updateConfig('plugins', pluginConfig);
+          await this.updatePluginConfigValue('plugins', pluginConfig);
           console.log(`✅ Auto-registered hot-added plugin: ${pluginName}`);
         }
       }
@@ -171,7 +201,7 @@ class PluginManager {
    * Load all configured plugins
    */
   async loadConfiguredPlugins() {
-    const pluginConfig = getConfigValue('plugins', {});
+    const pluginConfig = this.getPluginConfigValue('plugins', {});
 
     // Skip if plugins system is disabled
     if (pluginConfig.enabled === false) {
@@ -776,7 +806,7 @@ class PluginManager {
     }
 
     // Add disabled plugins from config
-    const pluginConfig = getConfigValue('plugins', {});
+    const pluginConfig = this.getPluginConfigValue('plugins', {});
     const SETTING_KEYS = ['enabled', 'auto_discover', 'auto_enable_discovered', 'watch_for_changes'];
 
     for (const [name, config] of Object.entries(pluginConfig)) {
@@ -828,7 +858,7 @@ class PluginManager {
       const pluginData = this.activePlugins.get(name) || this.loadedPlugins.get(name);
       if (!pluginData) {
         // Try to get from config
-        const pluginConfig = getConfigValue('plugins', {});
+        const pluginConfig = this.getPluginConfigValue('plugins', {});
         const config = pluginConfig[name];
         if (config && typeof config === 'object') {
           if (config.type === 'internal' || (config.path && config.path.includes('@core'))) {
@@ -883,14 +913,14 @@ class PluginManager {
    * Enable a plugin
    */
   async enablePlugin(pluginName) {
-    const pluginConfig = getConfigValue('plugins', {});
+    const pluginConfig = this.getPluginConfigValue('plugins', {});
 
     if (!pluginConfig[pluginName]) {
       throw new Error(`Plugin not found: ${pluginName}`);
     }
 
     pluginConfig[pluginName].enabled = true;
-    updateConfig('plugins', pluginConfig);
+    await this.updatePluginConfigValue('plugins', pluginConfig);
 
     // If already loaded but not active, activate it
     if (this.loadedPlugins.has(pluginName) && !this.activePlugins.has(pluginName)) {
@@ -906,14 +936,14 @@ class PluginManager {
    * Disable a plugin
    */
   async disablePlugin(pluginName) {
-    const pluginConfig = getConfigValue('plugins', {});
+    const pluginConfig = this.getPluginConfigValue('plugins', {});
 
     if (!pluginConfig[pluginName]) {
       throw new Error(`Plugin not found: ${pluginName}`);
     }
 
     pluginConfig[pluginName].enabled = false;
-    updateConfig('plugins', pluginConfig);
+    await this.updatePluginConfigValue('plugins', pluginConfig);
 
     if (this.activePlugins.has(pluginName)) {
       await this.deactivatePlugin(pluginName);
@@ -1018,7 +1048,7 @@ class PluginManager {
 
     // Remove from config
     delete pluginConfig[pluginName];
-    updateConfig('plugins', pluginConfig);
+    await this.updatePluginConfigValue('plugins', pluginConfig);
 
     console.log(`🗑️  Purged plugin: ${pluginName}`);
   }
@@ -1037,7 +1067,7 @@ class PluginManager {
     // Mark as suppressed
     pluginConfig[pluginName].suppressed = true;
     pluginConfig[pluginName].enabled = false;
-    updateConfig('plugins', pluginConfig);
+    await this.updatePluginConfigValue('plugins', pluginConfig);
 
     // Remove from internal maps
     this.failedPlugins.delete(pluginName);

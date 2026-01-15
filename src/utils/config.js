@@ -236,6 +236,61 @@ function updateConfig(key, value, configPath = CONFIG_FILE) {
 }
 
 /**
+ * Gets the configuration for a specific project
+ * @param {string} projectId - Project identifier
+ * @returns {Object|null} Project configuration or null
+ */
+function getProjectConfig(projectId) {
+  if (!currentConfig || !currentConfig.projects) return null;
+  return currentConfig.projects.find(p => p.id === projectId) || null;
+}
+
+/**
+ * Updates a configuration value for a specific project
+ * @param {string} projectId - Project identifier
+ * @param {string} key - Dot-notation key within the project config (e.g., 'plugins.achievements.enabled')
+ * @param {*} value - New value to set
+ * @param {string} configPath - Path to the configuration file (optional)
+ */
+function updateProjectConfig(projectId, key, value, configPath = CONFIG_FILE) {
+  if (!currentConfig) {
+    throw new Error('Configuration not loaded. Call loadConfig() first.');
+  }
+
+  const project = getProjectConfig(projectId);
+  if (!project) {
+    throw new Error(`Project ${projectId} not found in configuration`);
+  }
+
+  const keys = key.split('.');
+  let target = project;
+
+  // Navigate to the parent object within the project config
+  for (let i = 0; i < keys.length - 1; i++) {
+    const k = keys[i];
+    if (!target[k] || typeof target[k] !== 'object') {
+      target[k] = {};
+    }
+    target = target[k];
+  }
+
+  // Set the final value
+  target[keys[keys.length - 1]] = value;
+
+  // Save the entire config to file
+  const fullPath = path.resolve(configPath);
+  const configYaml = yaml.dump(currentConfig, {
+    indent: 2,
+    lineWidth: -1,
+    noArrayIndent: false,
+    skipInvalid: false,
+    flowLevel: -1
+  });
+
+  fs.writeFileSync(fullPath, configYaml, 'utf8');
+}
+
+/**
  * Checks if config is in old single-project format
  * @param {Object} config - Configuration object
  * @returns {boolean} True if old format
@@ -298,6 +353,8 @@ module.exports = {
   loadConfig,
   getConfigValue,
   updateConfig,
+  getProjectConfig,
+  updateProjectConfig,
   DEFAULT_CONFIG,
   isOldConfigFormat,
   migrateToMultiProject

@@ -1,4 +1,4 @@
-const { getConfigValue, updateConfig } = require('../../utils/config');
+const { getConfigValue, updateConfig, getProjectConfig, updateProjectConfig } = require('../../utils/config');
 
 /**
  * Plugin Config Service
@@ -8,10 +8,36 @@ class PluginConfigService {
     /**
      * @param {Object} discoveryService - Instance of PluginDiscoveryService
      * @param {Object} lifecycleService - Instance of PluginLifecycleService (for logging)
+     * @param {string} projectId - Project identifier
      */
-    constructor(discoveryService, lifecycleService) {
+    constructor(discoveryService, lifecycleService, projectId = 'default') {
         this.discoveryService = discoveryService;
         this.lifecycleService = lifecycleService;
+        this.projectId = projectId;
+    }
+
+    /**
+     * Get the current project's plugin configuration
+     * @private
+     */
+    _getPluginConfig() {
+        if (this.projectId === 'default') {
+            return getConfigValue('plugins', {});
+        }
+        const projectConfig = getProjectConfig(this.projectId);
+        return projectConfig ? projectConfig.plugins : {};
+    }
+
+    /**
+     * Update the current project's plugin configuration
+     * @private
+     */
+    async _updatePluginConfig(newConfig) {
+        if (this.projectId === 'default') {
+            await updateConfig('plugins', newConfig);
+        } else {
+            await updateProjectConfig(this.projectId, 'plugins', newConfig);
+        }
     }
 
     /**
@@ -20,7 +46,7 @@ class PluginConfigService {
      * @returns {Promise<Object>}
      */
     async getPluginConfig(pluginId) {
-        const config = getConfigValue('plugins', {});
+        const config = this._getPluginConfig();
         const pluginConfig = config[pluginId] || {};
 
         return {
@@ -40,7 +66,7 @@ class PluginConfigService {
     async updatePluginConfig(pluginId, newConfig, adminUser = 'system') {
         try {
             // Get current configuration
-            const fullConfig = getConfigValue('plugins', {});
+            const fullConfig = this._getPluginConfig();
             const currentPluginConfig = fullConfig[pluginId];
 
             if (!currentPluginConfig) {
@@ -48,7 +74,7 @@ class PluginConfigService {
             }
 
             // Get plugin metadata to find its schema
-            const status = await this.discoveryService.getSystemStatus();
+            const status = await this.discoveryService.getSystemStatus(fullConfig);
             const pluginMetadata = status.plugins.find(p => p.id === pluginId);
 
             // TODO: In Story 3.4.2, implement full JSON schema validation here
@@ -81,7 +107,7 @@ class PluginConfigService {
             };
 
             // Write back to config file
-            await updateConfig('plugins', updatedFullConfig);
+            await this._updatePluginConfig(updatedFullConfig);
 
             // Log the action via lifecycle service
             if (this.lifecycleService) {
@@ -107,7 +133,8 @@ class PluginConfigService {
      * @param {string} pluginId 
      */
     async getPluginSchema(pluginId) {
-        const status = await this.discoveryService.getSystemStatus();
+        const config = this._getPluginConfig();
+        const status = await this.discoveryService.getSystemStatus(config);
         const plugin = status.plugins.find(p => p.id === pluginId);
 
         if (!plugin) {

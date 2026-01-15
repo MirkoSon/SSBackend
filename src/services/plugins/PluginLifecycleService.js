@@ -1,4 +1,4 @@
-const { getConfigValue, updateConfig } = require('../../utils/config');
+const { getConfigValue, updateConfig, getProjectConfig, updateProjectConfig } = require('../../utils/config');
 const path = require('path');
 
 /**
@@ -10,10 +10,36 @@ class PluginLifecycleService {
     /**
      * @param {Object} db - Database instance
      * @param {Object} discoveryService - Instance of PluginDiscoveryService
+     * @param {string} projectId - Project identifier
      */
-    constructor(db, discoveryService) {
+    constructor(db, discoveryService, projectId = 'default') {
         this.db = db;
         this.discoveryService = discoveryService;
+        this.projectId = projectId;
+    }
+
+    /**
+     * Get the current project's plugin configuration
+     * @private
+     */
+    _getPluginConfig() {
+        if (this.projectId === 'default') {
+            return getConfigValue('plugins', {});
+        }
+        const projectConfig = getProjectConfig(this.projectId);
+        return projectConfig ? projectConfig.plugins : {};
+    }
+
+    /**
+     * Update the current project's plugin configuration
+     * @private
+     */
+    async _updatePluginConfig(newConfig) {
+        if (this.projectId === 'default') {
+            await updateConfig('plugins', newConfig);
+        } else {
+            await updateProjectConfig(this.projectId, 'plugins', newConfig);
+        }
     }
 
     /**
@@ -25,10 +51,10 @@ class PluginLifecycleService {
     async enablePlugin(pluginId, adminUser = 'system') {
         try {
             // Get current configuration
-            const config = getConfigValue('plugins', {});
+            const config = this._getPluginConfig();
 
             // Check if plugin exists
-            const allPlugins = await this.discoveryService.getSystemStatus();
+            const allPlugins = await this.discoveryService.getSystemStatus(config);
             const targetPlugin = allPlugins.plugins.find(p => p.id === pluginId);
 
             if (!targetPlugin) {
@@ -73,7 +99,7 @@ class PluginLifecycleService {
             }
 
             // Update configuration atomically
-            await updateConfig('plugins', updatedConfig);
+            await this._updatePluginConfig(updatedConfig);
 
             // Log the action
             await this.logPluginAction('enable', pluginId, {
@@ -103,10 +129,10 @@ class PluginLifecycleService {
     async disablePlugin(pluginId, adminUser = 'system') {
         try {
             // Get current configuration
-            const config = getConfigValue('plugins', {});
+            const config = this._getPluginConfig();
 
             // Check if plugin exists
-            const allPlugins = await this.discoveryService.getSystemStatus();
+            const allPlugins = await this.discoveryService.getSystemStatus(config);
             const targetPlugin = allPlugins.plugins.find(p => p.id === pluginId);
 
             if (!targetPlugin) {
@@ -141,7 +167,7 @@ class PluginLifecycleService {
             };
 
             // Update configuration atomically
-            await updateConfig('plugins', updatedConfig);
+            await this._updatePluginConfig(updatedConfig);
 
             // Log the action
             await this.logPluginAction('disable', pluginId, {
@@ -168,7 +194,8 @@ class PluginLifecycleService {
      * @param {string} adminUser 
      */
     async togglePlugin(pluginId, adminUser = 'system') {
-        const allPlugins = await this.discoveryService.getSystemStatus();
+        const config = this._getPluginConfig();
+        const allPlugins = await this.discoveryService.getSystemStatus(config);
         const targetPlugin = allPlugins.plugins.find(p => p.id === pluginId);
 
         if (!targetPlugin) {

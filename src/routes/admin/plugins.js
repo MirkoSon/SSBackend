@@ -29,17 +29,27 @@ let lifecycleService = null;
 let configService = null;
 
 const ensureServices = async (req) => {
-  const db = req.db;
-  if (!lifecycleService || !configService || lifecycleService.db !== db) {
-    lifecycleService = new PluginLifecycleService(db, discoveryService);
-    configService = new PluginConfigService(discoveryService, lifecycleService);
+  if (!req.pluginManager) {
+    throw new Error('Plugin manager not found in request context');
   }
+
+  // Use services attached to the project-specific plugin manager if available
+  // otherwise create them and attach them for the lifecycle of the project context
+  if (!req.pluginManager.lifecycleService) {
+    req.pluginManager.lifecycleService = new PluginLifecycleService(req.db, discoveryService, req.projectId);
+  }
+  if (!req.pluginManager.configService) {
+    req.pluginManager.configService = new PluginConfigService(discoveryService, req.pluginManager.lifecycleService, req.projectId);
+  }
+
+  lifecycleService = req.pluginManager.lifecycleService;
+  configService = req.pluginManager.configService;
 };
 
 /**
  * GET /admin/api/plugins/ui-modules - Get UI metadata for all active plugins
  */
-router.get('/plugins/ui-modules', adminAuth, async (req, res) => {
+router.get('/ui-modules', adminAuth, async (req, res) => {
   try {
     if (!req.pluginManager) {
       throw new Error('Plugin manager not initialized');
@@ -67,12 +77,13 @@ router.get('/plugins/ui-modules', adminAuth, async (req, res) => {
 /**
  * GET /admin/api/plugins - Get all plugins with status and metadata
  */
-router.get('/plugins', adminAuth, async (req, res) => {
+router.get('/', adminAuth, async (req, res) => {
   try {
     console.log('📋 Admin request: Get all plugins status');
 
     await ensureServices(req);
-    const pluginStatus = await discoveryService.getSystemStatus();
+    const pluginConfig = req.pluginManager.getPluginConfigValue('plugins', {});
+    const pluginStatus = await discoveryService.getSystemStatus(pluginConfig);
 
     res.json({
       success: true,
@@ -95,7 +106,7 @@ router.get('/plugins', adminAuth, async (req, res) => {
 /**
  * POST /admin/api/plugins/:id/enable - Enable a specific plugin
  */
-router.post('/plugins/:id/enable', adminAuth, async (req, res) => {
+router.post('/:id/enable', adminAuth, async (req, res) => {
   try {
     const pluginId = req.params.id;
     const adminUser = req.session?.adminUser || 'admin';
@@ -127,7 +138,7 @@ router.post('/plugins/:id/enable', adminAuth, async (req, res) => {
 /**
  * POST /admin/api/plugins/:id/disable - Disable a specific plugin
  */
-router.post('/plugins/:id/disable', adminAuth, async (req, res) => {
+router.post('/:id/disable', adminAuth, async (req, res) => {
   try {
     const pluginId = req.params.id;
     const adminUser = req.session?.adminUser || 'admin';
@@ -159,7 +170,7 @@ router.post('/plugins/:id/disable', adminAuth, async (req, res) => {
 /**
  * POST /admin/api/plugins/:id/reload - Hot-reload a plugin without server restart (Story 6.3)
  */
-router.post('/plugins/:id/reload', adminAuth, async (req, res) => {
+router.post('/:id/reload', adminAuth, async (req, res) => {
   try {
     const pluginId = req.params.id;
     const adminUser = req.session?.adminUser || 'admin';
@@ -204,7 +215,7 @@ router.post('/plugins/:id/reload', adminAuth, async (req, res) => {
 /**
  * POST /admin/api/plugins/:id/toggle - Toggle plugin state (enable/disable)
  */
-router.post('/plugins/:id/toggle', adminAuth, async (req, res) => {
+router.post('/:id/toggle', adminAuth, async (req, res) => {
   try {
     const pluginId = req.params.id;
     const adminUser = req.session?.adminUser || 'admin';
@@ -236,7 +247,7 @@ router.post('/plugins/:id/toggle', adminAuth, async (req, res) => {
 /**
  * GET /admin/api/plugins/:id/config - Get plugin configuration
  */
-router.get('/plugins/:id/config', adminAuth, async (req, res) => {
+router.get('/:id/config', adminAuth, async (req, res) => {
   try {
     const pluginId = req.params.id;
 
@@ -267,7 +278,7 @@ router.get('/plugins/:id/config', adminAuth, async (req, res) => {
 /**
  * PUT /admin/api/plugins/:id/config - Update plugin configuration
  */
-router.put('/plugins/:id/config', adminAuth, async (req, res) => {
+router.put('/:id/config', adminAuth, async (req, res) => {
   try {
     const pluginId = req.params.id;
     const newConfig = req.body;
@@ -300,14 +311,15 @@ router.put('/plugins/:id/config', adminAuth, async (req, res) => {
 /**
  * POST /admin/api/plugins/validate - Validate entire plugin system
  */
-router.post('/plugins/validate', adminAuth, async (req, res) => {
+router.post('/validate', adminAuth, async (req, res) => {
   try {
     const adminUser = req.session?.adminUser || 'admin';
 
     console.log(`🔍 Admin request: Validate plugin system by ${adminUser}`);
 
     await ensureServices(req);
-    const validation = await discoveryService.validatePluginSystem();
+    const pluginConfig = req.pluginManager.getPluginConfigValue('plugins', {});
+    const validation = await discoveryService.validatePluginSystem(pluginConfig);
 
     // Return appropriate status code based on validation result
     const statusCode = validation.valid ? 200 : 400;
@@ -333,7 +345,7 @@ router.post('/plugins/validate', adminAuth, async (req, res) => {
 /**
  * GET /admin/api/plugins/:id - Get detailed plugin information
  */
-router.get('/plugins/:id', adminAuth, async (req, res) => {
+router.get('/:id', adminAuth, async (req, res) => {
   try {
     const pluginId = req.params.id;
 
@@ -381,7 +393,7 @@ router.get('/plugins/:id', adminAuth, async (req, res) => {
 /**
  * DELETE /admin/api/plugins/:id - Purge a plugin completely from config
  */
-router.delete('/plugins/:id', adminAuth, async (req, res) => {
+router.delete('/:id', adminAuth, async (req, res) => {
   try {
     const pluginId = req.params.id;
     const adminUser = req.session?.adminUser || 'admin';
@@ -415,7 +427,7 @@ router.delete('/plugins/:id', adminAuth, async (req, res) => {
 /**
  * POST /admin/api/plugins/:id/suppress - Suppress a missing plugin
  */
-router.post('/plugins/:id/suppress', adminAuth, async (req, res) => {
+router.post('/:id/suppress', adminAuth, async (req, res) => {
   try {
     const pluginId = req.params.id;
     const adminUser = req.session?.adminUser || 'admin';

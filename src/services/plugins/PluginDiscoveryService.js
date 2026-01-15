@@ -21,11 +21,11 @@ class PluginDiscoveryService {
     }
 
     /**
-     * Discover overall system status (used by Dashboard)
+     * @param {Object} projectPluginConfig - Optional project-specific plugin config
      * @returns {Promise<Object>} Unified status report
      */
-    async getSystemStatus() {
-        const pluginConfig = getConfigValue('plugins', {});
+    async getSystemStatus(projectPluginConfig = null) {
+        const pluginConfig = projectPluginConfig || getConfigValue('plugins', {});
         const internalPlugins = await this.discoverInternalPlugins();
         const externalPlugins = await this.discoverExternalPlugins();
         const allPlugins = [...internalPlugins, ...externalPlugins];
@@ -96,9 +96,10 @@ class PluginDiscoveryService {
 
     /**
      * Validate the entire plugin system for consistency and health
+     * @param {Object} projectPluginConfig - Optional project-specific plugin config
      * @returns {Promise<Object>} Validation result
      */
-    async validatePluginSystem() {
+    async validatePluginSystem(projectPluginConfig = null) {
         try {
             const validation = {
                 valid: true,
@@ -112,7 +113,7 @@ class PluginDiscoveryService {
                 }
             };
 
-            const allPlugins = await this.getSystemStatus();
+            const allPlugins = await this.getSystemStatus(projectPluginConfig);
             validation.summary.totalPlugins = allPlugins.plugins.length;
             validation.summary.enabledPlugins = allPlugins.plugins.filter(p => p.enabled).length;
 
@@ -303,9 +304,11 @@ class PluginDiscoveryService {
 
     /**
      * Check for reinstalled suppressed plugins
+     * @param {Object} projectPluginConfig - Optional project-specific plugin config
+     * @param {Function} updateCallback - Function to call with updated config
      */
-    async checkSuppressedPlugins() {
-        const pluginConfig = getConfigValue('plugins', {});
+    async checkSuppressedPlugins(projectPluginConfig = null, updateCallback = null) {
+        const pluginConfig = projectPluginConfig || getConfigValue('plugins', {});
         const SETTING_KEYS = ['enabled', 'auto_discover', 'auto_enable_discovered', 'watch_for_changes'];
         let changed = false;
 
@@ -328,16 +331,24 @@ class PluginDiscoveryService {
         }
 
         if (changed) {
-            await updateConfig('plugins', pluginConfig);
+            if (updateCallback) {
+                await updateCallback(pluginConfig);
+            } else {
+                await updateConfig('plugins', pluginConfig);
+            }
         }
     }
 
     /**
      * Register new external plugins into the config
+     * @param {Object} projectPluginConfig - Optional project-specific plugin config
+     * @param {Function} updateCallback - Function to call with updated config
      */
-    async registerNewPlugins() {
-        const pluginConfig = getConfigValue('plugins', {});
-        const autoEnable = getConfigValue('plugins.auto_enable_discovered', true);
+    async registerNewPlugins(projectPluginConfig = null, updateCallback = null) {
+        const pluginConfig = projectPluginConfig || getConfigValue('plugins', {});
+        const autoEnable = projectPluginConfig
+            ? (projectPluginConfig.auto_enable_discovered !== undefined ? projectPluginConfig.auto_enable_discovered : true)
+            : getConfigValue('plugins.auto_enable_discovered', true);
         const externalPlugins = await this.discoverExternalPlugins();
         let changed = false;
 
@@ -373,7 +384,11 @@ class PluginDiscoveryService {
         }
 
         if (changed) {
-            await updateConfig('plugins', pluginConfig);
+            if (updateCallback) {
+                await updateCallback(pluginConfig);
+            } else {
+                await updateConfig('plugins', pluginConfig);
+            }
         }
     }
 }
