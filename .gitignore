@@ -57,6 +57,7 @@ CHANGELOG.md
 # ===================================
 
 # Dependencies
+.npm-cache/
 node_modules/
 npm-debug.log*
 yarn-debug.log*
@@ -155,3 +156,9 @@ demo/
 .bmad-core/
 .bmad-*/
 .agent/
+
+# ===================================
+# Other
+# ===================================
+
+/themes/

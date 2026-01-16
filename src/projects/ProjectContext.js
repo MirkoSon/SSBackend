@@ -1,5 +1,6 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const fs = require('fs');
 const MigrationManager = require('../db/migrations/MigrationManager');
 
 /**
@@ -63,6 +64,12 @@ class ProjectContext {
      * @returns {Promise<sqlite3.Database>} Database instance
      */
     async _openDatabase() {
+        // Ensure parent directory exists
+        const dbDir = path.dirname(this.databasePath);
+        if (!fs.existsSync(dbDir)) {
+            fs.mkdirSync(dbDir, { recursive: true });
+        }
+
         return new Promise((resolve, reject) => {
             const db = new sqlite3.Database(this.databasePath, (err) => {
                 if (err) {

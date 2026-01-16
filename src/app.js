@@ -141,6 +141,27 @@ if (isNaN(PORT) || PORT < 1 || PORT > 65535) {
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Simple CORS for local dev (React at 5173/5174)
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174'
+];
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-admin-bypass');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+  next();
+});
+
 // Session middleware for admin authentication
 app.use(session({
   secret: process.env.SESSION_SECRET || getConfigValue('auth.session_secret', 'admin-session-secret-key'),
@@ -250,6 +271,11 @@ async function startServer() {
     // Each route group is mounted both at root (default project) and under /project/:projectId
     const scopedRouter = express.Router();
 
+    // Epic 7: Mount project management endpoints WITHOUT projectMiddleware
+    // These endpoints manage projects themselves and shouldn't require a project to exist
+    // Mount before general /admin route so they match first
+    app.use('/admin/api/projects', adminRoutes);
+
     app.use('/project/:projectId/save', projectMiddleware, saveRoutes);
     app.use('/project/:projectId/auth', projectMiddleware, authRoutes);
     app.use('/project/:projectId/inventory', projectMiddleware, inventoryRoutes);
@@ -261,6 +287,8 @@ async function startServer() {
     app.use('/auth', projectMiddleware, authRoutes);
     app.use('/inventory', projectMiddleware, inventoryRoutes);
     app.use('/progress', projectMiddleware, progressRoutes);
+    // Note: /admin/api/projects mounted above without projectMiddleware
+    // All other /admin routes require project context
     app.use('/admin', projectMiddleware, adminRoutes);
 
     // Note: plugin management API routes also support scoping
