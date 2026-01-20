@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Character Progress - Backend Management Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#ff5722",
+                        "background-light": "#f8fafc",
+                        "background-dark": "#0f172a",
+                        "card-dark": "rgba(30, 41, 59, 0.7)",
+                        "border-dark": "rgba(255, 255, 255, 0.1)",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.75rem",
+                    },
+                },
+            },
+        };
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('main-content');
+            const logoText = document.getElementById('logo-text');
+            const navLabels = document.querySelectorAll('.nav-label');
+            sidebar.classList.toggle('w-64');
+            sidebar.classList.toggle('w-20');
+            logoText.classList.toggle('hidden');
+            navLabels.forEach(label => label.classList.toggle('hidden'));
+        }
+    </script>
+<style type="text/tailwindcss">
+        .glass {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex transition-colors duration-300">
+<aside class="w-64 flex-shrink-0 border-r border-slate-200 dark:border-border-dark bg-white/50 dark:bg-slate-900/50 glass transition-all duration-300 flex flex-col fixed h-screen z-50" id="sidebar">
+<div class="p-6 flex items-center gap-3">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-white text-xl">layers</span>
+</div>
+<span class="font-bold text-lg tracking-tight whitespace-nowrap" id="logo-text">StupidSimple</span>
+</div>
+<nav class="flex-1 px-4 space-y-1 overflow-y-auto">
+<div class="pb-4">
+<p class="nav-label text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-3 mb-2">Core</p>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="nav-label font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all mt-1" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="nav-label font-medium">Users</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all mt-1" href="#">
+<span class="material-symbols-outlined">save</span>
+<span class="nav-label font-medium">Saves</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 bg-primary text-white rounded-xl shadow-lg shadow-primary/20 transition-all mt-1" href="#">
+<span class="material-symbols-outlined">trending_up</span>
+<span class="nav-label font-medium">Progress</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all mt-1" href="#">
+<span class="material-symbols-outlined">ios_share</span>
+<span class="nav-label font-medium">Export</span>
+</a>
+</div>
+<div class="pb-4">
+<p class="nav-label text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-3 mb-2">Plugins</p>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined text-emerald-500">payments</span>
+<span class="nav-label font-medium">Economy</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all mt-1" href="#">
+<span class="material-symbols-outlined text-amber-500">emoji_events</span>
+<span class="nav-label font-medium">Achievements</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all mt-1" href="#">
+<span class="material-symbols-outlined text-blue-500">leaderboard</span>
+<span class="nav-label font-medium">Leaderboards</span>
+</a>
+</div>
+</nav>
+<div class="p-4 border-t border-slate-200 dark:border-border-dark">
+<button class="w-full flex items-center justify-center p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 transition-colors" onclick="toggleSidebar()">
+<span class="material-symbols-outlined">menu_open</span>
+</button>
+</div>
+</aside>
+<main class="flex-1 transition-all duration-300 ml-64 min-h-screen" id="main-content">
+<header class="h-16 border-b border-slate-200 dark:border-border-dark flex items-center justify-between px-8 bg-white/30 dark:bg-slate-900/30 glass sticky top-0 z-40">
+<div class="flex items-center gap-4">
+<div class="relative group">
+<select class="appearance-none bg-slate-100 dark:bg-slate-800 border-none rounded-lg py-1.5 pl-3 pr-10 text-sm font-medium focus:ring-2 focus:ring-primary cursor-pointer">
+<option>Default Project</option>
+<option>Production API</option>
+<option>Staging Environment</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1.5 text-slate-400 pointer-events-none text-xl">expand_more</span>
+</div>
+<div class="h-8 w-px bg-slate-200 dark:bg-border-dark"></div>
+<nav class="flex items-center text-xs font-medium text-slate-500 uppercase tracking-widest gap-2">
+<span>Core</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="text-primary">Character Progress</span>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors">
+<span class="material-symbols-outlined">search</span>
+</button>
+<div class="flex items-center gap-3 cursor-pointer group">
+<div class="text-right hidden sm:block">
+<p class="text-sm font-semibold">Alex Rivera</p>
+<p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Administrator</p>
+</div>
+<img alt="User avatar" class="w-9 h-9 rounded-full ring-2 ring-transparent group-hover:ring-primary transition-all shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-gz3IlCXkqsKBiC1aSxdhxHI2d0pS3Q589NhpRhYDQqk5a_c3zdj1LVeeomcuak0HP3oDmfuriwCxwah0KkyfuMDoKRAri8vvhkxzzHNtKZu8tuo33RLije-OkJA95n39xafxkjfN-gonB0V93jcjRDsih3pwj8LKbor72nxiR1le6VP0UqUgEDAUIdY7Sgzdh6_TXEJ7SeAiRMmKY6Kc6z2f3RUlhZ9v1R-JQTUM9HOQXryjQFQY1OFqb9tyqmO35W1Q7NclhOI"/>
+</div>
+</div>
+</header>
+<div class="p-8">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+<div>
+<h1 class="text-2xl font-bold mb-1">Character Progress</h1>
+<p class="text-slate-500 text-sm">Real-time tracking of player metrics and evolution across the project.</p>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-bold rounded-xl hover:bg-orange-600 transition-colors shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-lg">add</span>
+                    New Entry
+                </button>
+<button class="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-border-dark rounded-xl text-slate-500 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+</div>
+</div>
+<div class="flex flex-wrap items-center gap-3 mb-8">
+<button class="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest bg-primary text-white border border-primary transition-all shadow-md shadow-primary/10">All Metrics</button>
+<button class="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest bg-white dark:bg-slate-800 border border-slate-200 dark:border-border-dark text-slate-500 hover:border-primary hover:text-primary transition-all">Level</button>
+<button class="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest bg-white dark:bg-slate-800 border border-slate-200 dark:border-border-dark text-slate-500 hover:border-primary hover:text-primary transition-all">Experience</button>
+<button class="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest bg-white dark:bg-slate-800 border border-slate-200 dark:border-border-dark text-slate-500 hover:border-primary hover:text-primary transition-all">Playtime</button>
+<button class="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest bg-white dark:bg-slate-800 border border-slate-200 dark:border-border-dark text-slate-500 hover:border-primary hover:text-primary transition-all">Skill Points</button>
+<button class="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest bg-white dark:bg-slate-800 border border-slate-200 dark:border-border-dark text-slate-500 hover:border-primary hover:text-primary transition-all">Achievements</button>
+</div>
+<div class="bg-white dark:bg-card-dark border border-slate-200 dark:border-border-dark rounded-2xl glass overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-slate-200 dark:border-border-dark">
+<th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">User ID</th>
+<th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Metric Name</th>
+<th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Progress (Current / Max)</th>
+<th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Raw Value</th>
+<th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Updated At</th>
+<th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-200 dark:divide-border-dark">
+<tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-sm text-slate-400">person</span>
+</div>
+<div>
+<p class="text-sm font-semibold">USR-9421</p>
+<p class="text-[10px] text-slate-500">neon_rider_99</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-500 uppercase tracking-wide">Level</span>
+</td>
+<td class="px-6 py-4">
+<div class="w-full max-w-[200px]">
+<div class="flex justify-between items-center mb-1">
+<span class="text-xs font-bold text-slate-300">85 / 100</span>
+<span class="text-[10px] text-slate-500">85%</span>
+</div>
+<div class="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full shadow-[0_0_8px_rgba(255,87,34,0.3)]" style="width: 85%"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<p class="text-sm font-medium">85</p>
+</td>
+<td class="px-6 py-4">
+<p class="text-xs text-slate-500 font-medium">2 mins ago</p>
+</td>
+<td class="px-6 py-4">
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-sm text-slate-400">person</span>
+</div>
+<div>
+<p class="text-sm font-semibold">USR-1205</p>
+<p class="text-[10px] text-slate-500">shadow_walker</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-500 uppercase tracking-wide">XP Points</span>
+</td>
+<td class="px-6 py-4">
+<div class="w-full max-w-[200px]">
+<div class="flex justify-between items-center mb-1">
+<span class="text-xs font-bold text-slate-300">12,450 / 25,000</span>
+<span class="text-[10px] text-slate-500">49%</span>
+</div>
+<div class="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-amber-500 rounded-full shadow-[0_0_8px_rgba(245,158,11,0.3)]" style="width: 49.8%"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<p class="text-sm font-medium">12.4k</p>
+</td>
+<td class="px-6 py-4">
+<p class="text-xs text-slate-500 font-medium">15 mins ago</p>
+</td>
+<td class="px-6 py-4">
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-sm text-slate-400">person</span>
+</div>
+<div>
+<p class="text-sm font-semibold">USR-4503</p>
+<p class="text-[10px] text-slate-500">cyber_punk_88</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-500 uppercase tracking-wide">Skill Points</span>
+</td>
+<td class="px-6 py-4">
+<div class="w-full max-w-[200px]">
+<div class="flex justify-between items-center mb-1">
+<span class="text-xs font-bold text-slate-300">5 / 12</span>
+<span class="text-[10px] text-slate-500">41%</span>
+</div>
+<div class="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.3)]" style="width: 41%"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<p class="text-sm font-medium">5</p>
+</td>
+<td class="px-6 py-4">
+<p class="text-xs text-slate-500 font-medium">1 hour ago</p>
+</td>
+<td class="px-6 py-4">
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-sm text-slate-400">person</span>
+</div>
+<div>
+<p class="text-sm font-semibold">USR-2219</p>
+<p class="text-[10px] text-slate-500">alpha_wolf</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-500 uppercase tracking-wide">Playtime</span>
+</td>
+<td class="px-6 py-4">
+<div class="w-full max-w-[200px]">
+<div class="flex justify-between items-center mb-1">
+<span class="text-xs font-bold text-slate-300">120 / 500 h</span>
+<span class="text-[10px] text-slate-500">24%</span>
+</div>
+<div class="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-purple-500 rounded-full shadow-[0_0_8px_rgba(168,85,247,0.3)]" style="width: 24%"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<p class="text-sm font-medium">120.5h</p>
+</td>
+<td class="px-6 py-4">
+<p class="text-xs text-slate-500 font-medium">3 hours ago</p>
+</td>
+<td class="px-6 py-4">
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-sm text-slate-400">person</span>
+</div>
+<div>
+<p class="text-sm font-semibold">USR-8822</p>
+<p class="text-[10px] text-slate-500">frost_bite</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-500 uppercase tracking-wide">Boss Kills</span>
+</td>
+<td class="px-6 py-4">
+<div class="w-full max-w-[200px]">
+<div class="flex justify-between items-center mb-1">
+<span class="text-xs font-bold text-slate-300">12 / 12</span>
+<span class="text-[10px] text-slate-500">100%</span>
+</div>
+<div class="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-rose-500 rounded-full shadow-[0_0_8px_rgba(244,63,94,0.3)]" style="width: 100%"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<p class="text-sm font-medium">12</p>
+</td>
+<td class="px-6 py-4">
+<p class="text-xs text-slate-500 font-medium">5 hours ago</p>
+</td>
+<td class="px-6 py-4">
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 border-t border-slate-200 dark:border-border-dark flex items-center justify-between">
+<p class="text-xs text-slate-500">Showing <span class="text-slate-300 font-bold">5</span> of <span class="text-slate-300 font-bold">1,284</span> entries</p>
+<div class="flex gap-1">
+<button class="p-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<button class="w-8 h-8 bg-primary text-white text-xs font-bold rounded-lg flex items-center justify-center">1</button>
+<button class="w-8 h-8 bg-slate-800 border border-slate-700 text-slate-400 text-xs font-bold rounded-lg flex items-center justify-center hover:bg-slate-700 transition-colors">2</button>
+<button class="w-8 h-8 bg-slate-800 border border-slate-700 text-slate-400 text-xs font-bold rounded-lg flex items-center justify-center hover:bg-slate-700 transition-colors">3</button>
+<button class="p-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<div class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60]" id="mobile-overlay"></div>
+<script>
+    function toggleTheme() {
+        document.documentElement.classList.toggle('dark');
+    }
+</script>
+
+</body></html>

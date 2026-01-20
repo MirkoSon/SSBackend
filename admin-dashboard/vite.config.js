@@ -16,4 +16,19 @@ export default defineConfig({
       services: path.resolve(__dirname, './src/services'),
     },
   },
+  server: {
+    proxy: {
+      // Proxy admin API requests to backend server
+      '/admin': {
+        target: 'http://localhost:3012',
+        changeOrigin: true,
+      },
+      // Proxy project-scoped API requests to backend server
+      '/project': {
+        target: 'http://localhost:3012',
+        changeOrigin: true,
+      },
+    },
+  },
 })
+

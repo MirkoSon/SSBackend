@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Game Saves Database View - Stupid Simple Backend</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#ff5722",
+                        "background-light": "#f8fafc",
+                        "background-dark": "#0f172a",
+                        "card-dark": "rgba(30, 41, 59, 0.7)",
+                        "border-dark": "rgba(255, 255, 255, 0.1)",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                        mono: ["Fira Code", "monospace"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.75rem",
+                    },
+                },
+            },
+        };
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('main-content');
+            const logoText = document.getElementById('logo-text');
+            const navLabels = document.querySelectorAll('.nav-label');
+            sidebar.classList.toggle('w-64');
+            sidebar.classList.toggle('w-20');
+            logoText.classList.toggle('hidden');
+            navLabels.forEach(label => label.classList.toggle('hidden'));
+        }
+    </script>
+<style type="text/tailwindcss">
+        .glass {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .json-preview {
+            scrollbar-width: thin;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex transition-colors duration-300">
+<aside class="w-64 flex-shrink-0 border-r border-slate-200 dark:border-border-dark bg-white/50 dark:bg-slate-900/50 glass transition-all duration-300 flex flex-col fixed h-screen z-50" id="sidebar">
+<div class="p-6 flex items-center gap-3">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center flex-shrink-0 text-white">
+<span class="material-symbols-outlined text-xl">layers</span>
+</div>
+<span class="font-bold text-lg tracking-tight whitespace-nowrap" id="logo-text">StupidSimple</span>
+</div>
+<nav class="flex-1 px-4 space-y-1 overflow-y-auto">
+<div class="pb-4">
+<p class="nav-label text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-3 mb-2">Core</p>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="nav-label font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all mt-1" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="nav-label font-medium">Users</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 bg-primary text-white rounded-xl shadow-lg shadow-primary/20 transition-all mt-1" href="#">
+<span class="material-symbols-outlined">save</span>
+<span class="nav-label font-medium">Saves</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all mt-1" href="#">
+<span class="material-symbols-outlined">trending_up</span>
+<span class="nav-label font-medium">Progress</span>
+</a>
+</div>
+<div class="pb-4">
+<p class="nav-label text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-3 mb-2">Maintenance</p>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined text-amber-500">cleaning_services</span>
+<span class="nav-label font-medium">Cleanup Tasks</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all mt-1" href="#">
+<span class="material-symbols-outlined text-blue-500">settings</span>
+<span class="nav-label font-medium">System Health</span>
+</a>
+</div>
+</nav>
+<div class="p-4 border-t border-slate-200 dark:border-border-dark">
+<button class="w-full flex items-center justify-center p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 transition-colors" onclick="toggleSidebar()">
+<span class="material-symbols-outlined">menu_open</span>
+</button>
+</div>
+</aside>
+<main class="flex-1 transition-all duration-300 ml-64 min-h-screen flex flex-col" id="main-content">
+<header class="h-16 border-b border-slate-200 dark:border-border-dark flex items-center justify-between px-8 bg-white/30 dark:bg-slate-900/30 glass sticky top-0 z-40">
+<div class="flex items-center gap-4">
+<nav aria-label="Breadcrumb" class="flex">
+<ol class="inline-flex items-center space-x-1 md:space-x-3">
+<li class="inline-flex items-center">
+<a class="inline-flex items-center text-sm font-medium text-slate-500 hover:text-primary" href="#">
+                            Database
+                        </a>
+</li>
+<li>
+<div class="flex items-center">
+<span class="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+<span class="ml-1 text-sm font-bold text-slate-700 dark:text-slate-200 md:ml-2">Game Saves</span>
+</div>
+</li>
+</ol>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden lg:flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg px-3 py-1.5 border border-transparent focus-within:border-primary/50 transition-all">
+<span class="material-symbols-outlined text-slate-400 text-lg">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-xs w-64 placeholder:text-slate-500" placeholder="Search by User ID or Save ID..." type="text"/>
+</div>
+<div class="h-8 w-px bg-slate-200 dark:bg-border-dark mx-2"></div>
+<div class="flex items-center gap-3 cursor-pointer group">
+<div class="text-right hidden sm:block">
+<p class="text-sm font-semibold">Alex Rivera</p>
+<p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Administrator</p>
+</div>
+<img alt="User avatar" class="w-9 h-9 rounded-full ring-2 ring-transparent group-hover:ring-primary transition-all shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1pp-wy6RnDdN1jV-r3gfAQ3Y_qDcxQiAd4whrR9PG0Y4fFZZ3e_84zknrY5S0kGefhDxxz3PchVCSTo7snsY1O3bitv0dXV1zUjZQHnl5VO3tXTkmbeeLMkMwYbGukJ8Miy4dz03RuF0iyO__EKykZGaYBMYfqq_bNHtCKDDdJp79nKac6l_GDGaTqgJfFTBhvWRdOopgacqFzd2eMmFKjGgFsA4LLPZdSU8bx02PA9RhL-tIccmoG3cJuNTkwtQpxVHfQlQDwb8"/>
+</div>
+</div>
+</header>
+<div class="p-8 flex-1">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+<div>
+<h1 class="text-2xl font-bold mb-1">Game Saves Database</h1>
+<p class="text-slate-500 text-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">database</span>
+                    Showing all persisted game state snapshots
+                </p>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-semibold text-sm transition-all border border-slate-200 dark:border-border-dark">
+<span class="material-symbols-outlined text-lg">filter_list</span>
+                    Advanced Filters
+                </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl font-bold text-sm transition-all border border-red-500/20">
+<span class="material-symbols-outlined text-lg">delete_sweep</span>
+                    Prune Old Saves
+                </button>
+</div>
+</div>
+<div class="bg-white dark:bg-card-dark border border-slate-200 dark:border-border-dark rounded-2xl glass overflow-hidden shadow-2xl shadow-slate-900/20">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-border-dark">
+<th class="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-slate-500">Save ID</th>
+<th class="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-slate-500">User ID</th>
+<th class="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-slate-500">JSON Data Preview</th>
+<th class="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-slate-500">Created At</th>
+<th class="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-slate-500 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-200 dark:divide-border-dark">
+<tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="font-mono text-xs text-primary font-bold">SAV_8829_XP</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded bg-indigo-500/10 text-indigo-500 flex items-center justify-center text-[10px] font-bold">UR</div>
+<span class="text-sm font-medium">user_9921_beta</span>
+</div>
+</td>
+<td class="px-6 py-4 min-w-[320px]">
+<div class="bg-slate-900/80 rounded-lg p-3 font-mono text-[10px] text-slate-300 max-w-md overflow-hidden relative group/code">
+<div class="flex justify-between items-center mb-1 text-slate-500 font-bold uppercase text-[8px]">
+<span>Application/JSON</span>
+<span class="material-symbols-outlined text-[12px] opacity-0 group-hover/code:opacity-100 transition-opacity cursor-pointer hover:text-white">content_copy</span>
+</div>
+<pre class="json-preview overflow-x-auto whitespace-pre"><span class="text-emerald-400">"level"</span>: <span class="text-amber-400">42</span>, <span class="text-emerald-400">"pos"</span>: {<span class="text-emerald-400">"x"</span>: <span class="text-amber-400">102.5</span>, <span class="text-emerald-400">"y"</span>: <span class="text-amber-400">-12.0</span>}, <span class="text-emerald-400">"inv"</span>: [<span class="text-sky-400">"sword_01"</span>, <span class="text-sky-400">"potion_hp"</span>]</pre>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="text-sm font-medium">Oct 24, 2023</div>
+<div class="text-[10px] text-slate-500 font-bold">14:22:10 UTC</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">visibility</span>
+</button>
+<button class="p-2 text-slate-400 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-lg">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="font-mono text-xs text-primary font-bold">SAV_9012_LQ</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-[10px] font-bold">KJ</div>
+<span class="text-sm font-medium">kyle_j_88</span>
+</div>
+</td>
+<td class="px-6 py-4 min-w-[320px]">
+<div class="bg-slate-900/80 rounded-lg p-3 font-mono text-[10px] text-slate-300 max-w-md overflow-hidden relative group/code">
+<div class="flex justify-between items-center mb-1 text-slate-500 font-bold uppercase text-[8px]">
+<span>Application/JSON</span>
+<span class="material-symbols-outlined text-[12px] opacity-0 group-hover/code:opacity-100 transition-opacity cursor-pointer hover:text-white">content_copy</span>
+</div>
+<pre class="json-preview overflow-x-auto whitespace-pre"><span class="text-emerald-400">"health"</span>: <span class="text-amber-400">100</span>, <span class="text-emerald-400">"mana"</span>: <span class="text-amber-400">85</span>, <span class="text-emerald-400">"checkpoint"</span>: <span class="text-sky-400">"Cave_Entrance_A"</span>, <span class="text-emerald-400">"kills"</span>: <span class="text-amber-400">12</span></pre>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="text-sm font-medium">Oct 24, 2023</div>
+<div class="text-[10px] text-slate-500 font-bold">14:15:45 UTC</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">visibility</span>
+</button>
+<button class="p-2 text-slate-400 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-lg">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="font-mono text-xs text-primary font-bold">SAV_7731_ZM</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded bg-orange-500/10 text-orange-500 flex items-center justify-center text-[10px] font-bold">ZM</div>
+<span class="text-sm font-medium">zeromancer</span>
+</div>
+</td>
+<td class="px-6 py-4 min-w-[320px]">
+<div class="bg-slate-900/80 rounded-lg p-3 font-mono text-[10px] text-slate-300 max-w-md overflow-hidden relative group/code">
+<div class="flex justify-between items-center mb-1 text-slate-500 font-bold uppercase text-[8px]">
+<span>Application/JSON</span>
+<span class="material-symbols-outlined text-[12px] opacity-0 group-hover/code:opacity-100 transition-opacity cursor-pointer hover:text-white">content_copy</span>
+</div>
+<pre class="json-preview overflow-x-auto whitespace-pre"><span class="text-emerald-400">"stats"</span>: {<span class="text-emerald-400">"str"</span>: <span class="text-amber-400">15</span>, <span class="text-emerald-400">"dex"</span>: <span class="text-amber-400">12</span>, <span class="text-emerald-400">"int"</span>: <span class="text-amber-400">8</span>}, <span class="text-emerald-400">"quest_active"</span>: <span class="text-sky-400">"Dragon_Slayer_Q1"</span></pre>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="text-sm font-medium">Oct 24, 2023</div>
+<div class="text-[10px] text-slate-500 font-bold">13:58:22 UTC</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">visibility</span>
+</button>
+<button class="p-2 text-slate-400 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-lg">delete</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 bg-slate-50/50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-border-dark flex items-center justify-between">
+<div class="text-[11px] text-slate-500 font-bold uppercase tracking-widest">
+                    Showing 1-15 of 45,102 records
+                </div>
+<div class="flex gap-1">
+<button class="p-1 text-slate-400 hover:text-primary transition-colors disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined">first_page</span>
+</button>
+<button class="p-1 text-slate-400 hover:text-primary transition-colors disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary text-white text-xs font-bold">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold transition-colors">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold transition-colors">3</button>
+<button class="p-1 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+<button class="p-1 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">last_page</span>
+</button>
+</div>
+</div>
+</div>
+<div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+<div class="bg-white dark:bg-card-dark border border-slate-200 dark:border-border-dark p-6 rounded-2xl glass">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center">
+<span class="material-symbols-outlined">trending_down</span>
+</div>
+<div>
+<h3 class="font-bold text-sm">Storage Optimization</h3>
+<p class="text-xs text-slate-500">Unused saves older than 30 days are eligible for pruning.</p>
+</div>
+</div>
+<div class="flex items-end justify-between gap-4">
+<div class="flex-1">
+<div class="flex justify-between text-[10px] font-bold uppercase text-slate-400 mb-1.5">
+<span>Prunable Data</span>
+<span class="text-orange-500">2.4 GB</span>
+</div>
+<div class="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="bg-orange-500 h-full w-[35%] rounded-full"></div>
+</div>
+</div>
+<button class="px-4 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl text-xs font-bold hover:opacity-90 transition-opacity">
+                        Analyze
+                    </button>
+</div>
+</div>
+<div class="bg-white dark:bg-card-dark border border-slate-200 dark:border-border-dark p-6 rounded-2xl glass">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+<span class="material-symbols-outlined">history</span>
+</div>
+<div>
+<h3 class="font-bold text-sm">Recent Export</h3>
+<p class="text-xs text-slate-500">Database snapshot generated successfully.</p>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="text-xs">
+<span class="font-medium">game_saves_production_v2.sql.gz</span>
+<div class="text-slate-500 text-[10px]">Yesterday at 11:45 PM • 142 MB</div>
+</div>
+<button class="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors">
+<span class="material-symbols-outlined">download</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<script>
+    function toggleTheme() {
+        document.documentElement.classList.toggle('dark');
+    }
+</script>
+
+</body></html>

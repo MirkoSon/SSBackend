@@ -1,5 +1,4 @@
 import { useState } from "react";
-import PropTypes from "prop-types";
 
 // @mui components
 import AppBar from "@mui/material/AppBar";
@@ -10,17 +9,15 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Tooltip from "@mui/material/Tooltip";
-import Fab from "@mui/material/Fab";
 
 // MD components
 import MDBox from "components/MDBox";
-import MDTypography from "components/MDTypography";
 
 // Context
 import { useProjects } from "context/projectContext";
 import { useMaterialUIController } from "context";
 
-function AdminNavbar({ onCreateProject }) {
+function AdminNavbar() {
   const [controller] = useMaterialUIController();
   const { darkMode } = controller;
   const { projects, currentProjectId, selectProject } = useProjects();
@@ -42,21 +39,20 @@ function AdminNavbar({ onCreateProject }) {
 
   return (
     <AppBar
-      position="sticky"
+      position="fixed"
       color="inherit"
+      elevation={0}
       sx={{
-        backdropFilter: "blur(20px)",
-        backgroundColor: ({ palette, functions }) =>
-          darkMode
-            ? functions.rgba(palette.background.default, 0.8)
-            : functions.rgba(palette.white.main, 0.8),
-        boxShadow: ({ boxShadows }) => boxShadows.md,
+        backgroundColor: '#1e293b',
+        borderBottom: '1px solid #334155',
+        boxShadow: 'none',
+        zIndex: ({ zIndex }) => zIndex.drawer + 1,
       }}
     >
       <Toolbar>
         {/* Logo */}
         <MDBox display="flex" alignItems="center" mr={3}>
-          <img src="assets/SSBackend_title_logo.png" alt="SSBackend Logo" style={{ height: "68px" }} />
+          <img src="/assets/SSBackend_title_logo.png" alt="SSBackend Logo" style={{ height: "68px" }} />
         </MDBox>
 
         {/* Project Selector */}
@@ -66,10 +62,24 @@ function AdminNavbar({ onCreateProject }) {
             onChange={handleProjectChange}
             size="small"
             sx={{
-              minWidth: 150,
+              minWidth: 200,
+              color: '#ffffff',
+              backgroundColor: '#0f172a',
+              borderRadius: '0.5rem',
+              fontWeight: 600,
+              fontSize: '0.85rem',
               "& .MuiOutlinedInput-notchedOutline": {
-                borderColor: ({ palette }) =>
-                  darkMode ? palette.grey[700] : palette.grey[400],
+                borderColor: '#334155',
+              },
+              "&:hover .MuiOutlinedInput-notchedOutline": {
+                borderColor: '#f97316',
+              },
+              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                borderColor: '#f97316',
+                boxShadow: '0 0 0 2px rgba(249, 115, 22, 0.3)',
+              },
+              "& .MuiSvgIcon-root": {
+                color: '#f97316',
               },
             }}
           >
@@ -79,37 +89,68 @@ function AdminNavbar({ onCreateProject }) {
               </MenuItem>
             ))}
           </Select>
-          <Tooltip title="Create new project">
-            <Fab
-              color="primary"
-              size="small"
-              onClick={onCreateProject}
-              sx={{ width: 24, height: 24, minHeight: 24 }}
-            >
-              <Icon sx={{ fontSize: "1rem" }}>add</Icon>
-            </Fab>
-          </Tooltip>
+          {/* Note: Project creation will be handled via Projects page route */}
         </MDBox>
 
         {/* Right side icons */}
         <MDBox display="flex" alignItems="center" gap={1}>
-          {/* Help Icon */}
-          <Tooltip title="Help">
-            <IconButton size="small" color="inherit">
-              <Icon>help_outline</Icon>
+          {/* Search Icon */}
+          <Tooltip title="Search">
+            <IconButton
+              size="small"
+              sx={{
+                color: '#94a3b8',
+                '&:hover': {
+                  backgroundColor: '#334155',
+                  color: '#ffffff'
+                }
+              }}
+            >
+              <Icon>search</Icon>
             </IconButton>
           </Tooltip>
 
-          {/* Settings Icon */}
-          <Tooltip title="Settings">
-            <IconButton size="small" color="inherit">
-              <Icon>settings</Icon>
+          {/* Notifications Icon with badge */}
+          <Tooltip title="Notifications">
+            <IconButton
+              size="small"
+              sx={{
+                color: '#94a3b8',
+                '&:hover': {
+                  backgroundColor: '#334155',
+                  color: '#ffffff'
+                },
+                position: 'relative',
+              }}
+            >
+              <Icon>notifications</Icon>
+              <MDBox
+                sx={{
+                  position: 'absolute',
+                  top: 8,
+                  right: 8,
+                  width: 8,
+                  height: 8,
+                  backgroundColor: '#ef4444',
+                  borderRadius: '50%',
+                }}
+              />
             </IconButton>
           </Tooltip>
 
           {/* Account Icon */}
           <Tooltip title="Account">
-            <IconButton size="small" color="inherit" onClick={handleAccountMenuOpen}>
+            <IconButton
+              size="small"
+              onClick={handleAccountMenuOpen}
+              sx={{
+                color: '#94a3b8',
+                '&:hover': {
+                  backgroundColor: '#334155',
+                  color: '#ffffff'
+                }
+              }}
+            >
               <Icon>account_circle</Icon>
             </IconButton>
           </Tooltip>
@@ -142,13 +183,5 @@ function AdminNavbar({ onCreateProject }) {
     </AppBar>
   );
 }
-
-AdminNavbar.propTypes = {
-  onCreateProject: PropTypes.func,
-};
-
-AdminNavbar.defaultProps = {
-  onCreateProject: () => { },
-};
 
 export default AdminNavbar;
