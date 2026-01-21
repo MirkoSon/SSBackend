@@ -21,9 +21,9 @@ Coded by www.creative-tim.com
 
 const colors = {
   background: {
-    default: "#1a2035",
-    sidenav: "#1f283e",
-    card: "#202940",
+    default: "#0f172a",
+    sidenav: "#0f172a",
+    card: "rgba(30, 41, 59, 0.7)",
   },
 
   text: {
@@ -47,8 +47,8 @@ const colors = {
   },
 
   primary: {
-    main: "#e91e63",
-    focus: "#e91e63",
+    main: "#ff5722",
+    focus: "#ff7043",
   },
 
   secondary: {
@@ -100,8 +100,8 @@ const colors = {
 
   gradients: {
     primary: {
-      main: "#EC407A",
-      state: "#D81B60",
+      main: "#ff7043",
+      state: "#ff5722",
     },
 
     secondary: {
@@ -245,7 +245,7 @@ const colors = {
   },
 
   coloredShadows: {
-    primary: "#e91e62",
+    primary: "#ff5722",
     secondary: "#110e0e",
     info: "#00bbd4",
     success: "#4caf4f",

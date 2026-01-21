@@ -7,35 +7,24 @@ import IconButton from "@mui/material/IconButton";
 import Icon from "@mui/material/Icon";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
 import Tooltip from "@mui/material/Tooltip";
 
 // MD components
 import MDBox from "components/MDBox";
+import MDTypography from "components/MDTypography";
 
 // Context
-import { useProjects } from "context/projectContext";
 import { useMaterialUIController } from "context";
 
 function AdminNavbar() {
   const [controller] = useMaterialUIController();
   const { darkMode } = controller;
-  const { projects, currentProjectId, selectProject } = useProjects();
   const [accountMenuAnchor, setAccountMenuAnchor] = useState(null);
 
   const handleAccountMenuOpen = (event) => setAccountMenuAnchor(event.currentTarget);
   const handleAccountMenuClose = () => setAccountMenuAnchor(null);
 
-  const handleProjectChange = (event) => {
-    selectProject(event.target.value);
-  };
 
-  // Ensure the selected value exists in the projects list
-  const safeCurrentProjectId = projects.some((p) => p.id === currentProjectId)
-    ? currentProjectId
-    : projects.length > 0
-      ? projects[0].id
-      : "";
 
   return (
     <AppBar
@@ -43,53 +32,25 @@ function AdminNavbar() {
       color="inherit"
       elevation={0}
       sx={{
-        backgroundColor: '#1e293b',
-        borderBottom: '1px solid #334155',
+        backgroundColor: darkMode ? 'rgba(15, 23, 42, 0.4)' : 'rgba(255, 255, 255, 0.4)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        borderBottom: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
         boxShadow: 'none',
         zIndex: ({ zIndex }) => zIndex.drawer + 1,
+        transition: "background-color 0.3s",
       }}
     >
       <Toolbar>
-        {/* Logo */}
-        <MDBox display="flex" alignItems="center" mr={3}>
-          <img src="/assets/SSBackend_title_logo.png" alt="SSBackend Logo" style={{ height: "68px" }} />
-        </MDBox>
-
-        {/* Project Selector */}
+        {/* Breadcrumbs Placeholder */}
         <MDBox display="flex" alignItems="center" gap={1} mr="auto">
-          <Select
-            value={safeCurrentProjectId}
-            onChange={handleProjectChange}
-            size="small"
-            sx={{
-              minWidth: 200,
-              color: '#ffffff',
-              backgroundColor: '#0f172a',
-              borderRadius: '0.5rem',
-              fontWeight: 600,
-              fontSize: '0.85rem',
-              "& .MuiOutlinedInput-notchedOutline": {
-                borderColor: '#334155',
-              },
-              "&:hover .MuiOutlinedInput-notchedOutline": {
-                borderColor: '#f97316',
-              },
-              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                borderColor: '#f97316',
-                boxShadow: '0 0 0 2px rgba(249, 115, 22, 0.3)',
-              },
-              "& .MuiSvgIcon-root": {
-                color: '#f97316',
-              },
-            }}
-          >
-            {projects.map((project) => (
-              <MenuItem key={project.id} value={project.id}>
-                {project.name}
-              </MenuItem>
-            ))}
-          </Select>
-          {/* Note: Project creation will be handled via Projects page route */}
+          <MDTypography variant="button" fontWeight="medium" sx={{ color: darkMode ? '#ffffff88' : '#64748b' }}>
+            Database
+          </MDTypography>
+          <Icon sx={{ fontSize: 'small', color: '#94a3b8' }}>chevron_right</Icon>
+          <MDTypography variant="button" fontWeight="bold" sx={{ color: darkMode ? '#ffffff' : '#1e293b' }}>
+            Dashboard
+          </MDTypography>
         </MDBox>
 
         {/* Right side icons */}
@@ -138,20 +99,33 @@ function AdminNavbar() {
             </IconButton>
           </Tooltip>
 
-          {/* Account Icon */}
+          {/* Account Icon / Avatar */}
           <Tooltip title="Account">
             <IconButton
               size="small"
               onClick={handleAccountMenuOpen}
               sx={{
-                color: '#94a3b8',
+                p: 0.5,
                 '&:hover': {
-                  backgroundColor: '#334155',
-                  color: '#ffffff'
+                  backgroundColor: 'transparent',
                 }
               }}
             >
-              <Icon>account_circle</Icon>
+              <MDBox
+                component="img"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5zQS5s-QcL7Ya9Bvdtp3Kb38sPQ8dwmzXTc_cAwuvPxQ6kYi91rOMrrBA1H4rHa9UzbfGbBB7k49j6qRZhO-VlZiWka44ULRpPOsihjRn9JkfLkm6tF5lfC8wAbC3ZCMpPa_bfqwpg8IsxIMifjWuOI_UnuLwJlOS5NwH6uIgCN1tuwrZIGTOckkLkUu46Jb5mWSoDYgAjAAQjRlTrcBNHmZQVQtb7VZUi-jbPq6IreqyYQ1HQwlXqH294YPAVIImZKEyO-20IFM"
+                alt="user-avatar"
+                sx={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: '50%',
+                  border: '2px solid transparent',
+                  transition: 'border-color 0.2s',
+                  '&:hover': {
+                    borderColor: '#ff5722',
+                  }
+                }}
+              />
             </IconButton>
           </Tooltip>
 

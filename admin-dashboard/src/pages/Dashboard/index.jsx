@@ -8,82 +8,83 @@ import Chip from "@mui/material/Chip";
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
 import { useProjects } from "context/projectContext";
+import { useMaterialUIController } from "context";
 
-function StatCard({ title, value, icon, color = "primary", change, status = "Stable" }) {
-  const getChangeColor = () => {
-    if (!change) return "text";
-    return change > 0 ? "success" : "error";
+function StatCard({ title, value, icon, color = "primary", change }) {
+  const [controller] = useMaterialUIController();
+  const { darkMode } = controller;
+
+  const getIconColors = () => {
+    switch (color) {
+      case "info": return { bg: "rgba(59, 130, 246, 0.1)", text: "#3b82f6" };
+      case "success": return { bg: "rgba(16, 185, 129, 0.1)", text: "#10b981" };
+      case "warning": return { bg: "rgba(245, 158, 11, 0.1)", text: "#f59e0b" };
+      default: return { bg: "rgba(255, 87, 34, 0.1)", text: "#ff5722" };
+    }
   };
+
+  const iconColors = getIconColors();
 
   return (
     <Card
       sx={{
-        backgroundColor: "#1e293b",
-        border: "1px solid #334155",
-        boxShadow: "none",
-        overflow: "visible",
-        position: "relative",
+        backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        border: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+        boxShadow: 'none',
+        borderRadius: '24px',
+        overflow: 'hidden',
       }}
     >
-      <MDBox p={3}>
-        <MDBox display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-          <MDBox
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            width="3rem"
-            height="3rem"
-            borderRadius="lg"
+      <MDBox p={3} display="flex" alignItems="center" gap={2}>
+        <MDBox
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          width="48px"
+          height="48px"
+          borderRadius="14px"
+          sx={{
+            backgroundColor: iconColors.bg,
+            color: iconColors.text,
+          }}
+        >
+          <Icon>{icon}</Icon>
+        </MDBox>
+        <MDBox>
+          <MDTypography
+            variant="caption"
+            fontWeight="bold"
             sx={{
-              backgroundColor:
-                color === "info"
-                  ? "#3b82f6"
-                  : color === "success"
-                  ? "#10b981"
-                  : color === "warning"
-                  ? "#f59e0b"
-                  : "#6366f1",
+              color: darkMode ? '#94a3b8' : '#64748b',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              fontSize: '10px'
             }}
           >
-            <Icon sx={{ color: "white" }}>{icon}</Icon>
-          </MDBox>
-          {change !== undefined ? (
-            <MDBox display="flex" alignItems="center">
-              <MDTypography variant="caption" fontWeight="medium" color={getChangeColor()}>
-                {change > 0 ? `+${change}%` : `${change}%`}
+            {title}
+          </MDTypography>
+          <MDBox display="flex" alignItems="baseline" gap={1}>
+            <MDTypography variant="h4" fontWeight="bold" sx={{ color: darkMode ? 'white' : '#1e293b' }}>
+              {typeof value === 'number' ? value.toLocaleString() : value}
+            </MDTypography>
+            {change && (
+              <MDTypography variant="caption" fontWeight="bold" color="success" sx={{ fontSize: '11px' }}>
+                +{change}%
               </MDTypography>
-              <Icon
-                fontSize="small"
-                sx={{ color: change > 0 ? "#10b981" : "#ef4444", ml: 0.5 }}
-              >
-                {change > 0 ? "trending_up" : "trending_down"}
-              </Icon>
-            </MDBox>
-          ) : (
-            <Chip
-              label={status}
-              size="small"
-              sx={{
-                backgroundColor: "#334155",
-                color: "#94a3b8",
-                fontSize: "0.75rem",
-                height: "24px",
-              }}
-            />
-          )}
+            )}
+          </MDBox>
         </MDBox>
-        <MDTypography variant="caption" color="text" sx={{ color: "#94a3b8", display: "block" }}>
-          {title}
-        </MDTypography>
-        <MDTypography variant="h4" fontWeight="bold" sx={{ color: "white", mt: 0.5 }}>
-          {value.toLocaleString()}
-        </MDTypography>
       </MDBox>
     </Card>
   );
 }
 
 function ActivityItem({ icon, title, description, status, time, iconColor }) {
+  const [controller] = useMaterialUIController();
+  const { darkMode } = controller;
+
   const statusColors = {
     SUCCESS: "#10b981",
     "IN PROGRESS": "#3b82f6",
@@ -95,9 +96,9 @@ function ActivityItem({ icon, title, description, status, time, iconColor }) {
     <MDBox
       display="flex"
       alignItems="flex-start"
-      p={2}
+      p={2.5}
       sx={{
-        borderBottom: "1px solid #334155",
+        borderBottom: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}`,
         "&:last-child": {
           borderBottom: "none",
         },
@@ -107,38 +108,40 @@ function ActivityItem({ icon, title, description, status, time, iconColor }) {
         display="flex"
         justifyContent="center"
         alignItems="center"
-        width="2.5rem"
-        height="2.5rem"
-        borderRadius="lg"
-        mr={2}
+        width="40px"
+        height="40px"
+        borderRadius="12px"
+        mr={2.5}
         sx={{
-          backgroundColor: iconColor || "#334155",
+          backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+          color: iconColor || (darkMode ? '#94a3b8' : '#64748b'),
           flexShrink: 0,
         }}
       >
-        <Icon sx={{ color: "white", fontSize: "1.25rem" }}>{icon}</Icon>
+        <Icon sx={{ fontSize: "1.25rem" }}>{icon}</Icon>
       </MDBox>
       <MDBox flex={1}>
-        <MDBox display="flex" justifyContent="space-between" alignItems="flex-start" mb={0.5}>
-          <MDTypography variant="button" fontWeight="medium" sx={{ color: "white" }}>
+        <MDBox display="flex" justifyContent="space-between" alignItems="center" mb={0.5}>
+          <MDTypography variant="button" fontWeight="bold" sx={{ color: darkMode ? 'white' : '#1e293b' }}>
             {title}
           </MDTypography>
-          <MDTypography variant="caption" sx={{ color: "#64748b", ml: 2 }}>
+          <MDTypography variant="caption" sx={{ color: '#94a3b8' }}>
             {time}
           </MDTypography>
         </MDBox>
-        <MDTypography variant="caption" sx={{ color: "#94a3b8", display: "block", mb: 1 }}>
+        <MDTypography variant="caption" sx={{ color: darkMode ? '#94a3b8' : '#64748b', display: "block", mb: 1, fontSize: '0.8rem' }}>
           {description}
         </MDTypography>
         <Chip
           label={status}
           size="small"
           sx={{
-            backgroundColor: statusColors[status] || "#334155",
-            color: "white",
+            backgroundColor: `${statusColors[status]}22` || "#33415522",
+            color: statusColors[status] || "#94a3b8",
             fontSize: "0.625rem",
             height: "20px",
             fontWeight: "bold",
+            borderRadius: '6px'
           }}
         />
       </MDBox>
@@ -146,7 +149,10 @@ function ActivityItem({ icon, title, description, status, time, iconColor }) {
   );
 }
 
+
 export default function Dashboard() {
+  const [controller] = useMaterialUIController();
+  const { darkMode } = controller;
   const { currentProjectId } = useProjects();
   const [stats, setStats] = useState({
     users: 12842,
@@ -179,137 +185,118 @@ export default function Dashboard() {
   }, [currentProjectId]);
 
   return (
-    <MDBox pt={4} pb={6} px={3} sx={{ backgroundColor: "#0f172a", minHeight: "100vh" }}>
+    <MDBox pt={4} pb={6} px={3} sx={{ backgroundColor: 'transparent' }}>
       {/* Header */}
-      <MDBox mb={3}>
-        <MDTypography variant="h4" fontWeight="medium" sx={{ color: "white" }}>
-          Dashboard Overview
-        </MDTypography>
-        <MDBox display="flex" alignItems="center" mt={0.5}>
-          <Icon sx={{ color: "#64748b", fontSize: "1rem", mr: 0.5 }}>visibility</Icon>
-          <MDTypography variant="button" sx={{ color: "#64748b" }}>
-            VIEWING DATA FOR PROJECT:{" "}
-            <span style={{ color: "#f97316", fontWeight: "bold" }}>
-              {currentProjectId || "DEFAULT"}
-            </span>
+      <MDBox mb={5} display="flex" justifyContent="space-between" alignItems="flex-end">
+        <MDBox>
+          <MDTypography variant="h3" fontWeight="bold" sx={{ color: darkMode ? 'white' : '#1e293b', letterSpacing: '-0.02em' }}>
+            Dashboard Overview
+          </MDTypography>
+          <MDTypography variant="button" sx={{ color: darkMode ? '#94a3b8' : '#64748b', mt: 0.5, display: 'block' }}>
+            Manage and monitor your application's health.
+          </MDTypography>
+        </MDBox>
+        <MDBox display="flex" alignItems="center" bgcolor={darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'} px={2} py={1} borderRadius="12px">
+          <Icon sx={{ color: '#ff5722', fontSize: "1.25rem", mr: 1 }}>analytics</Icon>
+          <MDTypography variant="button" fontWeight="bold" sx={{ color: darkMode ? 'white' : '#1e293b' }}>
+            {currentProjectId || "DEFAULT"}
           </MDTypography>
         </MDBox>
       </MDBox>
 
       {/* Stats Grid */}
-      <Grid container spacing={3} mb={4}>
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+      <Grid container spacing={4} mb={6}>
+        <Grid item xs={12} sm={6} md={4}>
           <StatCard
-            title="TOTAL USERS"
+            title="Total Users"
             value={stats.users}
-            icon="people"
+            icon="group"
             color="info"
-            change={12}
+            change={12.5}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <Grid item xs={12} sm={6} md={4}>
           <StatCard
-            title="GAME SAVES"
-            value={stats.saves}
-            icon="cloud_upload"
+            title="Active Today"
+            value={1402}
+            icon="bolt"
             color="success"
-            change={5.2}
+            change={8.2}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <Grid item xs={12} sm={6} md={4}>
           <StatCard
-            title="ACTIVE PLUGINS"
+            title="Active Plugins"
             value={stats.activePlugins}
             icon="extension"
             color="warning"
-            status="Stable"
           />
         </Grid>
       </Grid>
 
       {/* Quick Actions */}
-      <MDBox mb={3}>
-        <MDTypography variant="h6" fontWeight="medium" mb={2} sx={{ color: "#94a3b8" }}>
+      <MDBox mb={6}>
+        <MDTypography
+          variant="caption"
+          fontWeight="bold"
+          mb={2}
+          display="block"
+          sx={{ color: darkMode ? '#94a3b8' : '#64748b', letterSpacing: '0.05em' }}
+        >
           QUICK ACTIONS
         </MDTypography>
         <MDBox display="flex" gap={2}>
-          <IconButton
-            sx={{
-              backgroundColor: "#1e293b",
-              border: "1px solid #334155",
-              borderRadius: "12px",
-              width: "48px",
-              height: "48px",
-              "&:hover": {
-                backgroundColor: "#334155",
-              },
-            }}
-          >
-            <Icon sx={{ color: "white" }}>person_add</Icon>
-          </IconButton>
-          <IconButton
-            sx={{
-              backgroundColor: "#1e293b",
-              border: "1px solid #334155",
-              borderRadius: "12px",
-              width: "48px",
-              height: "48px",
-              "&:hover": {
-                backgroundColor: "#334155",
-              },
-            }}
-          >
-            <Icon sx={{ color: "white" }}>download</Icon>
-          </IconButton>
-          <IconButton
-            sx={{
-              backgroundColor: "#1e293b",
-              border: "1px solid #334155",
-              borderRadius: "12px",
-              width: "48px",
-              height: "48px",
-              "&:hover": {
-                backgroundColor: "#334155",
-              },
-            }}
-          >
-            <Icon sx={{ color: "white" }}>settings</Icon>
-          </IconButton>
-          <IconButton
-            sx={{
-              backgroundColor: "#1e293b",
-              border: "1px solid #334155",
-              borderRadius: "12px",
-              width: "48px",
-              height: "48px",
-              "&:hover": {
-                backgroundColor: "#334155",
-              },
-            }}
-          >
-            <Icon sx={{ color: "white" }}>help</Icon>
-          </IconButton>
+          {[
+            { icon: 'person_add', label: 'Add User' },
+            { icon: 'file_download', label: 'Export' },
+            { icon: 'settings', label: 'Settings' },
+            { icon: 'help', label: 'Help' }
+          ].map((action) => (
+            <IconButton
+              key={action.icon}
+              sx={{
+                backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                border: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
+                borderRadius: "14px",
+                width: "52px",
+                height: "52px",
+                transition: 'all 0.2s',
+                "&:hover": {
+                  backgroundColor: '#ff5722',
+                  borderColor: '#ff5722',
+                  transform: 'translateY(-2px)',
+                  "& .MuiIcon-root": { color: 'white' }
+                },
+              }}
+            >
+              <Icon sx={{ color: darkMode ? '#94a3b8' : '#64748b' }}>{action.icon}</Icon>
+            </IconButton>
+          ))}
         </MDBox>
       </MDBox>
 
       {/* Recent Activity */}
       <Card
         sx={{
-          backgroundColor: "#1e293b",
-          border: "1px solid #334155",
+          backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          border: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
           boxShadow: "none",
+          borderRadius: '24px',
+          overflow: 'hidden'
         }}
       >
-        <MDBox p={3}>
-          <MDBox display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <MDTypography variant="h6" fontWeight="medium" sx={{ color: "white" }}>
+        <MDBox p={4} pb={2}>
+          <MDBox display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+            <MDTypography variant="h5" fontWeight="bold" sx={{ color: darkMode ? 'white' : '#1e293b' }}>
               Recent Activity
             </MDTypography>
             <MDTypography
               variant="button"
               sx={{
-                color: "#f97316",
-                fontWeight: "medium",
+                color: "#ff5722",
+                fontWeight: "bold",
                 cursor: "pointer",
                 "&:hover": {
                   textDecoration: "underline",
@@ -319,6 +306,9 @@ export default function Dashboard() {
               VIEW ALL LOGS
             </MDTypography>
           </MDBox>
+          <MDTypography variant="button" sx={{ color: darkMode ? '#94a3b8' : '#64748b', display: 'block', mb: 3 }}>
+            Latest events from your registered plugins and core services.
+          </MDTypography>
           <MDBox>
             <ActivityItem
               icon="person_add"

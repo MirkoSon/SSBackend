@@ -20,48 +20,46 @@ import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
 import { progressApi } from "services/api/adminService";
 import { useProjects } from "context/projectContext";
+import { useMaterialUIController } from "context";
 
 // Progress bar with label
-function ProgressBar({ current, max, label, color = "#3b82f6" }) {
+function ProgressBar({ current, max, label, color = "#ff5722", darkMode }) {
   const percentage = max > 0 ? Math.min((current / max) * 100, 100) : 0;
 
   return (
-    <MDBox>
+    <MDBox width="100%">
       <MDBox display="flex" justifyContent="space-between" alignItems="center" mb={0.5}>
-        <Chip
-          label={label}
-          size="small"
-          sx={{
-            backgroundColor: color,
-            color: "white",
-            fontSize: "0.625rem",
-            height: "20px",
-            fontWeight: "bold",
-          }}
-        />
-        <MDTypography variant="caption" sx={{ color: "#94a3b8" }}>
+        <MDTypography variant="caption" fontWeight="bold" sx={{ color: darkMode ? "#94a3b8" : "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          {label}
+        </MDTypography>
+        <MDTypography variant="caption" fontWeight="bold" sx={{ color: darkMode ? "white" : "#1e293b" }}>
           {percentage.toFixed(0)}%
         </MDTypography>
       </MDBox>
-      <LinearProgress
-        variant="determinate"
-        value={percentage}
+      <MDBox
         sx={{
-          height: 8,
-          borderRadius: 1,
-          backgroundColor: "#334155",
-          "& .MuiLinearProgress-bar": {
-            backgroundColor: color,
-            borderRadius: 1,
-          },
+          height: "6px",
+          width: "100%",
+          backgroundColor: darkMode ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)",
+          borderRadius: "3px",
+          overflow: "hidden",
+          position: "relative",
         }}
-      />
+      >
+        <MDBox
+          sx={{
+            height: "100%",
+            width: `${percentage}%`,
+            backgroundColor: color,
+            borderRadius: "3px",
+            boxShadow: "0 0 8px " + color + "40",
+            transition: "width 0.5s ease-in-out",
+          }}
+        />
+      </MDBox>
       <MDBox display="flex" justifyContent="space-between" mt={0.5}>
-        <MDTypography variant="caption" sx={{ color: "#64748b", fontSize: "0.7rem" }}>
+        <MDTypography variant="caption" sx={{ color: darkMode ? "#94a3b8" : "#64748b", fontSize: "0.65rem", fontWeight: "medium" }}>
           {current.toLocaleString()} / {max.toLocaleString()}
-        </MDTypography>
-        <MDTypography variant="caption" sx={{ color: "#64748b", fontSize: "0.7rem" }}>
-          {percentage.toFixed(1)}%
         </MDTypography>
       </MDBox>
     </MDBox>
@@ -69,25 +67,28 @@ function ProgressBar({ current, max, label, color = "#3b82f6" }) {
 }
 
 // User avatar with icon
-function UserAvatar({ username }) {
+function UserAvatar({ username, darkMode }) {
   return (
-    <MDBox display="flex" alignItems="center" gap={1}>
+    <MDBox display="flex" alignItems="center" gap={1.5}>
       <MDBox
         display="flex"
         justifyContent="center"
         alignItems="center"
-        width="2rem"
-        height="2rem"
-        borderRadius="8px"
-        sx={{ backgroundColor: "#334155" }}
+        width="34px"
+        height="34px"
+        borderRadius="10px"
+        sx={{
+          backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+          border: "1px solid " + (darkMode ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"),
+        }}
       >
-        <Icon sx={{ color: "#94a3b8", fontSize: "1rem" }}>person</Icon>
+        <Icon sx={{ color: darkMode ? "#94a3b8" : "#64748b", fontSize: "1.1rem" }}>person</Icon>
       </MDBox>
       <MDBox>
-        <MDTypography variant="button" fontWeight="medium" sx={{ color: "white" }}>
+        <MDTypography variant="button" fontWeight="bold" sx={{ color: darkMode ? "white" : "#1e293b", lineHeight: 1, display: "block" }}>
           {username}
         </MDTypography>
-        <MDTypography variant="caption" sx={{ color: "#64748b", display: "block", fontSize: "0.7rem" }}>
+        <MDTypography variant="caption" sx={{ color: "#ff5722", fontWeight: "bold", fontSize: "0.65rem" }}>
           @active_user
         </MDTypography>
       </MDBox>
@@ -113,6 +114,8 @@ function formatRelativeTime(dateString) {
 }
 
 export default function Progress() {
+  const [controller] = useMaterialUIController();
+  const { darkMode } = controller;
   const { currentProjectId } = useProjects();
   const [progressData, setProgressData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
@@ -216,32 +219,32 @@ export default function Progress() {
 
   const getMetricColor = (metricName) => {
     const colors = {
-      level: "#3b82f6",
-      experience: "#f59e0b",
-      play_time_minutes: "#8b5cf6",
-      skill_points: "#10b981",
+      level: "#ff5722",
+      experience: "#2196f3",
+      play_time_minutes: "#4caf50",
+      skill_points: "#ff9800",
     };
-    return colors[metricName] || "#3b82f6";
+    return colors[metricName] || "#ff5722";
   };
 
   return (
-    <MDBox pt={4} pb={6} px={3} sx={{ backgroundColor: "#0f172a", minHeight: "100vh" }}>
+    <MDBox pt={4} pb={6} px={3} sx={{ backgroundColor: darkMode ? '#0f172a' : '#f8fafc', minHeight: "100vh" }}>
       {/* Header */}
       <MDBox mb={3}>
         <MDBox display="flex" alignItems="center" gap={1} mb={1}>
-          <MDTypography variant="caption" sx={{ color: "#64748b" }}>
+          <MDTypography variant="caption" sx={{ color: darkMode ? "#94a3b8" : "#64748b" }}>
             Default Project
           </MDTypography>
-          <Icon sx={{ color: "#64748b", fontSize: "1rem" }}>chevron_right</Icon>
-          <MDTypography variant="caption" sx={{ color: "#64748b" }}>
+          <Icon sx={{ color: darkMode ? "#94a3b8" : "#64748b", fontSize: "1rem" }}>chevron_right</Icon>
+          <MDTypography variant="caption" sx={{ color: darkMode ? "#94a3b8" : "#64748b" }}>
             CORE
           </MDTypography>
-          <Icon sx={{ color: "#64748b", fontSize: "1rem" }}>chevron_right</Icon>
-          <MDTypography variant="caption" sx={{ color: "#f97316", fontWeight: "bold" }}>
+          <Icon sx={{ color: darkMode ? "#94a3b8" : "#64748b", fontSize: "1rem" }}>chevron_right</Icon>
+          <MDTypography variant="caption" sx={{ color: "#ff5722", fontWeight: "bold" }}>
             CHARACTER PROGRESS
           </MDTypography>
         </MDBox>
-        <MDTypography variant="h4" fontWeight="medium" sx={{ color: "white" }}>
+        <MDTypography variant="h4" fontWeight="bold" sx={{ color: darkMode ? "white" : "#1e293b" }}>
           Character Progress
         </MDTypography>
         <MDTypography variant="caption" sx={{ color: "#64748b" }}>
@@ -256,17 +259,17 @@ export default function Progress() {
           onChange={handleTabChange}
           sx={{
             "& .MuiTab-root": {
-              color: "#64748b",
+              color: darkMode ? "#94a3b8" : "#64748b",
               textTransform: "none",
               minHeight: "40px",
               fontSize: "0.75rem",
               fontWeight: "bold",
               "&.Mui-selected": {
-                color: "#f97316",
+                color: "#ff5722",
               },
             },
             "& .MuiTabs-indicator": {
-              backgroundColor: "#f97316",
+              backgroundColor: "#ff5722",
             },
           }}
         >
@@ -282,13 +285,15 @@ export default function Progress() {
             variant="outlined"
             startIcon={<Icon>filter_list</Icon>}
             sx={{
-              borderColor: "#334155",
-              color: "#94a3b8",
+              borderColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+              color: darkMode ? "#94a3b8" : "#64748b",
               textTransform: "none",
-              borderRadius: "8px",
+              borderRadius: "12px",
+              backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.4)' : 'rgba(255, 255, 255, 0.4)',
               "&:hover": {
-                borderColor: "#475569",
-                backgroundColor: "#1e293b",
+                borderColor: "#ff5722",
+                backgroundColor: darkMode ? 'rgba(255, 87, 34, 0.1)' : 'rgba(255, 87, 34, 0.05)',
+                color: "#ff5722",
               },
             }}
           >
@@ -299,12 +304,14 @@ export default function Progress() {
             startIcon={<Icon>add</Icon>}
             onClick={handleNewEntry}
             sx={{
-              backgroundColor: "#f97316",
+              backgroundColor: "#ff5722",
               color: "white",
               textTransform: "none",
-              borderRadius: "8px",
+              borderRadius: "12px",
+              boxShadow: '0 4px 12px rgba(255, 87, 34, 0.2)',
               "&:hover": {
-                backgroundColor: "#ea580c",
+                backgroundColor: "#e64a19",
+                boxShadow: '0 6px 16px rgba(255, 87, 34, 0.3)',
               },
             }}
           >
@@ -316,31 +323,35 @@ export default function Progress() {
       {/* Progress Table */}
       <Card
         sx={{
-          backgroundColor: "#1e293b",
-          border: "1px solid #334155",
+          backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          border: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
           boxShadow: "none",
+          borderRadius: '24px',
+          overflow: 'hidden'
         }}
       >
         <TableContainer>
           <Table>
-            <TableHead>
+            <TableHead sx={{ display: "table-header-group", backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)' }}>
               <TableRow>
-                <TableCell sx={{ color: "#64748b", borderColor: "#334155", fontSize: "0.75rem", fontWeight: "bold" }}>
+                <TableCell sx={{ color: darkMode ? '#94a3b8' : '#64748b', borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', fontSize: "10px", fontWeight: "bold", letterSpacing: '0.05em' }}>
                   USER ID
                 </TableCell>
-                <TableCell sx={{ color: "#64748b", borderColor: "#334155", fontSize: "0.75rem", fontWeight: "bold" }}>
+                <TableCell sx={{ color: darkMode ? '#94a3b8' : '#64748b', borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', fontSize: "10px", fontWeight: "bold", letterSpacing: '0.05em' }}>
                   METRIC NAME
                 </TableCell>
-                <TableCell sx={{ color: "#64748b", borderColor: "#334155", fontSize: "0.75rem", fontWeight: "bold" }}>
+                <TableCell sx={{ color: darkMode ? '#94a3b8' : '#64748b', borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', fontSize: "10px", fontWeight: "bold", letterSpacing: '0.05em' }}>
                   PROGRESS (CURRENT / MAX)
                 </TableCell>
-                <TableCell sx={{ color: "#64748b", borderColor: "#334155", fontSize: "0.75rem", fontWeight: "bold" }}>
+                <TableCell sx={{ color: darkMode ? '#94a3b8' : '#64748b', borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', fontSize: "10px", fontWeight: "bold", letterSpacing: '0.05em' }}>
                   RAW VALUE
                 </TableCell>
-                <TableCell sx={{ color: "#64748b", borderColor: "#334155", fontSize: "0.75rem", fontWeight: "bold" }}>
+                <TableCell sx={{ color: darkMode ? '#94a3b8' : '#64748b', borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', fontSize: "10px", fontWeight: "bold", letterSpacing: '0.05em' }}>
                   UPDATED AT
                 </TableCell>
-                <TableCell sx={{ color: "#64748b", borderColor: "#334155", fontSize: "0.75rem", fontWeight: "bold" }}>
+                <TableCell sx={{ color: darkMode ? '#94a3b8' : '#64748b', borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', fontSize: "10px", fontWeight: "bold", letterSpacing: '0.05em', textAlign: 'right' }}>
                   ACTIONS
                 </TableCell>
               </TableRow>
@@ -366,45 +377,56 @@ export default function Progress() {
                   const metricColor = getMetricColor(firstMetricName);
 
                   return (
-                    <TableRow key={`${progress.user_id}-${firstMetricName}`} hover sx={{ "&:hover": { backgroundColor: "#334155" } }}>
-                      <TableCell sx={{ borderColor: "#334155" }}>
-                        <UserAvatar username={`USR-${progress.user_id}`} />
+                    <TableRow
+                      key={`${progress.user_id}-${firstMetricName}`}
+                      hover
+                      sx={{
+                        transition: "background-color 0.2s",
+                        "&:hover": {
+                          backgroundColor: darkMode ? "rgba(255, 255, 255, 0.02) !important" : "rgba(0, 0, 0, 0.02) !important"
+                        }
+                      }}
+                    >
+                      <TableCell sx={{ borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' }}>
+                        <UserAvatar username={`USR-${progress.user_id}`} darkMode={darkMode} />
                       </TableCell>
-                      <TableCell sx={{ borderColor: "#334155" }}>
+                      <TableCell sx={{ borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' }}>
                         <Chip
                           label={metricLabel}
                           size="small"
                           sx={{
-                            backgroundColor: metricColor,
-                            color: "white",
+                            backgroundColor: darkMode ? `${metricColor}20` : `${metricColor}15`,
+                            color: metricColor,
                             fontSize: "0.625rem",
                             height: "20px",
                             fontWeight: "bold",
+                            border: "1px solid " + metricColor + "40"
                           }}
                         />
                       </TableCell>
-                      <TableCell sx={{ borderColor: "#334155", minWidth: "200px" }}>
+                      <TableCell sx={{ borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', minWidth: "200px" }}>
                         <ProgressBar
                           current={metric?.current_value || 0}
                           max={metric?.max_value || 100}
                           label={metricLabel}
                           color={metricColor}
+                          darkMode={darkMode}
                         />
                       </TableCell>
-                      <TableCell sx={{ color: "white", borderColor: "#334155", fontWeight: "bold" }}>
+                      <TableCell sx={{ color: darkMode ? "white" : "#1e293b", borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', fontWeight: "bold" }}>
                         {metric?.current_value || 0}
                       </TableCell>
-                      <TableCell sx={{ color: "#94a3b8", borderColor: "#334155", fontSize: "0.75rem" }}>
+                      <TableCell sx={{ color: darkMode ? "#94a3b8" : "#64748b", borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', fontSize: "12px" }}>
                         {formatRelativeTime(metric?.updated_at)}
                       </TableCell>
-                      <TableCell sx={{ borderColor: "#334155" }}>
+                      <TableCell sx={{ borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', textAlign: "right" }}>
                         <IconButton
                           size="small"
                           sx={{
-                            color: "#64748b",
+                            color: darkMode ? "#94a3b8" : "#64748b",
                             "&:hover": {
-                              color: "#f97316",
-                              backgroundColor: "#334155",
+                              color: "#ff5722",
+                              backgroundColor: darkMode ? 'rgba(255, 87, 34, 0.1)' : 'rgba(255, 87, 34, 0.05)',
                             },
                           }}
                         >
@@ -427,13 +449,16 @@ export default function Progress() {
           onRowsPerPageChange={handleChangeRowsPerPage}
           rowsPerPageOptions={[5, 10, 25, 50]}
           sx={{
-            color: "#94a3b8",
-            borderTop: "1px solid #334155",
+            color: darkMode ? "#94a3b8" : "#64748b",
+            borderTop: "1px solid " + (darkMode ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"),
             "& .MuiTablePagination-selectIcon": {
-              color: "#94a3b8",
+              color: darkMode ? "#94a3b8" : "#64748b",
             },
             "& .MuiTablePagination-actions button": {
-              color: "#94a3b8",
+              color: darkMode ? "#94a3b8" : "#64748b",
+              "&.Mui-disabled": {
+                color: darkMode ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.2)",
+              },
             },
           }}
         />
@@ -441,8 +466,8 @@ export default function Progress() {
 
       {/* Footer text */}
       <MDBox mt={2}>
-        <MDTypography variant="caption" sx={{ color: "#64748b" }}>
-          Showing {filteredData.length > 0 ? 1 : 0} of {filteredData.length} entries
+        <MDTypography variant="caption" sx={{ color: darkMode ? "#94a3b8" : "#64748b" }}>
+          Showing {filteredData.length > 0 ? (page * rowsPerPage) + 1 : 0} to {Math.min((page + 1) * rowsPerPage, filteredData.length)} of {filteredData.length} entries
         </MDTypography>
       </MDBox>
     </MDBox>

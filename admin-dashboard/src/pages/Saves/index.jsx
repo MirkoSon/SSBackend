@@ -23,6 +23,7 @@ import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
 import { savesApi, exportApi } from "services/api/adminService";
 import { useProjects } from "context/projectContext";
+import { useMaterialUIController } from "context";
 
 // Helper to format bytes
 function formatBytes(bytes) {
@@ -87,6 +88,8 @@ function JsonPreview({ data }) {
 }
 
 export default function Saves() {
+  const [controller] = useMaterialUIController();
+  const { darkMode } = controller;
   const { currentProjectId } = useProjects();
   const [saves, setSaves] = useState([]);
   const [filteredSaves, setFilteredSaves] = useState([]);
@@ -181,19 +184,19 @@ export default function Saves() {
   );
 
   return (
-    <MDBox pt={4} pb={6} px={3} sx={{ backgroundColor: "#0f172a", minHeight: "100vh" }}>
+    <MDBox pt={4} pb={6} px={3} sx={{ backgroundColor: darkMode ? '#0f172a' : '#f8fafc', minHeight: "100vh" }}>
       {/* Header */}
       <MDBox mb={3}>
         <MDBox display="flex" alignItems="center" gap={1} mb={1}>
-          <MDTypography variant="caption" sx={{ color: "#64748b" }}>
+          <MDTypography variant="caption" sx={{ color: darkMode ? "#94a3b8" : "#64748b" }}>
             Database
           </MDTypography>
-          <Icon sx={{ color: "#64748b", fontSize: "1rem" }}>chevron_right</Icon>
-          <MDTypography variant="caption" sx={{ color: "#f97316", fontWeight: "bold" }}>
+          <Icon sx={{ color: darkMode ? "#94a3b8" : "#64748b", fontSize: "1rem" }}>chevron_right</Icon>
+          <MDTypography variant="caption" sx={{ color: "#ff5722", fontWeight: "bold" }}>
             Game Saves
           </MDTypography>
         </MDBox>
-        <MDTypography variant="h4" fontWeight="medium" sx={{ color: "white" }}>
+        <MDTypography variant="h4" fontWeight="bold" sx={{ color: darkMode ? "white" : "#1e293b" }}>
           Game Saves Database
         </MDTypography>
         <MDBox display="flex" alignItems="center" gap={0.5} mt={0.5}>
@@ -209,10 +212,13 @@ export default function Saves() {
         <Grid item xs={12} sm={6} md={3}>
           <Card
             sx={{
-              backgroundColor: "#1e293b",
-              border: "1px solid #334155",
+              backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
               boxShadow: "none",
               p: 2,
+              borderRadius: '16px'
             }}
           >
             <MDBox display="flex" alignItems="center" gap={2}>
@@ -228,10 +234,10 @@ export default function Saves() {
                 <Icon sx={{ color: "white" }}>cloud_upload</Icon>
               </MDBox>
               <MDBox>
-                <MDTypography variant="caption" sx={{ color: "#94a3b8", display: "block" }}>
+                <MDTypography variant="caption" sx={{ color: darkMode ? "#94a3b8" : "#64748b", display: "block", fontWeight: "bold" }}>
                   TOTAL SAVES
                 </MDTypography>
-                <MDTypography variant="h5" fontWeight="bold" sx={{ color: "white" }}>
+                <MDTypography variant="h5" fontWeight="bold" sx={{ color: darkMode ? "white" : "#1e293b" }}>
                   {stats.totalSaves.toLocaleString()}
                 </MDTypography>
               </MDBox>
@@ -241,10 +247,13 @@ export default function Saves() {
         <Grid item xs={12} sm={6} md={3}>
           <Card
             sx={{
-              backgroundColor: "#1e293b",
-              border: "1px solid #334155",
+              backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
               boxShadow: "none",
               p: 2,
+              borderRadius: '16px'
             }}
           >
             <MDBox display="flex" alignItems="center" gap={2}>
@@ -260,10 +269,10 @@ export default function Saves() {
                 <Icon sx={{ color: "white" }}>storage</Icon>
               </MDBox>
               <MDBox>
-                <MDTypography variant="caption" sx={{ color: "#94a3b8", display: "block" }}>
+                <MDTypography variant="caption" sx={{ color: darkMode ? "#94a3b8" : "#64748b", display: "block", fontWeight: "bold" }}>
                   STORAGE USED
                 </MDTypography>
-                <MDTypography variant="h5" fontWeight="bold" sx={{ color: "white" }}>
+                <MDTypography variant="h5" fontWeight="bold" sx={{ color: darkMode ? "white" : "#1e293b" }}>
                   {formatBytes(stats.totalSize)}
                 </MDTypography>
               </MDBox>
@@ -282,21 +291,22 @@ export default function Saves() {
           sx={{
             flex: 1,
             "& .MuiOutlinedInput-root": {
-              color: "#ffffff",
-              backgroundColor: "#1e293b",
-              borderRadius: "8px",
+              color: darkMode ? "#ffffff" : "#1e293b",
+              backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+              borderRadius: "12px",
+              backdropFilter: 'blur(8px)',
               "& fieldset": {
-                borderColor: "#334155",
+                borderColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
               },
               "&:hover fieldset": {
-                borderColor: "#475569",
+                borderColor: "#ff5722",
               },
               "&.Mui-focused fieldset": {
-                borderColor: "#f97316",
+                borderColor: "#ff5722",
               },
             },
             "& .MuiInputBase-input::placeholder": {
-              color: "#64748b",
+              color: darkMode ? "#94a3b8" : "#64748b",
               opacity: 1,
             },
           }}
@@ -312,13 +322,15 @@ export default function Saves() {
           variant="outlined"
           startIcon={<Icon>filter_list</Icon>}
           sx={{
-            borderColor: "#334155",
-            color: "#94a3b8",
+            borderColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+            color: darkMode ? "#94a3b8" : "#64748b",
             textTransform: "none",
-            borderRadius: "8px",
+            borderRadius: "12px",
+            backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.4)' : 'rgba(255, 255, 255, 0.4)',
             "&:hover": {
-              borderColor: "#475569",
-              backgroundColor: "#1e293b",
+              borderColor: "#ff5722",
+              backgroundColor: darkMode ? 'rgba(255, 87, 34, 0.1)' : 'rgba(255, 87, 34, 0.05)',
+              color: "#ff5722",
             },
           }}
         >
@@ -329,12 +341,14 @@ export default function Saves() {
           startIcon={<Icon>delete_sweep</Icon>}
           onClick={handlePruneOld}
           sx={{
-            backgroundColor: "#ef4444",
+            backgroundColor: "#ff5722",
             color: "white",
             textTransform: "none",
-            borderRadius: "8px",
+            borderRadius: "12px",
+            boxShadow: '0 4px 12px rgba(255, 87, 34, 0.2)',
             "&:hover": {
-              backgroundColor: "#dc2626",
+              backgroundColor: "#e64a19",
+              boxShadow: '0 6px 16px rgba(255, 87, 34, 0.3)',
             },
           }}
         >
@@ -345,28 +359,32 @@ export default function Saves() {
       {/* Saves Table */}
       <Card
         sx={{
-          backgroundColor: "#1e293b",
-          border: "1px solid #334155",
+          backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          border: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
           boxShadow: "none",
+          borderRadius: '24px',
+          overflow: 'hidden'
         }}
       >
         <TableContainer>
           <Table>
-            <TableHead>
+            <TableHead sx={{ display: "table-header-group", backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)' }}>
               <TableRow>
-                <TableCell sx={{ color: "#64748b", borderColor: "#334155", fontSize: "0.75rem", fontWeight: "bold" }}>
+                <TableCell sx={{ color: darkMode ? '#94a3b8' : '#64748b', borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', fontSize: "10px", fontWeight: "bold", letterSpacing: '0.05em' }}>
                   SAVE ID
                 </TableCell>
-                <TableCell sx={{ color: "#64748b", borderColor: "#334155", fontSize: "0.75rem", fontWeight: "bold" }}>
+                <TableCell sx={{ color: darkMode ? '#94a3b8' : '#64748b', borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', fontSize: "10px", fontWeight: "bold", letterSpacing: '0.05em' }}>
                   USER ID
                 </TableCell>
-                <TableCell sx={{ color: "#64748b", borderColor: "#334155", fontSize: "0.75rem", fontWeight: "bold" }}>
+                <TableCell sx={{ color: darkMode ? '#94a3b8' : '#64748b', borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', fontSize: "10px", fontWeight: "bold", letterSpacing: '0.05em' }}>
                   JSON DATA PREVIEW
                 </TableCell>
-                <TableCell sx={{ color: "#64748b", borderColor: "#334155", fontSize: "0.75rem", fontWeight: "bold" }}>
+                <TableCell sx={{ color: darkMode ? '#94a3b8' : '#64748b', borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', fontSize: "10px", fontWeight: "bold", letterSpacing: '0.05em' }}>
                   CREATED AT
                 </TableCell>
-                <TableCell sx={{ color: "#64748b", borderColor: "#334155", fontSize: "0.75rem", fontWeight: "bold" }}>
+                <TableCell sx={{ color: darkMode ? '#94a3b8' : '#64748b', borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', fontSize: "10px", fontWeight: "bold", letterSpacing: '0.05em', textAlign: 'right' }}>
                   ACTIONS
                 </TableCell>
               </TableRow>
@@ -386,21 +404,21 @@ export default function Saves() {
                 </TableRow>
               ) : (
                 paginatedSaves.map((save) => (
-                  <TableRow key={save.id} hover sx={{ "&:hover": { backgroundColor: "#334155" } }}>
-                    <TableCell sx={{ borderColor: "#334155" }}>
-                      <MDTypography variant="button" fontWeight="medium" sx={{ color: "#f97316" }}>
-                        {save.id}
+                  <TableRow key={save.id} hover sx={{ "&:hover": { backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)' } }}>
+                    <TableCell sx={{ borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' }}>
+                      <MDTypography variant="button" fontWeight="bold" sx={{ color: "#ff5722", fontFamily: 'monospace', fontSize: '11px' }}>
+                        #{save.id}
                       </MDTypography>
                     </TableCell>
-                    <TableCell sx={{ borderColor: "#334155" }}>
+                    <TableCell sx={{ borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' }}>
                       <UserIdBadge userId={save.id.split("_")[0] || "unknown"} />
                     </TableCell>
-                    <TableCell sx={{ color: "#94a3b8", borderColor: "#334155", maxWidth: "400px" }}>
+                    <TableCell sx={{ color: darkMode ? '#94a3b8' : '#64748b', borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', maxWidth: "400px" }}>
                       <MDTypography
                         variant="caption"
                         sx={{
                           fontFamily: "'Fira Code', monospace",
-                          fontSize: "0.75rem",
+                          fontSize: "11px",
                           display: "block",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
@@ -410,23 +428,25 @@ export default function Saves() {
                         {save.data_preview}
                       </MDTypography>
                     </TableCell>
-                    <TableCell sx={{ color: "#94a3b8", borderColor: "#334155", fontSize: "0.75rem" }}>
-                      {new Date(save.created_at).toLocaleString()}
+                    <TableCell sx={{ color: darkMode ? '#94a3b8' : '#64748b', borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', fontSize: "12px" }}>
+                      {new Date(save.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </TableCell>
-                    <TableCell sx={{ borderColor: "#334155" }}>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleViewSave(save.id)}
-                        sx={{
-                          color: "#64748b",
-                          "&:hover": {
-                            color: "#f97316",
-                            backgroundColor: "#334155",
-                          },
-                        }}
-                      >
-                        <Icon fontSize="small">visibility</Icon>
-                      </IconButton>
+                    <TableCell sx={{ borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', textAlign: 'right' }}>
+                      <MDBox display="flex" justifyContent="flex-end">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleViewSave(save.id)}
+                          sx={{
+                            color: "#94a3b8",
+                            "&:hover": {
+                              color: "#ff5722",
+                              backgroundColor: "rgba(255, 87, 34, 0.1)",
+                            },
+                          }}
+                        >
+                          <Icon fontSize="small">visibility</Icon>
+                        </IconButton>
+                      </MDBox>
                     </TableCell>
                   </TableRow>
                 ))
@@ -443,13 +463,13 @@ export default function Saves() {
           onRowsPerPageChange={handleChangeRowsPerPage}
           rowsPerPageOptions={[5, 10, 25, 50]}
           sx={{
-            color: "#94a3b8",
-            borderTop: "1px solid #334155",
+            color: darkMode ? "#94a3b8" : "#64748b",
+            borderTop: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}`,
             "& .MuiTablePagination-selectIcon": {
-              color: "#94a3b8",
+              color: darkMode ? "#94a3b8" : "#64748b",
             },
             "& .MuiTablePagination-actions button": {
-              color: "#94a3b8",
+              color: darkMode ? "#94a3b8" : "#64748b",
             },
           }}
         />
@@ -460,10 +480,13 @@ export default function Saves() {
         <Grid item xs={12} md={6}>
           <Card
             sx={{
-              backgroundColor: "#1e293b",
-              border: "1px solid #334155",
+              backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
               boxShadow: "none",
               p: 3,
+              borderRadius: '16px'
             }}
           >
             <MDBox display="flex" alignItems="center" gap={2} mb={2}>
@@ -479,19 +502,19 @@ export default function Saves() {
                 <Icon sx={{ color: "white" }}>database</Icon>
               </MDBox>
               <MDBox>
-                <MDTypography variant="h6" fontWeight="medium" sx={{ color: "white" }}>
+                <MDTypography variant="h6" fontWeight="bold" sx={{ color: darkMode ? "white" : "#1e293b" }}>
                   Storage Optimization
                 </MDTypography>
-                <MDTypography variant="caption" sx={{ color: "#64748b" }}>
+                <MDTypography variant="caption" sx={{ color: darkMode ? "#94a3b8" : "#64748b" }}>
                   Remove old saves that are eligible for pruning.
                 </MDTypography>
               </MDBox>
             </MDBox>
             <MDBox display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-              <MDTypography variant="caption" sx={{ color: "#94a3b8" }}>
+              <MDTypography variant="caption" sx={{ color: darkMode ? "#94a3b8" : "#64748b", fontWeight: "bold" }}>
                 PRUNEABLE DATA
               </MDTypography>
-              <MDTypography variant="h6" fontWeight="bold" sx={{ color: "#f59e0b" }}>
+              <MDTypography variant="h6" fontWeight="bold" sx={{ color: "#ff5722" }}>
                 2.4 GB
               </MDTypography>
             </MDBox>
@@ -516,10 +539,13 @@ export default function Saves() {
         <Grid item xs={12} md={6}>
           <Card
             sx={{
-              backgroundColor: "#1e293b",
-              border: "1px solid #334155",
+              backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
               boxShadow: "none",
               p: 3,
+              borderRadius: '16px'
             }}
           >
             <MDBox display="flex" alignItems="center" gap={2} mb={2}>
@@ -535,10 +561,10 @@ export default function Saves() {
                 <Icon sx={{ color: "white" }}>download</Icon>
               </MDBox>
               <MDBox>
-                <MDTypography variant="h6" fontWeight="medium" sx={{ color: "white" }}>
+                <MDTypography variant="h6" fontWeight="bold" sx={{ color: darkMode ? "white" : "#1e293b" }}>
                   Recent Export
                 </MDTypography>
-                <MDTypography variant="caption" sx={{ color: "#64748b" }}>
+                <MDTypography variant="caption" sx={{ color: darkMode ? "#94a3b8" : "#64748b" }}>
                   Database snapshot generated successfully.
                 </MDTypography>
               </MDBox>
@@ -554,15 +580,15 @@ export default function Saves() {
             <Button
               variant="outlined"
               fullWidth
-              onClick={handleExport}
               sx={{
-                borderColor: "#334155",
-                color: "#94a3b8",
+                borderColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                color: darkMode ? "#94a3b8" : "#64748b",
                 textTransform: "none",
-                borderRadius: "8px",
+                borderRadius: "12px",
                 "&:hover": {
-                  borderColor: "#475569",
-                  backgroundColor: "#334155",
+                  borderColor: "#ff5722",
+                  backgroundColor: darkMode ? 'rgba(255, 87, 34, 0.1)' : 'rgba(255, 87, 34, 0.05)',
+                  color: "#ff5722",
                 },
               }}
             >
@@ -580,12 +606,15 @@ export default function Saves() {
         fullWidth
         PaperProps={{
           sx: {
-            backgroundColor: "#1e293b",
-            border: "1px solid #334155",
+            backgroundColor: darkMode ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+            backdropFilter: 'blur(20px)',
+            border: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+            borderRadius: '24px',
+            boxShadow: '0 24px 48px rgba(0,0,0,0.4)',
           },
         }}
       >
-        <DialogTitle sx={{ color: "white", borderBottom: "1px solid #334155" }}>
+        <DialogTitle sx={{ color: darkMode ? "white" : "#1e293b", borderBottom: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}`, fontWeight: "bold" }}>
           Save Details: {selectedSave?.id}
         </DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
@@ -598,14 +627,16 @@ export default function Saves() {
             </MDBox>
           )}
         </DialogContent>
-        <DialogActions sx={{ borderTop: "1px solid #334155", p: 2 }}>
+        <DialogActions sx={{ borderTop: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}`, p: 2 }}>
           <Button
             onClick={handleCloseDialog}
             sx={{
-              color: "#94a3b8",
+              color: darkMode ? "#94a3b8" : "#64748b",
               textTransform: "none",
+              borderRadius: "12px",
               "&:hover": {
-                backgroundColor: "#334155",
+                backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                color: "#ff5722",
               },
             }}
           >

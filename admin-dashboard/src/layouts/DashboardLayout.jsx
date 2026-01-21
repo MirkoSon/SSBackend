@@ -5,7 +5,6 @@ import Box from '@mui/material/Box';
 import MDBox from 'components/MDBox';
 
 // Custom components
-import AdminNavbar from 'components/AdminNavbar';
 import Sidebar from 'components/Sidebar';
 
 // Context
@@ -16,9 +15,7 @@ function DashboardLayout() {
     const { darkMode, miniSidenav } = controller;
 
     return (
-        <Box sx={{ minHeight: '100vh', backgroundColor: '#0f172a' }}>
-            {/* Top Navbar - Fixed at top */}
-            <AdminNavbar />
+        <Box sx={{ minHeight: '100vh', backgroundColor: darkMode ? '#0f172a' : '#f8fafc' }}>
 
             {/* Left Sidebar - Fixed at left */}
             <Sidebar />
@@ -27,11 +24,11 @@ function DashboardLayout() {
             <MDBox
                 component="main"
                 sx={{
-                    marginTop: '64px', // Account for navbar height
                     marginLeft: miniSidenav ? '80px' : '280px', // Account for sidebar width
                     transition: 'margin-left 0.3s ease-in-out',
-                    minHeight: 'calc(100vh - 64px)',
-                    backgroundColor: '#0f172a',
+                    minHeight: '100vh',
+                    backgroundColor: darkMode ? '#0f172a' : '#f8fafc',
+                    p: 3,
                 }}
             >
                 {/* Child routes render here */}

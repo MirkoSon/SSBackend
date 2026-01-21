@@ -15,6 +15,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TablePagination from "@mui/material/TablePagination";
 import Button from "@mui/material/Button";
+import { useMaterialUIController } from "context";
 
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
@@ -42,6 +43,9 @@ function formatRelativeTime(dateString) {
 
 // User avatar component with initials
 function UserAvatar({ username, color }) {
+  const [controller] = useMaterialUIController();
+  const { darkMode } = controller;
+
   const initials = username
     ? username
         .split("_")
@@ -56,14 +60,14 @@ function UserAvatar({ username, color }) {
       display="flex"
       justifyContent="center"
       alignItems="center"
-      width="2.5rem"
-      height="2.5rem"
-      borderRadius="8px"
+      width="32px"
+      height="32px"
+      borderRadius="50%"
       sx={{
-        backgroundColor: color || "#3b82f6",
-        color: "white",
+        backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+        color: color || "#ff5722",
         fontWeight: "bold",
-        fontSize: "0.875rem",
+        fontSize: "11px",
       }}
     >
       {initials}
@@ -78,6 +82,8 @@ function getAvatarColor(index) {
 }
 
 export default function Users() {
+  const [controller] = useMaterialUIController();
+  const { darkMode } = controller;
   const { currentProjectId } = useProjects();
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
@@ -169,35 +175,46 @@ export default function Users() {
   );
 
   return (
-    <MDBox pt={4} pb={6} px={3} sx={{ backgroundColor: "#0f172a", minHeight: "100vh" }}>
-      {/* Header with Breadcrumb */}
-      <MDBox mb={3}>
-        <MDBox display="flex" alignItems="center" gap={1} mb={1}>
-          <MDTypography variant="caption" sx={{ color: "#64748b" }}>
-            Database
+    <MDBox pt={4} pb={6} px={3} sx={{ backgroundColor: 'transparent' }}>
+      {/* Header */}
+      <MDBox mb={5} display="flex" justifyContent="space-between" alignItems="flex-end">
+        <MDBox>
+          <MDBox display="flex" alignItems="center" gap={1} mb={1}>
+            <MDTypography variant="caption" fontWeight="medium" sx={{ color: darkMode ? '#ffffff88' : '#64748b' }}>
+              Database
+            </MDTypography>
+            <Icon sx={{ color: "#94a3b8", fontSize: "1rem" }}>chevron_right</Icon>
+            <MDTypography variant="caption" sx={{ color: '#ff5722', fontWeight: "bold" }}>
+              Users
+            </MDTypography>
+          </MDBox>
+          <MDTypography variant="h3" fontWeight="bold" sx={{ color: darkMode ? 'white' : '#1e293b', letterSpacing: '-0.02em' }}>
+            Users Database
           </MDTypography>
-          <Icon sx={{ color: "#64748b", fontSize: "1rem" }}>chevron_right</Icon>
-          <MDTypography variant="caption" sx={{ color: "#f97316", fontWeight: "bold" }}>
-            Users
+          <MDTypography variant="button" sx={{ color: darkMode ? '#94a3b8' : '#64748b', mt: 0.5, display: 'block' }}>
+            Manage and monitor your application's user base.
           </MDTypography>
         </MDBox>
-        <MDTypography variant="h4" fontWeight="medium" sx={{ color: "white" }}>
-          Users Database
-        </MDTypography>
-        <MDTypography variant="caption" sx={{ color: "#94a3b8" }}>
-          Manage and monitor your application's user base.
-        </MDTypography>
+        <MDBox display="flex" alignItems="center" bgcolor={darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'} px={2} py={1} borderRadius="12px">
+          <Icon sx={{ color: '#ff5722', fontSize: "1.25rem", mr: 1 }}>group</Icon>
+          <MDTypography variant="button" fontWeight="bold" sx={{ color: darkMode ? 'white' : '#1e293b' }}>
+            {stats.totalUsers.toLocaleString()} Users
+          </MDTypography>
+        </MDBox>
       </MDBox>
 
       {/* Stats Cards */}
-      <Grid container spacing={2} mb={3}>
+      <Grid container spacing={4} mb={6}>
         <Grid item xs={12} sm={6} md={3}>
           <Card
             sx={{
-              backgroundColor: "#1e293b",
-              border: "1px solid #334155",
+              backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
               boxShadow: "none",
-              p: 2,
+              borderRadius: '24px',
+              p: 2.5,
             }}
           >
             <MDBox display="flex" alignItems="center" gap={2}>
@@ -205,18 +222,18 @@ export default function Users() {
                 display="flex"
                 justifyContent="center"
                 alignItems="center"
-                width="3rem"
-                height="3rem"
-                borderRadius="8px"
-                sx={{ backgroundColor: "#3b82f6" }}
+                width="48px"
+                height="48px"
+                borderRadius="14px"
+                sx={{ backgroundColor: "rgba(59, 130, 246, 0.1)", color: "#3b82f6" }}
               >
-                <Icon sx={{ color: "white" }}>people</Icon>
+                <Icon>group</Icon>
               </MDBox>
               <MDBox>
-                <MDTypography variant="caption" sx={{ color: "#94a3b8", display: "block" }}>
+                <MDTypography variant="caption" fontWeight="bold" sx={{ color: darkMode ? '#94a3b8' : '#64748b', fontSize: '10px' }}>
                   TOTAL USERS
                 </MDTypography>
-                <MDTypography variant="h5" fontWeight="bold" sx={{ color: "white" }}>
+                <MDTypography variant="h4" fontWeight="bold" sx={{ color: darkMode ? 'white' : '#1e293b' }}>
                   {stats.totalUsers.toLocaleString()}
                 </MDTypography>
               </MDBox>
@@ -226,10 +243,13 @@ export default function Users() {
         <Grid item xs={12} sm={6} md={3}>
           <Card
             sx={{
-              backgroundColor: "#1e293b",
-              border: "1px solid #334155",
+              backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
               boxShadow: "none",
-              p: 2,
+              borderRadius: '24px',
+              p: 2.5,
             }}
           >
             <MDBox display="flex" alignItems="center" gap={2}>
@@ -237,18 +257,18 @@ export default function Users() {
                 display="flex"
                 justifyContent="center"
                 alignItems="center"
-                width="3rem"
-                height="3rem"
-                borderRadius="8px"
-                sx={{ backgroundColor: "#10b981" }}
+                width="48px"
+                height="48px"
+                borderRadius="14px"
+                sx={{ backgroundColor: "rgba(16, 185, 129, 0.1)", color: "#10b981" }}
               >
-                <Icon sx={{ color: "white" }}>bolt</Icon>
+                <Icon>bolt</Icon>
               </MDBox>
               <MDBox>
-                <MDTypography variant="caption" sx={{ color: "#94a3b8", display: "block" }}>
+                <MDTypography variant="caption" fontWeight="bold" sx={{ color: darkMode ? '#94a3b8' : '#64748b', fontSize: '10px' }}>
                   ACTIVE TODAY
                 </MDTypography>
-                <MDTypography variant="h5" fontWeight="bold" sx={{ color: "white" }}>
+                <MDTypography variant="h4" fontWeight="bold" sx={{ color: darkMode ? 'white' : '#1e293b' }}>
                   {stats.activeToday.toLocaleString()}
                 </MDTypography>
               </MDBox>
@@ -259,6 +279,8 @@ export default function Users() {
 
       {/* Search and Actions */}
       <MDBox display="flex" gap={2} mb={3}>
+      {/* Search and Actions */}
+      <MDBox display="flex" gap={2} mb={4}>
         <TextField
           placeholder="Search by username, ID or email..."
           value={searchQuery}
@@ -267,28 +289,25 @@ export default function Users() {
           sx={{
             flex: 1,
             "& .MuiOutlinedInput-root": {
-              color: "#ffffff",
-              backgroundColor: "#1e293b",
-              borderRadius: "8px",
+              color: darkMode ? "#ffffff" : "#1e293b",
+              backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+              borderRadius: "12px",
               "& fieldset": {
-                borderColor: "#334155",
-              },
-              "&:hover fieldset": {
-                borderColor: "#475569",
+                border: 'none',
               },
               "&.Mui-focused fieldset": {
-                borderColor: "#f97316",
+                border: `2px solid #ff5722`,
               },
             },
             "& .MuiInputBase-input::placeholder": {
-              color: "#64748b",
+              color: darkMode ? "#94a3b8" : "#64748b",
               opacity: 1,
             },
           }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <Icon sx={{ color: "#64748b" }}>search</Icon>
+                <Icon sx={{ color: "#94a3b8" }}>search</Icon>
               </InputAdornment>
             ),
           }}
@@ -298,50 +317,59 @@ export default function Users() {
           startIcon={<Icon>person_add</Icon>}
           onClick={handleAddUser}
           sx={{
-            backgroundColor: "#f97316",
+            backgroundColor: "#ff5722",
             color: "white",
             textTransform: "none",
-            borderRadius: "8px",
+            borderRadius: "12px",
+            fontWeight: "bold",
+            px: 3,
+            boxShadow: '0 4px 12px rgba(255, 87, 34, 0.2)',
             "&:hover": {
-              backgroundColor: "#ea580c",
+              backgroundColor: "#e64a19",
+              boxShadow: '0 6px 16px rgba(255, 87, 34, 0.3)',
             },
           }}
         >
           Add User
         </Button>
       </MDBox>
+      </MDBox>
 
       {/* Users Table */}
       <Card
         sx={{
-          backgroundColor: "#1e293b",
-          border: "1px solid #334155",
+          backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          border: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
           boxShadow: "none",
+          borderRadius: '24px',
+          overflow: 'hidden'
         }}
       >
         <TableContainer>
           <Table>
-            <TableHead>
+            <TableHead sx={{ display: "table-header-group", backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)' }}>
               <TableRow>
-                <TableCell sx={{ color: "#64748b", borderColor: "#334155", fontSize: "0.75rem", fontWeight: "bold" }}>
+                <TableCell sx={{ color: darkMode ? '#94a3b8' : '#64748b', borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', fontSize: "10px", fontWeight: "bold", letterSpacing: '0.05em' }}>
                   USER ID
                 </TableCell>
-                <TableCell sx={{ color: "#64748b", borderColor: "#334155", fontSize: "0.75rem", fontWeight: "bold" }}>
+                <TableCell sx={{ color: darkMode ? '#94a3b8' : '#64748b', borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', fontSize: "10px", fontWeight: "bold", letterSpacing: '0.05em' }}>
                   USERNAME
                 </TableCell>
-                <TableCell sx={{ color: "#64748b", borderColor: "#334155", fontSize: "0.75rem", fontWeight: "bold" }}>
+                <TableCell sx={{ color: darkMode ? '#94a3b8' : '#64748b', borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', fontSize: "10px", fontWeight: "bold", letterSpacing: '0.05em' }}>
                   PASSWORD
                 </TableCell>
-                <TableCell sx={{ color: "#64748b", borderColor: "#334155", fontSize: "0.75rem", fontWeight: "bold" }}>
+                <TableCell sx={{ color: darkMode ? '#94a3b8' : '#64748b', borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', fontSize: "10px", fontWeight: "bold", letterSpacing: '0.05em' }}>
                   CREATED AT
                 </TableCell>
-                <TableCell sx={{ color: "#64748b", borderColor: "#334155", fontSize: "0.75rem", fontWeight: "bold" }}>
+                <TableCell sx={{ color: darkMode ? '#94a3b8' : '#64748b', borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', fontSize: "10px", fontWeight: "bold", letterSpacing: '0.05em' }}>
                   LAST LOGIN
                 </TableCell>
-                <TableCell sx={{ color: "#64748b", borderColor: "#334155", fontSize: "0.75rem", fontWeight: "bold" }}>
+                <TableCell sx={{ color: darkMode ? '#94a3b8' : '#64748b', borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', fontSize: "10px", fontWeight: "bold", letterSpacing: '0.05em', textAlign: 'center' }}>
                   LOGINS
                 </TableCell>
-                <TableCell sx={{ color: "#64748b", borderColor: "#334155", fontSize: "0.75rem", fontWeight: "bold" }}>
+                <TableCell sx={{ color: darkMode ? '#94a3b8' : '#64748b', borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', fontSize: "10px", fontWeight: "bold", letterSpacing: '0.05em', textAlign: 'right' }}>
                   ACTIONS
                 </TableCell>
               </TableRow>
@@ -361,63 +389,66 @@ export default function Users() {
                 </TableRow>
               ) : (
                 paginatedUsers.map((user, index) => (
-                  <TableRow key={user.id} hover sx={{ "&:hover": { backgroundColor: "#334155" } }}>
-                    <TableCell sx={{ color: "#64748b", borderColor: "#334155" }}>
+                  <TableRow key={user.id} hover sx={{ "&:hover": { backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)' } }}>
+                    <TableCell sx={{ color: darkMode ? '#94a3b8' : '#64748b', borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', fontFamily: 'monospace', fontSize: '11px' }}>
                       #{user.id}
                     </TableCell>
-                    <TableCell sx={{ borderColor: "#334155" }}>
-                      <MDBox display="flex" alignItems="center" gap={2}>
+                    <TableCell sx={{ borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' }}>
+                      <MDBox display="flex" alignItems="center" gap={1.5}>
                         <UserAvatar username={user.username} color={getAvatarColor(index)} />
-                        <MDTypography variant="button" fontWeight="medium" sx={{ color: "white" }}>
+                        <MDTypography variant="button" fontWeight="bold" sx={{ color: darkMode ? 'white' : '#1e293b' }}>
                           {user.username}
                         </MDTypography>
                       </MDBox>
                     </TableCell>
-                    <TableCell sx={{ color: "#64748b", borderColor: "#334155" }}>
+                    <TableCell sx={{ color: darkMode ? '#94a3b877' : '#64748b77', borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', fontSize: '10px' }}>
                       ••••••••••••••••
                     </TableCell>
-                    <TableCell sx={{ color: "#94a3b8", borderColor: "#334155", fontSize: "0.75rem" }}>
-                      {new Date(user.created_at).toLocaleDateString()}
+                    <TableCell sx={{ color: darkMode ? '#94a3b8' : '#64748b', borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', fontSize: "12px" }}>
+                      {new Date(user.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                     </TableCell>
-                    <TableCell sx={{ color: "#94a3b8", borderColor: "#334155", fontSize: "0.75rem" }}>
+                    <TableCell sx={{ color: darkMode ? '#94a3b8' : '#64748b', borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', fontSize: "12px" }}>
                       {formatRelativeTime(user.last_login)}
                     </TableCell>
-                    <TableCell sx={{ borderColor: "#334155" }}>
-                      <Chip
-                        label={user.login_count || 0}
-                        size="small"
+                    <TableCell sx={{ borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', textAlign: 'center' }}>
+                      <MDBox
+                        component="span"
                         sx={{
-                          backgroundColor: "#334155",
-                          color: "#94a3b8",
-                          fontSize: "0.75rem",
-                          height: "24px",
-                          fontWeight: "bold",
+                          px: 1.5,
+                          py: 0.5,
+                          backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                          borderRadius: '6px',
+                          color: darkMode ? 'white' : '#1e293b',
+                          fontSize: '11px',
+                          fontWeight: 'bold'
                         }}
-                      />
+                      >
+                        {user.login_count || 0}
+                      </MDBox>
                     </TableCell>
-                    <TableCell sx={{ borderColor: "#334155" }}>
-                      <MDBox display="flex" gap={1}>
+                    <TableCell sx={{ borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', textAlign: 'right' }}>
+                      <MDBox display="flex" justifyContent="flex-end" gap={0.5}>
                         <IconButton
                           size="small"
                           onClick={() => handleEditUser(user.id)}
                           sx={{
-                            color: "#64748b",
+                            color: "#94a3b8",
                             "&:hover": {
-                              color: "#f97316",
-                              backgroundColor: "#334155",
+                              color: "#3b82f6",
+                              backgroundColor: "rgba(59, 130, 246, 0.1)",
                             },
                           }}
                         >
-                          <Icon fontSize="small">edit</Icon>
+                          <Icon fontSize="small">edit_square</Icon>
                         </IconButton>
                         <IconButton
                           size="small"
                           onClick={() => handleDeleteUser(user.id)}
                           sx={{
-                            color: "#64748b",
+                            color: "#94a3b8",
                             "&:hover": {
-                              color: "#ef4444",
-                              backgroundColor: "#334155",
+                              color: "#ff5722",
+                              backgroundColor: "rgba(255, 87, 34, 0.1)",
                             },
                           }}
                         >
@@ -441,7 +472,7 @@ export default function Users() {
           rowsPerPageOptions={[5, 10, 25, 50]}
           sx={{
             color: "#94a3b8",
-            borderTop: "1px solid #334155",
+            borderTop: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}`,
             "& .MuiTablePagination-selectIcon": {
               color: "#94a3b8",
             },
@@ -453,11 +484,10 @@ export default function Users() {
       </Card>
 
       {/* Footer text */}
-      <MDBox mt={2}>
-        <MDTypography variant="caption" sx={{ color: "#64748b" }}>
-          Showing {page * rowsPerPage + 1}-
-          {Math.min((page + 1) * rowsPerPage, filteredUsers.length)} of {filteredUsers.length}{" "}
-          users
+      <MDBox mt={3} px={1}>
+        <MDTypography variant="caption" sx={{ color: darkMode ? '#94a3b8' : '#64748b' }}>
+          Showing <strong>{filteredUsers.length > 0 ? page * rowsPerPage + 1 : 0}</strong>-
+          <strong>{Math.min((page + 1) * rowsPerPage, filteredUsers.length)}</strong> of <strong>{filteredUsers.length}</strong> users
         </MDTypography>
       </MDBox>
     </MDBox>

@@ -13,6 +13,16 @@ import Icon from "@mui/material/Icon";
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
 import { useMaterialUIController } from "context";
+import { useProjects } from "context/projectContext";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import Tooltip from "@mui/material/Tooltip";
+import IconButton from "@mui/material/IconButton";
+import Box from "@mui/material/Box";
+import Menu from "@mui/material/Menu";
+
+// Assets
+import brandLogo from "assets/SSBackend_title_logo.png";
 
 const SIDEBAR_WIDTH = 280;
 const SIDEBAR_MINI_WIDTH = 80;
@@ -55,12 +65,17 @@ const pluginCategories = [
 function Sidebar() {
   const [controller] = useMaterialUIController();
   const { darkMode, miniSidenav } = controller;
+  const { projects, currentProjectId, selectProject } = useProjects();
   const location = useLocation();
+  const [accountMenuAnchor, setAccountMenuAnchor] = useState(null);
   const [openSections, setOpenSections] = useState({
     core: true,
     examples: true,
     community: true,
   });
+
+  const handleAccountMenuOpen = (event) => setAccountMenuAnchor(event.currentTarget);
+  const handleAccountMenuClose = () => setAccountMenuAnchor(null);
 
   const handleSectionToggle = (sectionId) => {
     setOpenSections((prev) => ({
@@ -84,20 +99,21 @@ function Sidebar() {
         to={item.path}
         selected={isActive(item.path)}
         sx={{
-          borderRadius: '8px',
+          borderRadius: '12px',
           mb: 0.5,
           pl: 2,
           py: 1,
           color: isActive(item.path) ? '#ffffff' : '#94a3b8',
           "&:hover": {
-            backgroundColor: '#1e293b',
-            color: '#ffffff',
+            backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+            color: darkMode ? '#ffffff' : '#1e293b',
           },
           "&.Mui-selected": {
-            backgroundColor: '#f97316',
+            backgroundColor: '#ff5722',
             color: '#ffffff',
+            boxShadow: '0 4px 12px rgba(255, 87, 34, 0.2)',
             "&:hover": {
-              backgroundColor: '#ea580c',
+              backgroundColor: '#e64a19',
             },
           },
         }}
@@ -105,7 +121,7 @@ function Sidebar() {
         <ListItemIcon sx={{ minWidth: 40, color: "inherit" }}>
           <Icon>{item.icon}</Icon>
         </ListItemIcon>
-        {!miniSidenav && <ListItemText primary={item.label} />}
+        {!miniSidenav && <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: isActive(item.path) ? 600 : 500 }} />}
       </ListItemButton>
     </ListItem>
   );
@@ -164,13 +180,14 @@ function Sidebar() {
         "& .MuiDrawer-paper": {
           width: miniSidenav ? SIDEBAR_MINI_WIDTH : SIDEBAR_WIDTH,
           boxSizing: "border-box",
-          backgroundColor: '#0f172a',
-          borderRight: '1px solid #1e293b',
-          transition: "width 0.3s ease-in-out",
+          backgroundColor: darkMode ? 'rgba(15, 23, 42, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          borderRight: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+          transition: "width 0.3s ease-in-out, background-color 0.3s",
           overflowX: "hidden",
-          mt: "64px", // Account for navbar height
-          height: "calc(100vh - 64px)",
-          color: '#ffffff',
+          height: "100vh",
+          color: darkMode ? '#ffffff' : '#1e293b',
         },
       }}
     >
@@ -179,19 +196,50 @@ function Sidebar() {
         {!miniSidenav && (
           <MDBox px={2} mb={3}>
             <MDBox
-              display="flex"
-              alignItems="center"
+              component="img"
+              src={brandLogo}
+              alt="Stupid Simple Backend"
               sx={{
-                backgroundColor: '#f97316',
-                borderRadius: '8px',
-                p: 1.5,
+                width: "100%",
+                maxWidth: "200px",
+                height: "auto",
+                display: "block",
+              }}
+            />
+          </MDBox>
+        )}
+
+        {/* Project Selector */}
+        {!miniSidenav && (
+          <MDBox px={2} mb={4}>
+            <Select
+              value={currentProjectId || (projects.length > 0 ? projects[0].id : "")}
+              onChange={(e) => selectProject(e.target.value)}
+              fullWidth
+              size="small"
+              sx={{
+                color: darkMode ? '#ffffff' : '#1e293b',
+                backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                borderRadius: '12px',
+                fontWeight: 600,
+                fontSize: '0.85rem',
+                "& .MuiOutlinedInput-notchedOutline": {
+                  border: 'none',
+                },
+                "&:hover": {
+                  backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+                },
+                "& .MuiSvgIcon-root": {
+                  color: '#94a3b8',
+                },
               }}
             >
-              <Icon sx={{ color: 'white', fontSize: '1.5rem', mr: 1 }}>dashboard</Icon>
-              <MDTypography variant="h6" fontWeight="bold" sx={{ color: 'white' }}>
-                StupidSimple
-              </MDTypography>
-            </MDBox>
+              {projects.map((project) => (
+                <MenuItem key={project.id} value={project.id}>
+                  {project.name}
+                </MenuItem>
+              ))}
+            </Select>
           </MDBox>
         )}
 
@@ -220,6 +268,71 @@ function Sidebar() {
 
         {/* Plugin Categories */}
         {pluginCategories.map((category) => renderPluginSection(category))}
+
+        {/* Bottom Actions */}
+        {!miniSidenav && (
+          <MDBox
+            sx={{
+              position: 'fixed',
+              bottom: 0,
+              width: SIDEBAR_WIDTH,
+              p: 2,
+              borderTop: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}`,
+              display: 'flex',
+              justifyContent: 'space-around',
+              alignItems: 'center',
+              backgroundColor: darkMode ? 'rgba(15, 23, 42, 0.4)' : 'rgba(255, 255, 255, 0.4)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              zIndex: 10,
+            }}
+          >
+            <Tooltip title="Help">
+              <IconButton size="small" sx={{ color: '#94a3b8', '&:hover': { color: '#ffffff' } }}>
+                <Icon>help_outline</Icon>
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Settings">
+              <IconButton size="small" sx={{ color: '#94a3b8', '&:hover': { color: '#ffffff' } }}>
+                <Icon>settings</Icon>
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Account">
+              <IconButton
+                size="small"
+                onClick={handleAccountMenuOpen}
+                sx={{ color: '#94a3b8', '&:hover': { color: '#ffffff' } }}
+              >
+                <Icon>account_circle</Icon>
+              </IconButton>
+            </Tooltip>
+          </MDBox>
+        )}
+
+        {/* Account Menu */}
+        <Menu
+          anchorEl={accountMenuAnchor}
+          open={Boolean(accountMenuAnchor)}
+          onClose={handleAccountMenuClose}
+          anchorOrigin={{
+            vertical: "top",
+            horizontal: "right",
+          }}
+          transformOrigin={{
+            vertical: "bottom",
+            horizontal: "left",
+          }}
+          sx={{ mt: -1 }}
+        >
+          <MenuItem onClick={handleAccountMenuClose}>
+            <Icon sx={{ mr: 1 }}>person</Icon>
+            Profile
+          </MenuItem>
+          <MenuItem onClick={handleAccountMenuClose}>
+            <Icon sx={{ mr: 1 }}>logout</Icon>
+            Logout
+          </MenuItem>
+        </Menu>
       </List>
     </Drawer>
   );
